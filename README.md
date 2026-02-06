@@ -7,9 +7,9 @@
 
 ## About
 
-**DBX Python** is the MongoDB Database Experience Team for the Python driver.
+**DBX Python** is MongoDB DBX Python.
 
-> **Note:** DBX in this context refers to the MongoDB Database Experience team, not Databricks.
+> **Note:** DBX in this context refers to MongoDB DBX Python, not Databricks.
 
 ## Features
 
@@ -177,5 +177,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-Made with ❤️ by the MongoDB Database Experience Team
-
+Made with ❤️ by MongoDB DBX Python
