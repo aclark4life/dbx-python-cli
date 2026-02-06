@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,9 +9,9 @@ description = "A command line interface tool"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    "click>=8.0.0",
+    "typer>=0.9.0",
 ]
 
 [project.scripts]
-dbx = "dbx.cli:main"
+dbx = "dbx.cli:app"
 
