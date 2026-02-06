@@ -7,9 +7,7 @@
 
 ## About
 
-**DBX Python** is MongoDB DBX Python.
-
-> **Note:** DBX in this context refers to MongoDB DBX Python, not Databricks.
+DBX Python is the MongoDB Database Experience Team for the Python driver. (Not affiliated with [Databricks](https://docs.databricks.com/aws/en/languages/python).)
 
 ## Features
 
