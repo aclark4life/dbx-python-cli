@@ -57,7 +57,14 @@ just install
 just install-hooks
 ```
 
-The `just install` command uses [uv](https://github.com/astral-sh/uv) under the hood to install the package in editable mode. If you need development dependencies, you can install them separately:
+The `just install` command uses [uv](https://github.com/astral-sh/uv) under the hood to install the package in editable mode. If you need development dependencies, you can install them with just:
+
+```bash
+just install-docs  # Documentation dependencies
+just install-test  # Testing dependencies
+```
+
+Or use uv directly:
 
 ```bash
 uv pip install -e ".[docs]"  # Documentation dependencies
