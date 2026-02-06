@@ -29,11 +29,8 @@
 git clone https://github.com/aclark4life/dbx-python-cli.git
 cd dbx-python-cli
 
-# Install with uv (recommended)
+# Install with uv
 uv pip install -e .
-
-# Or with pip
-pip install -e .
 ```
 
 ### Development Installation
