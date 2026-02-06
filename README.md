@@ -22,30 +22,17 @@
 
 ## Installation
 
-### From Source
+### Via pip (Coming Soon)
 
 ```bash
-# Clone the repository
-git clone https://github.com/aclark4life/dbx-python-cli.git
-cd dbx-python-cli
+# Once released, you'll be able to install with:
+pip install dbx-python-cli
 
-# Install with uv
-uv pip install -e .
-
-# Or just install
-just install
+# Or with uv (recommended):
+uv pip install dbx-python-cli
 ```
 
-### Development Installation
-
-```bash
-# Install with all development dependencies
-uv pip install -e ".[dev]"
-
-# Or install specific dependency groups
-uv pip install -e ".[docs]"  # Documentation dependencies
-uv pip install -e ".[test]"  # Testing dependencies
-```
+> **Note:** The package is not yet released to PyPI. For now, please use the development installation method below.
 
 ## Quick Start
 
@@ -58,6 +45,35 @@ dbx --version
 ```
 
 ## Development
+
+### Getting Started
+
+```bash
+# Clone the repository
+git clone https://github.com/aclark4life/dbx-python-cli.git
+cd dbx-python-cli
+
+# Install in editable mode with all development dependencies
+uv pip install -e ".[dev]"
+
+# Or use just
+just install
+
+# Install pre-commit hooks
+just hooks-install
+```
+
+### Development Dependencies
+
+You can install specific dependency groups as needed:
+
+```bash
+uv pip install -e ".[docs]"  # Documentation dependencies only
+uv pip install -e ".[test]"  # Testing dependencies only
+uv pip install -e ".[dev]"   # All development dependencies
+```
+
+### Command Runner
 
 This project uses [just](https://github.com/casey/just) as a command runner. All commands have single-character aliases for convenience.
 
