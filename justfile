@@ -4,14 +4,14 @@ default:
 
 # Install the package in editable mode
 install:
-    pip install -e .
+    uv pip install -e .
 
 # Alias for install
 alias i := install
 
 # Install development dependencies
 install-dev:
-    pip install -e ".[dev]"
+    uv pip install -e ".[dev]"
 
 # Build the package
 build:
@@ -48,7 +48,7 @@ alias v := version
 
 # Uninstall the package
 uninstall:
-    pip uninstall -y dbx
+    uv pip uninstall dbx
 
 # Alias for uninstall
 alias u := uninstall
