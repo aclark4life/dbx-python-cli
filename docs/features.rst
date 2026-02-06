@@ -38,24 +38,29 @@ Clone repositories from predefined groups:
 
 **Available Groups (Default):**
 
-- ``pymongo`` - MongoDB Python driver repositories (PyMongo, Motor, Specifications)
+- ``pymongo`` - MongoDB Python driver repositories (PyMongo, Specifications)
 - ``langchain`` - LangChain framework repositories
-- ``django`` - Django web framework repositories
+- ``django`` - Django web framework repositories (Django, django-mongodb-backend)
 
 **Configuration:**
 
-Repository groups are defined in ``~/.config/dbx-python-cli/config.toml``. The default base directory for cloning is ``~/repos``, which can be customized:
+Repository groups are defined in ``~/.config/dbx-python-cli/config.toml``. The default base directory for cloning is ``~/Developer``, which can be customized:
 
 .. code-block:: toml
 
    [repo]
-   base_dir = "~/repos"
+   base_dir = "~/Developer"
 
    [repo.groups.pymongo]
    repos = [
        "https://github.com/mongodb/mongo-python-driver.git",
-       "https://github.com/mongodb/motor.git",
        "https://github.com/mongodb/specifications.git",
+   ]
+
+   [repo.groups.django]
+   repos = [
+       "https://github.com/django/django.git",
+       "https://github.com/mongodb-labs/django-mongodb-backend.git",
    ]
 
    [repo.groups.custom]
