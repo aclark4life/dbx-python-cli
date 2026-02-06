@@ -77,3 +77,14 @@ test:
 # Alias for test
 alias t := test
 
+# Install pre-commit hooks with prek
+hooks-install:
+    prek install
+
+# Run pre-commit hooks on all files
+hooks-run:
+    prek run --all-files
+
+# Alias for hooks-run
+alias h := hooks-run
+
