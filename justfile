@@ -17,6 +17,10 @@ install-dev:
 install-docs:
     uv pip install -e ".[docs]"
 
+# Install test dependencies
+install-test:
+    uv pip install -e ".[test]"
+
 # Build the package
 build:
     python -m build
@@ -74,12 +78,24 @@ lint:
 # Alias for lint
 alias l := lint
 
-# Run tests (placeholder for future tests)
+# Run tests with pytest
 test:
-    @echo "No tests configured yet"
+    python -m pytest
 
 # Alias for test
 alias t := test
+
+# Run tests with coverage report
+test-cov:
+    python -m pytest --cov=dbx --cov-report=term-missing --cov-report=html
+
+# Run tests in watch mode (requires pytest-watch)
+test-watch:
+    python -m pytest_watch
+
+# Run tests with verbose output
+test-verbose:
+    python -m pytest -vv
 
 # Install pre-commit hooks with prek
 hooks-install:

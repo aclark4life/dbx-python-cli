@@ -25,7 +25,27 @@ docs = [
     "sphinx>=7.0.0",
     "furo>=2024.0.0",
 ]
+test = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+]
+dev = [
+    "dbx[docs,test]",
+]
 
 [project.scripts]
 dbx = "dbx.cli:app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--cov=dbx",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
 
