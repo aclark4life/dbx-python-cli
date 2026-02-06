@@ -1,19 +1,18 @@
 API Reference
 =============
 
-dbx package
------------
+dbx_python_cli package
+----------------------
 
-.. automodule:: dbx
+.. automodule:: dbx_python_cli
    :members:
    :undoc-members:
    :show-inheritance:
 
-dbx.cli module
---------------
+dbx_python_cli.cli module
+-------------------------
 
-.. automodule:: dbx.cli
+.. automodule:: dbx_python_cli.cli
    :members:
    :undoc-members:
    :show-inheritance:
-

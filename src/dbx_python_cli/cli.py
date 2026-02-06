@@ -2,7 +2,7 @@
 
 import typer
 
-from dbx.commands import repo
+from dbx_python_cli.commands import repo
 
 app = typer.Typer(
     help="A command line tool for DBX Python development tasks. AI first. De-siloing happens here."

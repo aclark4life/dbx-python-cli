@@ -2,7 +2,7 @@
 
 from typer.testing import CliRunner
 
-from dbx.cli import app
+from dbx_python_cli.cli import app
 
 runner = CliRunner()
 
@@ -26,4 +26,3 @@ def test_app_no_args():
     result = runner.invoke(app, [])
     # Typer returns exit code 2 when no command is provided (shows help)
     assert result.exit_code == 2
-
