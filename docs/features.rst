@@ -8,6 +8,18 @@ Repository Management
 
 The ``dbx repo`` command provides repository management functionality for cloning and managing groups of related repositories.
 
+Initialize Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before using the repo commands, initialize your configuration file:
+
+.. code-block:: bash
+
+   # Create user configuration file at ~/.config/dbx/config.toml
+   dbx repo init
+
+This creates a configuration file with default repository groups that you can customize.
+
 Clone Repositories by Group
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -24,7 +36,7 @@ Clone repositories from predefined groups:
    # Clone django repositories
    dbx repo clone -g django
 
-**Available Groups:**
+**Available Groups (Default):**
 
 - ``pymongo`` - MongoDB Python driver repositories
 - ``langchain`` - LangChain framework repositories
@@ -32,21 +44,30 @@ Clone repositories from predefined groups:
 
 **Configuration:**
 
-Repository groups are defined in ``pyproject.toml`` under ``[tool.dbx.repo.groups]``. The default base directory for cloning is ``~/repos``, which can be customized in the configuration:
+Repository groups are defined in ``~/.config/dbx/config.toml``. The default base directory for cloning is ``~/repos``, which can be customized:
 
 .. code-block:: toml
 
-   [tool.dbx.repo]
+   [repo]
    base_dir = "~/repos"
 
-   [tool.dbx.repo.groups.pymongo]
+   [repo.groups.pymongo]
    repos = [
        "https://github.com/mongodb/mongo-python-driver.git",
    ]
 
+   [repo.groups.custom]
+   repos = [
+       "https://github.com/your-org/your-repo.git",
+   ]
+
+You can add your own custom groups by editing the configuration file.
+
 **Features:**
 
+- User-specific configuration file (works with pip-installed package)
 - Clones all repositories in a group to the configured base directory
 - Skips repositories that already exist locally
 - Provides clear progress feedback with emoji indicators
 - Handles errors gracefully and continues with remaining repositories
+- Easy to add custom repository groups

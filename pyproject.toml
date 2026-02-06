@@ -36,6 +36,9 @@ dev = [
 [project.scripts]
 dbx = "dbx.cli:app"
 
+[tool.setuptools.package-data]
+dbx = ["config.toml"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

@@ -1,0 +1,21 @@
+# DBX Python CLI Configuration
+# This is the default configuration file.
+# Copy this to ~/.config/dbx/config.toml and customize as needed.
+
+[repo]
+base_dir = "~/repos"
+
+[repo.groups.pymongo]
+repos = [
+    "https://github.com/mongodb/mongo-python-driver.git",
+]
+
+[repo.groups.langchain]
+repos = [
+    "https://github.com/langchain-ai/langchain.git",
+]
+
+[repo.groups.django]
+repos = [
+    "https://github.com/django/django.git",
+]
