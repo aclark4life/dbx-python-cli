@@ -98,7 +98,7 @@ test-verbose:
     python -m pytest -vv
 
 # Install pre-commit hooks with prek
-hooks-install:
+install-hooks:
     prek install
 
 # Run pre-commit hooks on all files

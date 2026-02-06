@@ -54,7 +54,7 @@ cd dbx-python-cli
 just install
 
 # Install pre-commit hooks
-just hooks-install
+just install-hooks
 ```
 
 The `just install` command uses [uv](https://github.com/astral-sh/uv) under the hood to install the package in editable mode. If you need development dependencies, you can install them separately:
@@ -158,7 +158,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Install pre-commit hooks (`just hooks-install`)
+3. Install pre-commit hooks (`just install-hooks`)
 4. Make your changes
 5. Run tests (`just test`)
 6. Commit your changes (`git commit -m 'Add amazing feature'`)
