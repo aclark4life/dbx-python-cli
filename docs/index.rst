@@ -1,5 +1,5 @@
-dbx Documentation
-=================
+dbx-python-cli Documentation
+============================
 
 A command line tool for DBX Python development tasks. AI first. De-siloing happens here.
 

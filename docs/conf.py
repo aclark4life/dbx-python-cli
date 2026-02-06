@@ -1,4 +1,4 @@
-"""Sphinx configuration for dbx documentation."""
+"""Sphinx configuration for dbx-python-cli documentation."""
 
 import os
 import sys
@@ -7,9 +7,9 @@ import sys
 sys.path.insert(0, os.path.abspath("../src"))
 
 # Project information
-project = "dbx"
-copyright = "2024, MongoDB Database Experience Team"
-author = "MongoDB Database Experience Team"
+project = "dbx-python-cli"
+copyright = "2024, MongoDB DBX Python"
+author = "MongoDB DBX Python"
 release = "0.1.0"
 
 # General configuration
@@ -25,7 +25,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # HTML output options
 html_theme = "furo"
-html_title = "dbx"
+html_title = "dbx-python-cli"
 html_static_path = ["_static"]
 
 # Furo theme options
@@ -43,4 +43,3 @@ intersphinx_mapping = {
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = True
-
