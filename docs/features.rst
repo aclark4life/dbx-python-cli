@@ -15,7 +15,7 @@ Before using the repo commands, initialize your configuration file:
 
 .. code-block:: bash
 
-   # Create user configuration file at ~/.config/dbx/config.toml
+   # Create user configuration file at ~/.config/dbx-python-cli/config.toml
    dbx repo init
 
 This creates a configuration file with default repository groups that you can customize.
@@ -44,7 +44,7 @@ Clone repositories from predefined groups:
 
 **Configuration:**
 
-Repository groups are defined in ``~/.config/dbx/config.toml``. The default base directory for cloning is ``~/repos``, which can be customized:
+Repository groups are defined in ``~/.config/dbx-python-cli/config.toml``. The default base directory for cloning is ``~/repos``, which can be customized:
 
 .. code-block:: toml
 

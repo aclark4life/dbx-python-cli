@@ -1,6 +1,6 @@
 # DBX Python CLI Configuration
 # This is the default configuration file.
-# Copy this to ~/.config/dbx/config.toml and customize as needed.
+# Copy this to ~/.config/dbx-python-cli/config.toml and customize as needed.
 
 [repo]
 base_dir = "~/repos"

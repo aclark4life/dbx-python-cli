@@ -14,7 +14,7 @@ app = typer.Typer(
 
 def get_config_path():
     """Get the path to the user config file."""
-    config_dir = Path.home() / ".config" / "dbx"
+    config_dir = Path.home() / ".config" / "dbx-python-cli"
     return config_dir / "config.toml"
 
 
