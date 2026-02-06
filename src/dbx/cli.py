@@ -2,7 +2,7 @@
 
 import typer
 
-app = typer.Typer(help="dbx - A command line interface tool.")
+app = typer.Typer(help="A command line tool for DBX Python.")
 
 
 def version_callback(value: bool):
@@ -22,7 +22,7 @@ def main(
         help="Show the version and exit.",
     )
 ):
-    """dbx - A command line interface tool."""
+    """A command line tool for DBX Python."""
     pass
 
 
