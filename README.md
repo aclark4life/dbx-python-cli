@@ -27,12 +27,9 @@
 ```bash
 # Once released, you'll be able to install with:
 pip install dbx-python-cli
-
-# Or with uv (recommended):
-uv pip install dbx-python-cli
 ```
 
-> **Note:** The package is not yet released to PyPI. For now, please use the development installation method below.
+> **Note:** The package is not yet released to PyPI. For now, please see the Development section below.
 
 ## Quick Start
 
@@ -53,24 +50,19 @@ dbx --version
 git clone https://github.com/aclark4life/dbx-python-cli.git
 cd dbx-python-cli
 
-# Install in editable mode with all development dependencies
-uv pip install -e ".[dev]"
-
-# Or use just
+# Install the package (uses uv pip install -e .)
 just install
 
 # Install pre-commit hooks
 just hooks-install
 ```
 
-### Development Dependencies
-
-You can install specific dependency groups as needed:
+The `just install` command uses [uv](https://github.com/astral-sh/uv) under the hood to install the package in editable mode. If you need development dependencies, you can install them separately:
 
 ```bash
-uv pip install -e ".[docs]"  # Documentation dependencies only
-uv pip install -e ".[test]"  # Testing dependencies only
-uv pip install -e ".[dev]"   # All development dependencies
+uv pip install -e ".[docs]"  # Documentation dependencies
+uv pip install -e ".[test]"  # Testing dependencies
+uv pip install -e ".[dev]"   # All development dependencies (docs + test)
 ```
 
 ### Command Runner
