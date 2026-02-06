@@ -2,7 +2,14 @@
 
 import typer
 
-app = typer.Typer(help="A command line tool for DBX Python development tasks. AI first. De-siloing happens here.")
+from dbx.commands import repo
+
+app = typer.Typer(
+    help="A command line tool for DBX Python development tasks. AI first. De-siloing happens here."
+)
+
+# Add subcommands
+app.add_typer(repo.app, name="repo")
 
 
 def version_callback(value: bool):
@@ -20,7 +27,7 @@ def main(
         callback=version_callback,
         is_eager=True,
         help="Show the version and exit.",
-    )
+    ),
 ):
     """A command line tool for DBX Python development tasks. AI first. De-siloing happens here."""
     pass
@@ -28,4 +35,3 @@ def main(
 
 if __name__ == "__main__":
     app()
-
