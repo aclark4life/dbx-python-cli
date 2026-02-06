@@ -31,6 +31,9 @@ cd dbx-python-cli
 
 # Install with uv
 uv pip install -e .
+
+# Or just install
+just install
 ```
 
 ### Development Installation
