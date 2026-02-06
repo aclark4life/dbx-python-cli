@@ -9,15 +9,10 @@ About
 DBX Python is the MongoDB Database Experience Team for the MongoDB Python driver.
 
 .. note::
-   This is not `Databricks for Python developers <https://docs.databricks.com/aws/en/languages/python>`__ (opens in new tab).
+   This is not `Databricks for Python developers <https://docs.databricks.com/aws/en/languages/python>`__.
 
 .. raw:: html
 
-   <style>
-   a[href="https://docs.databricks.com/aws/en/languages/python"] {
-       target-new: tab !important;
-   }
-   </style>
    <script>
    document.addEventListener('DOMContentLoaded', function() {
        var links = document.querySelectorAll('a[href="https://docs.databricks.com/aws/en/languages/python"]');
