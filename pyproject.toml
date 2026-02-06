@@ -1,3 +1,6 @@
+# Build system configuration (PEP 517/518)
+# Explicitly specifying the build backend is best practice for reproducible builds.
+# Without this section, build tools fall back to legacy setuptools behavior.
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
