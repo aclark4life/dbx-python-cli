@@ -1,6 +1,6 @@
 # dbx
 
-A command line tool for DBX Python.
+A command line tool for DBX Python development tasks. AI first. De-siloing happens here.
 
 DBX Python is the MongoDB Database Experience Team for the Python driver.
 
