@@ -38,7 +38,7 @@ Clone repositories from predefined groups:
 
 **Available Groups (Default):**
 
-- ``pymongo`` - MongoDB Python driver repositories
+- ``pymongo`` - MongoDB Python driver repositories (PyMongo, Motor, Specifications)
 - ``langchain`` - LangChain framework repositories
 - ``django`` - Django web framework repositories
 
@@ -54,6 +54,8 @@ Repository groups are defined in ``~/.config/dbx-python-cli/config.toml``. The d
    [repo.groups.pymongo]
    repos = [
        "https://github.com/mongodb/mongo-python-driver.git",
+       "https://github.com/mongodb/motor.git",
+       "https://github.com/mongodb/specifications.git",
    ]
 
    [repo.groups.custom]

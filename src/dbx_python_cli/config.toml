@@ -8,6 +8,8 @@ base_dir = "~/repos"
 [repo.groups.pymongo]
 repos = [
     "https://github.com/mongodb/mongo-python-driver.git",
+    "https://github.com/mongodb/motor.git",
+    "https://github.com/mongodb/specifications.git",
 ]
 
 [repo.groups.langchain]
