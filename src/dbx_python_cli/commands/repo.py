@@ -6,7 +6,10 @@ from pathlib import Path
 
 import typer
 
-app = typer.Typer(help="Repository management commands")
+app = typer.Typer(
+    help="Repository management commands",
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
 
 def get_config_path():
