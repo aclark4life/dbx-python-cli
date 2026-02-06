@@ -36,12 +36,6 @@ pip install dbx-python-cli
 ## Quick Start
 
 ```bash
-# Show help
-dbx --help
-
-# Show version
-dbx --version
-
 # Initialize configuration
 dbx repo init
 

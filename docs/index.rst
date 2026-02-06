@@ -42,12 +42,6 @@ Quick Start
 
 .. code-block:: bash
 
-   # Show help
-   dbx --help
-
-   # Show version
-   dbx --version
-
    # Initialize configuration
    dbx repo init
 
