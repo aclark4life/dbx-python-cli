@@ -48,6 +48,9 @@ Quick Start
    # Show version
    dbx --version
 
+   # Initialize configuration
+   dbx repo init
+
    # Clone repositories by group
    dbx repo clone -g pymongo
 
