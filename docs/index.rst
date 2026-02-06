@@ -6,10 +6,10 @@ A command line tool for DBX Python development tasks. AI first. De-siloing happe
 About
 -----
 
-**DBX Python** is MongoDB DBX Python.
+DBX Python is the MongoDB Database Experience Team for the Python driver.
 
 .. note::
-   DBX in this context refers to MongoDB DBX Python, not Databricks.
+   DBX in this context refers to the MongoDB Database Experience Team for the Python driver, not Databricks.
 
 Features
 --------
