@@ -1,6 +1,11 @@
 # Build system configuration (PEP 517/518)
 # Explicitly specifying the build backend is best practice for reproducible builds.
 # Without this section, build tools fall back to legacy setuptools behavior.
+#
+# setuptools.build_meta vs setuptools.build_meta:__legacy__:
+# - build_meta: Modern PEP 517 backend, uses pyproject.toml for all configuration
+# - build_meta:__legacy__: Fallback mode that also reads setup.py/setup.cfg
+# We use the modern backend since all our config is in pyproject.toml.
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
