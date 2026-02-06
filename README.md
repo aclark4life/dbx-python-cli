@@ -7,7 +7,7 @@
 
 ## About
 
-DBX Python is the MongoDB Database Experience Team for the Python driver. (Not affiliated with [Databricks](https://docs.databricks.com/aws/en/languages/python).)
+DBX Python is the MongoDB Database Experience Team for the MongoDB Python driver. (Not affiliated with [Databricks](https://docs.databricks.com/aws/en/languages/python).)
 
 ## Features
 
