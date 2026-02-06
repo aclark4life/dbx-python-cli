@@ -20,6 +20,12 @@ dependencies = [
     "typer",
 ]
 
+[project.optional-dependencies]
+docs = [
+    "sphinx>=7.0.0",
+    "furo>=2024.0.0",
+]
+
 [project.scripts]
 dbx = "dbx.cli:app"
 

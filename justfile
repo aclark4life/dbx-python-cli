@@ -13,6 +13,10 @@ alias i := install
 install-dev:
     uv pip install -e ".[dev]"
 
+# Install documentation dependencies
+install-docs:
+    uv pip install -e ".[docs]"
+
 # Build the package
 build:
     python -m build
@@ -87,4 +91,19 @@ hooks-run:
 
 # Alias for hooks-run
 alias h := hooks-run
+
+# Build Sphinx documentation
+docs:
+    cd docs && python -m sphinx -b html . _build/html
+
+# Alias for docs
+alias d := docs
+
+# Clean documentation build
+docs-clean:
+    rm -rf docs/_build
+
+# Serve documentation locally
+docs-serve:
+    python -m http.server --directory docs/_build/html 8000
 
