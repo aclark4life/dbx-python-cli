@@ -1,10 +1,18 @@
 """Tests for the CLI module."""
 
+import re
+
 from typer.testing import CliRunner
 
 from dbx_python_cli.cli import app
 
 runner = CliRunner()
+
+
+def strip_ansi(text):
+    """Remove ANSI escape sequences from text."""
+    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+    return ansi_escape.sub("", text)
 
 
 def test_app_help():
@@ -32,9 +40,10 @@ def test_verbose_flag_in_help():
     """Test that the verbose flag appears in help."""
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    assert "--verbose" in result.stdout
-    assert "-v" in result.stdout
-    assert "Show more detailed output" in result.stdout
+    output = strip_ansi(result.stdout)
+    assert "--verbose" in output
+    assert "-v" in output
+    assert "Show more detailed output" in output
 
 
 def test_verbose_flag_with_test_command():
