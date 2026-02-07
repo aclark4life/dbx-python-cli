@@ -80,9 +80,15 @@ def install_callback(
     if ctx.invoked_subcommand is not None:
         return
 
+    # Get verbose flag from parent context
+    verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+
     try:
         config = get_config()
         base_dir = get_base_dir(config)
+        if verbose:
+            typer.echo(f"[verbose] Using base directory: {base_dir}")
+            typer.echo(f"[verbose] Config: {config}\n")
     except Exception as e:
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
@@ -129,20 +135,27 @@ def install_callback(
 
     install_cmd = ["uv", "pip", "install", "-e", install_spec]
 
+    if verbose:
+        typer.echo(f"[verbose] Running command: {' '.join(install_cmd)}")
+        typer.echo(f"[verbose] Working directory: {repo_path}\n")
+
     install_result = subprocess.run(
         install_cmd,
         cwd=str(repo_path),
         check=False,
-        capture_output=True,
+        capture_output=not verbose,  # Show output in real-time if verbose
         text=True,
     )
 
     if install_result.returncode != 0:
         typer.echo("⚠️  Warning: Installation failed", err=True)
-        typer.echo(install_result.stderr, err=True)
+        if not verbose and install_result.stderr:
+            typer.echo(install_result.stderr, err=True)
         raise typer.Exit(1)
     else:
         typer.echo("✅ Package installed successfully\n")
+        if verbose and install_result.stdout:
+            typer.echo(f"[verbose] Output:\n{install_result.stdout}")
 
     # Install dependency groups if specified
     if groups:
@@ -152,18 +165,25 @@ def install_callback(
         for group in groups_list:
             group_cmd = ["uv", "pip", "install", "--group", group]
 
+            if verbose:
+                typer.echo(f"[verbose] Running command: {' '.join(group_cmd)}")
+                typer.echo(f"[verbose] Working directory: {repo_path}\n")
+
             group_result = subprocess.run(
                 group_cmd,
                 cwd=str(repo_path),
                 check=False,
-                capture_output=True,
+                capture_output=not verbose,  # Show output in real-time if verbose
                 text=True,
             )
 
             if group_result.returncode != 0:
                 typer.echo(f"⚠️  Warning: Failed to install group '{group}'", err=True)
-                typer.echo(group_result.stderr, err=True)
+                if not verbose and group_result.stderr:
+                    typer.echo(group_result.stderr, err=True)
             else:
                 typer.echo(f"✅ Group '{group}' installed successfully")
+                if verbose and group_result.stdout:
+                    typer.echo(f"[verbose] Output:\n{group_result.stdout}")
 
         typer.echo()  # Empty line at the end

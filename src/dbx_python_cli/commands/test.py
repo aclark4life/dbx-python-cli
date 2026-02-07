@@ -70,9 +70,15 @@ def test_callback(
     if ctx.invoked_subcommand is not None:
         return
 
+    # Get verbose flag from parent context
+    verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+
     try:
         config = get_config()
         base_dir = get_base_dir(config)
+        if verbose:
+            typer.echo(f"[verbose] Using base directory: {base_dir}")
+            typer.echo(f"[verbose] Config: {config}\n")
 
         # List repos if requested
         if list_repos:
@@ -108,11 +114,17 @@ def test_callback(
 
         # Build pytest command
         pytest_cmd = ["pytest"]
+        if verbose:
+            pytest_cmd.append("-v")  # Add pytest verbose flag
         if keyword:
             pytest_cmd.extend(["-k", keyword])
             typer.echo(f"Running pytest -k '{keyword}' in {repo_path}...\n")
         else:
             typer.echo(f"Running pytest in {repo_path}...\n")
+
+        if verbose:
+            typer.echo(f"[verbose] Running command: {' '.join(pytest_cmd)}")
+            typer.echo(f"[verbose] Working directory: {repo_path}\n")
 
         # Run pytest in the repository
         result = subprocess.run(

@@ -61,6 +61,11 @@ dbx test mongo-python-driver
 
 # Run tests matching a keyword expression
 dbx test mongo-python-driver -k "test_connection"
+
+# Use verbose mode for more detailed output
+dbx -v install mongo-python-driver -e test
+dbx -v test mongo-python-driver
+dbx -v repo clone -g pymongo
 ```
 
 ## Development

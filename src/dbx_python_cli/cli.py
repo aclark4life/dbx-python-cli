@@ -24,6 +24,7 @@ def version_callback(value: bool):
 
 @app.callback()
 def main(
+    ctx: typer.Context,
     version: bool = typer.Option(
         None,
         "--version",
@@ -31,9 +32,16 @@ def main(
         is_eager=True,
         help="Show the version and exit.",
     ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Show more detailed output.",
+    ),
 ):
     """A command line tool for DBX Python development tasks. AI first. De-siloing happens here."""
-    pass
+    # Store verbose flag in context for subcommands to access
+    ctx.obj = {"verbose": verbose}
 
 
 if __name__ == "__main__":

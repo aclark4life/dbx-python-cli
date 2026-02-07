@@ -86,6 +86,7 @@ def init():
 
 @app.command()
 def clone(
+    ctx: typer.Context,
     group: str = typer.Option(
         ...,
         "--group",
@@ -94,10 +95,17 @@ def clone(
     ),
 ):
     """Clone repositories from a specified group."""
+    # Get verbose flag from parent context
+    verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+
     try:
         config = get_config()
         base_dir = get_base_dir(config)
         groups = get_repo_groups(config)
+
+        if verbose:
+            typer.echo(f"[verbose] Using base directory: {base_dir}")
+            typer.echo(f"[verbose] Available groups: {list(groups.keys())}\n")
 
         if group not in groups:
             typer.echo(f"Error: Group '{group}' not found in configuration.", err=True)
@@ -125,17 +133,21 @@ def clone(
                 typer.echo(f"  ⏭️  {repo_name} (already exists)")
             else:
                 typer.echo(f"  📦 Cloning {repo_name}...")
+                if verbose:
+                    typer.echo(f"  [verbose] URL: {repo_url}")
+                    typer.echo(f"  [verbose] Destination: {repo_path}")
                 try:
                     subprocess.run(
                         ["git", "clone", repo_url, str(repo_path)],
                         check=True,
-                        capture_output=True,
+                        capture_output=not verbose,  # Show output in real-time if verbose
                         text=True,
                     )
                     typer.echo(f"  ✅ {repo_name} cloned successfully")
                 except subprocess.CalledProcessError as e:
                     typer.echo(
-                        f"  ❌ Failed to clone {repo_name}: {e.stderr}", err=True
+                        f"  ❌ Failed to clone {repo_name}: {e.stderr if not verbose else ''}",
+                        err=True,
                     )
 
         typer.echo(f"\n✨ Done! Repositories cloned to {group_dir}")
