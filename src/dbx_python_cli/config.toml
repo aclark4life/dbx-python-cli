@@ -17,6 +17,15 @@ repos = [
     "git@github.com:langchain-ai/langchain.git",
     "git@github.com:mongodb-labs/pymongo-search-utils.git",
     "git@github.com:mongodb-labs/ai-ml-pipeline-testing.git",
+    "git@github.com:mongodb-labs/langchain-mongodb.git",
+]
+
+# Monorepo configuration: specify install directories for repos with multiple packages
+[repo.groups.langchain.install_dirs]
+langchain-mongodb = [
+    "libs/langchain-mongodb/",
+    "libs/langgraph-checkpoint-mongodb/",
+    "libs/langgraph-store-mongodb/",
 ]
 
 [repo.groups.django]

@@ -53,6 +53,29 @@ def get_repo_groups(config):
     return config.get("repo", {}).get("groups", {})
 
 
+def get_install_dirs(config, group_name, repo_name):
+    """
+    Get install directories for a repository.
+
+    For monorepos, returns a list of subdirectories to install.
+    For regular repos, returns None (install from root).
+
+    Args:
+        config: Configuration dictionary
+        group_name: Name of the group (e.g., 'langchain')
+        repo_name: Name of the repository (e.g., 'langchain-mongodb')
+
+    Returns:
+        list: List of install directories, or None if not a monorepo
+    """
+    groups = get_repo_groups(config)
+    if group_name not in groups:
+        return None
+
+    install_dirs_config = groups[group_name].get("install_dirs", {})
+    return install_dirs_config.get(repo_name)
+
+
 @app.command()
 def init(
     yes: bool = typer.Option(

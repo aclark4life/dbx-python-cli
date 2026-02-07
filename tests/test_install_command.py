@@ -336,7 +336,7 @@ def test_install_group_all_repos(tmp_path):
                 assert "mongo-python-driver" in result.stdout
                 assert "drivers-evergreen-tools" in result.stdout
                 assert "Installation Summary" in result.stdout
-                assert "Total repositories: 2" in result.stdout
+                assert "Total packages: 2" in result.stdout
 
                 # Verify install was called for both repos
                 assert mock_run.call_count == 2
