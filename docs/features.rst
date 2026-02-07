@@ -81,6 +81,9 @@ You can add your own custom groups by editing the configuration file.
 - Handles errors gracefully and continues with remaining repositories
 - Easy to add custom repository groups
 
+Testing
+-------
+
 Run Tests in Repositories
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -89,13 +92,13 @@ Run pytest in any cloned repository:
 .. code-block:: bash
 
    # List all available repositories
-   dbx repo test --list
+   dbx test --list
 
    # Run tests in a specific repository
-   dbx repo test mongo-python-driver
+   dbx test mongo-python-driver
 
    # Short form
-   dbx repo test -l
+   dbx test -l
 
 The ``test`` command will:
 
@@ -107,7 +110,7 @@ The ``test`` command will:
 
 .. code-block:: bash
 
-   $ dbx repo test --list
+   $ dbx test --list
    Available repositories in ~/Developer/dbx-repos:
 
      [django] django
@@ -115,7 +118,7 @@ The ``test`` command will:
      [pymongo] mongo-python-driver
      [pymongo] specifications
 
-   $ dbx repo test mongo-python-driver
+   $ dbx test mongo-python-driver
    Running pytest in ~/Developer/dbx-repos/pymongo/mongo-python-driver...
 
    ============================= test session starts ==============================
