@@ -66,8 +66,13 @@ def install_callback(
     groups: Optional[str] = typer.Option(
         None,
         "--groups",
-        "-g",
         help="Comma-separated list of dependency groups to install (e.g., 'dev', 'test')",
+    ),
+    group: Optional[str] = typer.Option(
+        None,
+        "--group",
+        "-g",
+        help="Group name to use for venv (e.g., 'pymongo')",
     ),
     list_repos: bool = typer.Option(
         False,
@@ -122,7 +127,17 @@ def install_callback(
         raise typer.Exit(1)
 
     repo_path = Path(repo["path"])
-    group_path = repo_path.parent  # Group directory
+
+    # Determine which group's venv to use
+    if group:
+        # Use specified group's venv
+        group_path = base_dir / group
+        if not group_path.exists():
+            typer.echo(f"❌ Error: Group '{group}' not found in {base_dir}", err=True)
+            raise typer.Exit(1)
+    else:
+        # Default to repo's own group
+        group_path = repo_path.parent
 
     # Detect venv
     python_path, venv_type = get_venv_info(repo_path, group_path)

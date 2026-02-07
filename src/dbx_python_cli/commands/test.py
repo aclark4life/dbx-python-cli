@@ -1,6 +1,7 @@
 """Test command for running pytest in repositories."""
 
 import subprocess
+from typing import Optional
 
 import typer
 
@@ -65,6 +66,12 @@ def test_callback(
         "-k",
         help="Only run tests matching the given keyword expression (passed to pytest -k)",
     ),
+    group: Optional[str] = typer.Option(
+        None,
+        "--group",
+        "-g",
+        help="Group name to use for venv (e.g., 'pymongo')",
+    ),
 ):
     """Run pytest in a cloned repository."""
     # If a subcommand was invoked, don't run this logic
@@ -112,7 +119,21 @@ def test_callback(
             raise typer.Exit(1)
 
         repo_path = repo["path"]
-        group_path = repo_path.parent  # Group directory
+
+        # Determine which group's venv to use
+        if group:
+            # Use specified group's venv
+            from pathlib import Path
+
+            group_path = Path(base_dir) / group
+            if not group_path.exists():
+                typer.echo(
+                    f"❌ Error: Group '{group}' not found in {base_dir}", err=True
+                )
+                raise typer.Exit(1)
+        else:
+            # Default to repo's own group
+            group_path = repo_path.parent
 
         # Detect venv
         python_path, venv_type = get_venv_info(repo_path, group_path)

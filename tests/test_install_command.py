@@ -194,7 +194,7 @@ def test_install_with_groups(tmp_path):
                 mock_run.return_value = mock_result
 
                 result = runner.invoke(
-                    app, ["install", "mongo-python-driver", "-g", "dev"]
+                    app, ["install", "mongo-python-driver", "--groups", "dev"]
                 )
                 assert result.exit_code == 0
                 assert "Package installed successfully" in result.stdout
@@ -248,7 +248,7 @@ def test_install_with_extras_and_groups(tmp_path):
                         "mongo-python-driver",
                         "-e",
                         "test,aws",
-                        "-g",
+                        "--groups",
                         "dev,test",
                     ],
                 )
