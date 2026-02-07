@@ -17,7 +17,7 @@ if build_hash != "dev":
     # Show short hash (first 7 characters)
     build_hash = build_hash[:7]
 version = f"{release} ({build_hash})"
-copyright = f"2024, MongoDB DBX Python | Build: {build_hash}"
+copyright = f"2026, MongoDB DBX Python | Build: {build_hash}"
 
 # General configuration
 extensions = [
