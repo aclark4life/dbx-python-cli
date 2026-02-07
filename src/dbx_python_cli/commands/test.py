@@ -1,7 +1,6 @@
 """Test command for running pytest in repositories."""
 
 import subprocess
-from typing import Optional
 
 import typer
 
@@ -59,12 +58,6 @@ def test_callback(
         "-l",
         help="List all available repositories",
     ),
-    install_extras: Optional[str] = typer.Option(
-        None,
-        "--install",
-        "-i",
-        help="Install extras before running tests (e.g., 'test', 'dev', 'docs')",
-    ),
     keyword: str = typer.Option(
         None,
         "--keyword",
@@ -112,26 +105,6 @@ def test_callback(
             raise typer.Exit(1)
 
         repo_path = repo["path"]
-
-        # Install extras if requested
-        if install_extras:
-            typer.echo(f"Installing '{install_extras}' extras in {repo_path}...\n")
-            install_result = subprocess.run(
-                ["uv", "pip", "install", "-e", f".[{install_extras}]"],
-                cwd=str(repo_path),
-                check=False,
-                capture_output=True,
-                text=True,
-            )
-
-            if install_result.returncode != 0:
-                typer.echo(
-                    f"⚠️  Warning: Failed to install '{install_extras}' extras: {install_result.stderr}",
-                    err=True,
-                )
-                typer.echo("Continuing with test run...\n")
-            else:
-                typer.echo(f"✅ '{install_extras}' extras installed successfully\n")
 
         # Build pytest command
         pytest_cmd = ["pytest"]

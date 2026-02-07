@@ -47,20 +47,20 @@ dbx repo clone -g pymongo
 # List available repositories
 dbx test -l
 
+# Install dependencies in a repository
+dbx install mongo-python-driver -e test
+
+# Install with multiple extras
+dbx install mongo-python-driver -e test,aws
+
+# Install with dependency groups
+dbx install mongo-python-driver -e test -g dev,test
+
 # Run tests in a repository
 dbx test mongo-python-driver
 
-# Install test extras and run tests
-dbx test mongo-python-driver -i test
-
-# Install dev extras and run tests
-dbx test mongo-python-driver -i dev
-
 # Run tests matching a keyword expression
 dbx test mongo-python-driver -k "test_connection"
-
-# Combine flags
-dbx test mongo-python-driver -i test -k "test_auth"
 ```
 
 ## Development

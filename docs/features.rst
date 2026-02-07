@@ -81,6 +81,46 @@ You can add your own custom groups by editing the configuration file.
 - Handles errors gracefully and continues with remaining repositories
 - Easy to add custom repository groups
 
+Installing Dependencies
+-----------------------
+
+Install Dependencies in Repositories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install dependencies in any cloned repository using ``uv pip install``:
+
+.. code-block:: bash
+
+   # List all available repositories
+   dbx install --list
+
+   # Install a repository in editable mode
+   dbx install mongo-python-driver
+
+   # Install with extras
+   dbx install mongo-python-driver -e test
+
+   # Install with multiple extras
+   dbx install mongo-python-driver -e test,aws
+
+   # Install with dependency groups
+   dbx install mongo-python-driver -g dev,test
+
+   # Combine extras and groups
+   dbx install mongo-python-driver -e test,aws -g dev
+
+   # Short forms
+   dbx install -l  # list
+   dbx install mongo-python-driver -e test  # install with test extras
+   dbx install mongo-python-driver -e test -g dev  # install with test extras and dev group
+
+The ``install`` command will:
+
+1. Find the repository by name across all cloned groups
+2. Run ``uv pip install -e .`` (or with extras if specified)
+3. Optionally install dependency groups with ``--group`` flag
+4. Display installation results
+
 Testing
 -------
 
@@ -97,34 +137,44 @@ Run pytest in any cloned repository:
    # Run tests in a specific repository
    dbx test mongo-python-driver
 
-   # Install test extras before running tests
-   dbx test mongo-python-driver --install test
-
-   # Install dev extras before running tests
-   dbx test mongo-python-driver --install dev
-
    # Run tests matching a keyword expression
    dbx test mongo-python-driver --keyword "test_connection"
 
    # Short forms
    dbx test -l  # list
-   dbx test mongo-python-driver -i test  # install test extras and run tests
-   dbx test mongo-python-driver -i dev  # install dev extras and run tests
    dbx test mongo-python-driver -k "test_auth"  # filter tests
-
-   # Combine flags
-   dbx test mongo-python-driver -i test -k "test_connection"
 
 The ``test`` command will:
 
 1. Find the repository by name across all cloned groups
-2. Optionally install extras with ``-i`` / ``--install`` flag (specify which extra, e.g., 'test', 'dev')
-3. Run ``pytest`` in the repository directory (with optional ``-k`` filter)
-4. Display the test results
+2. Run ``pytest`` in the repository directory (with optional ``-k`` filter)
+3. Display the test results
 
 **Example:**
 
 .. code-block:: bash
+
+   $ dbx install --list
+   Available repositories:
+
+     • mongo-python-driver (pymongo)
+     • specifications (pymongo)
+     • django (django)
+     • django-mongodb-backend (django)
+
+   $ dbx install mongo-python-driver -e test
+   Installing dependencies in ~/Developer/dbx-repos/pymongo/mongo-python-driver...
+
+   ✅ Package installed successfully
+
+   $ dbx install mongo-python-driver -e test,aws -g dev
+   Installing dependencies in ~/Developer/dbx-repos/pymongo/mongo-python-driver...
+
+   ✅ Package installed successfully
+
+   Installing dependency groups: dev...
+
+   ✅ Group 'dev' installed successfully
 
    $ dbx test --list
    Available repositories in ~/Developer/dbx-repos:
@@ -141,26 +191,18 @@ The ``test`` command will:
    ...
    ✅ Tests passed in mongo-python-driver
 
-   $ dbx test mongo-python-driver -i test
-   Installing 'test' extras in ~/Developer/dbx-repos/pymongo/mongo-python-driver...
+**Install Command:**
 
-   ✅ 'test' extras installed successfully
+The ``install`` command uses ``uv pip install`` to install dependencies:
 
-   Running pytest in ~/Developer/dbx-repos/pymongo/mongo-python-driver...
+- ``-e`` / ``--extras``: Comma-separated list of extras to install (e.g., 'test', 'dev', 'aws')
+- ``-g`` / ``--groups``: Comma-separated list of dependency groups to install (e.g., 'dev', 'test')
 
-   ============================= test session starts ==============================
-   ...
-   ✅ Tests passed in mongo-python-driver
+This is useful when:
 
-**Install Extras:**
-
-The ``-i`` / ``--install`` flag accepts an extra name (e.g., 'test', 'dev', 'docs') and will run ``uv pip install -e ".[<extra>]"`` in the repository directory before running tests. This is useful when:
-
-- You need to install test dependencies for the first time
-- Test dependencies have been updated
-- You want to ensure all test extras are up to date
-
-If the installation fails, a warning is displayed but the test run continues.
+- You need to install dependencies for the first time
+- Dependencies have been updated
+- You want to install specific extras or dependency groups
 
 **Filter Tests by Keyword:**
 
@@ -175,5 +217,5 @@ The keyword expression is passed directly to pytest, so all pytest ``-k`` syntax
 **Requirements:**
 
 - The repository must be cloned first using ``dbx repo clone``
-- For the ``-i`` flag: The repository must have a ``pyproject.toml`` or ``setup.py`` with test extras defined
-- For the ``-k`` flag: The repository must have pytest installed
+- For the ``install`` command: The repository must have a ``pyproject.toml`` or ``setup.py``
+- For the ``test`` command: The repository must have pytest installed

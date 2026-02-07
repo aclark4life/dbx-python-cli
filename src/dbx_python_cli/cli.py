@@ -2,7 +2,7 @@
 
 import typer
 
-from dbx_python_cli.commands import repo, test
+from dbx_python_cli.commands import install, repo, test
 
 app = typer.Typer(
     help="A command line tool for DBX Python development tasks. AI first. De-siloing happens here.",
@@ -12,6 +12,7 @@ app = typer.Typer(
 # Add subcommands
 app.add_typer(repo.app, name="repo")
 app.add_typer(test.app, name="test")
+app.add_typer(install.app, name="install")
 
 
 def version_callback(value: bool):
