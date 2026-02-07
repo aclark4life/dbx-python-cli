@@ -58,6 +58,12 @@ def test_callback(
         "-i",
         help="Install test extras before running tests",
     ),
+    keyword: str = typer.Option(
+        None,
+        "--keyword",
+        "-k",
+        help="Only run tests matching the given keyword expression (passed to pytest -k)",
+    ),
 ):
     """Run pytest in a cloned repository."""
     # If a subcommand was invoked, don't run this logic
@@ -120,11 +126,17 @@ def test_callback(
             else:
                 typer.echo("✅ Test extras installed successfully\n")
 
-        typer.echo(f"Running pytest in {repo_path}...\n")
+        # Build pytest command
+        pytest_cmd = ["pytest"]
+        if keyword:
+            pytest_cmd.extend(["-k", keyword])
+            typer.echo(f"Running pytest -k '{keyword}' in {repo_path}...\n")
+        else:
+            typer.echo(f"Running pytest in {repo_path}...\n")
 
         # Run pytest in the repository
         result = subprocess.run(
-            ["pytest"],
+            pytest_cmd,
             cwd=str(repo_path),
             check=False,
         )

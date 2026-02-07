@@ -52,6 +52,12 @@ dbx test mongo-python-driver
 
 # Install test extras and run tests
 dbx test -i mongo-python-driver
+
+# Run tests matching a keyword expression
+dbx test mongo-python-driver -k "test_connection"
+
+# Combine flags
+dbx test -i mongo-python-driver -k "test_auth"
 ```
 
 ## Development

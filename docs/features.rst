@@ -100,15 +100,22 @@ Run pytest in any cloned repository:
    # Install test extras before running tests
    dbx test --install mongo-python-driver
 
+   # Run tests matching a keyword expression
+   dbx test mongo-python-driver --keyword "test_connection"
+
    # Short forms
    dbx test -l  # list
    dbx test -i mongo-python-driver  # install and test
+   dbx test mongo-python-driver -k "test_auth"  # filter tests
+
+   # Combine flags
+   dbx test -i mongo-python-driver -k "test_connection"
 
 The ``test`` command will:
 
 1. Find the repository by name across all cloned groups
 2. Optionally install test extras with ``-i`` / ``--install`` flag
-3. Run ``pytest`` in the repository directory
+3. Run ``pytest`` in the repository directory (with optional ``-k`` filter)
 4. Display the test results
 
 **Example:**
@@ -151,7 +158,18 @@ The ``-i`` / ``--install`` flag will run ``uv pip install -e ".[test]"`` in the 
 
 If the installation fails, a warning is displayed but the test run continues.
 
+**Filter Tests by Keyword:**
+
+The ``-k`` / ``--keyword`` flag passes a keyword expression to pytest's ``-k`` option to filter which tests to run. This is useful for:
+
+- Running only tests matching a specific pattern (e.g., ``-k "test_connection"``)
+- Running tests from a specific class (e.g., ``-k "TestAuth"``)
+- Using boolean expressions (e.g., ``-k "test_auth and not test_slow"``)
+
+The keyword expression is passed directly to pytest, so all pytest ``-k`` syntax is supported.
+
 **Requirements:**
 
 - The repository must be cloned first using ``dbx repo clone``
 - For the ``-i`` flag: The repository must have a ``pyproject.toml`` or ``setup.py`` with test extras defined
+- For the ``-k`` flag: The repository must have pytest installed
