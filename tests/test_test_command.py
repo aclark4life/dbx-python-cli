@@ -149,7 +149,7 @@ def test_test_runs_pytest_success(mock_config, temp_repos_dir):
             # Verify pytest was called with correct arguments
             mock_run.assert_called_once()
             call_args = mock_run.call_args
-            assert call_args[0][0] == ["pytest"]
+            assert call_args[0][0] == ["python", "-m", "pytest"]
             assert "mongo-python-driver" in str(call_args[1]["cwd"])
 
 

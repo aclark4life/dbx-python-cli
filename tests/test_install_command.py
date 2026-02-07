@@ -109,7 +109,15 @@ def test_install_basic_success(tmp_path):
                 # Verify uv pip install was called
                 mock_run.assert_called_once()
                 call_args = mock_run.call_args
-                assert call_args[0][0] == ["uv", "pip", "install", "-e", "."]
+                assert call_args[0][0] == [
+                    "uv",
+                    "pip",
+                    "install",
+                    "--python",
+                    "python",
+                    "-e",
+                    ".",
+                ]
 
 
 def test_install_with_extras(tmp_path):
@@ -136,7 +144,15 @@ def test_install_with_extras(tmp_path):
 
                 # Verify uv pip install was called with extras
                 call_args = mock_run.call_args
-                assert call_args[0][0] == ["uv", "pip", "install", "-e", ".[test]"]
+                assert call_args[0][0] == [
+                    "uv",
+                    "pip",
+                    "install",
+                    "--python",
+                    "python",
+                    "-e",
+                    ".[test]",
+                ]
 
 
 def test_install_with_multiple_extras(tmp_path):
@@ -192,6 +208,8 @@ def test_install_with_groups(tmp_path):
                     "uv",
                     "pip",
                     "install",
+                    "--python",
+                    "python",
                     "-e",
                     ".",
                 ]
@@ -200,6 +218,8 @@ def test_install_with_groups(tmp_path):
                     "uv",
                     "pip",
                     "install",
+                    "--python",
+                    "python",
                     "--group",
                     "dev",
                 ]
@@ -241,6 +261,8 @@ def test_install_with_extras_and_groups(tmp_path):
                     "uv",
                     "pip",
                     "install",
+                    "--python",
+                    "python",
                     "-e",
                     ".[test,aws]",
                 ]
@@ -249,6 +271,8 @@ def test_install_with_extras_and_groups(tmp_path):
                     "uv",
                     "pip",
                     "install",
+                    "--python",
+                    "python",
                     "--group",
                     "dev",
                 ]
@@ -257,6 +281,8 @@ def test_install_with_extras_and_groups(tmp_path):
                     "uv",
                     "pip",
                     "install",
+                    "--python",
+                    "python",
                     "--group",
                     "test",
                 ]
