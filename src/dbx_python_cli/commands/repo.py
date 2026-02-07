@@ -1,16 +1,10 @@
 """Repository management commands."""
 
 import subprocess
-import sys
+import tomllib
 from pathlib import Path
 
 import typer
-
-# Use tomllib from stdlib (Python 3.11+) or tomli backport (Python 3.10)
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
 
 app = typer.Typer(
     help="Repository management commands",
