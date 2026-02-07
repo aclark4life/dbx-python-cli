@@ -163,13 +163,14 @@ Technology Stack
 - **Documentation:** `Sphinx <https://www.sphinx-doc.org/>`_ with `Furo <https://github.com/pradyunsg/furo>`_ theme
 - **Testing:** `pytest <https://pytest.org/>`_ with `pytest-cov <https://pytest-cov.readthedocs.io/>`_
 
-API Reference
+Documentation
 -------------
 
 .. toctree::
    :maxdepth: 2
 
    features
+   design
    api/modules
 
 Indices and tables
