@@ -44,328 +44,71 @@ This approach aligns with our philosophy of keeping the tool simple, transparent
 Virtual Environment Strategy
 -----------------------------
 
-**Decision: One virtual environment per repository, with dbx-python-cli installed globally via pipx**
+**Status: Design in progress - implementation details TBD**
 
-We recommend a clear separation between the dbx-python-cli tool itself and the repositories it manages.
+Current State
+~~~~~~~~~~~~~
 
-Problem Statement
-~~~~~~~~~~~~~~~~~
+**dbx-python-cli Installation**
 
-Users need a clear strategy for managing virtual environments when:
-
-1. Installing and using ``dbx-python-cli`` itself
-2. Developing on cloned repositories (pymongo, django, etc.)
-
-Recommended Strategy
-~~~~~~~~~~~~~~~~~~~~
-
-**For dbx-python-cli Installation**
-
-Install with pipx (recommended):
+``dbx-python-cli`` is expected to be installed via pipx:
 
 .. code-block:: bash
 
    pipx install dbx-python-cli
 
-**Why pipx?**
+This keeps the ``dbx`` command available globally, isolated from project dependencies.
 
-- Keeps ``dbx`` command available globally
-- Isolated from project dependencies
-- No venv activation needed
-- Standard practice for CLI tools
+**Repository Management**
 
-**How pipx + repo venvs work together:**
-
-When you run ``dbx test mongo-python-driver``:
-
-1. Your shell finds ``dbx`` in pipx's isolated environment
-2. ``dbx`` (Python code) runs in pipx's environment
-3. ``dbx`` detects the repo's ``.venv`` directory
-4. ``dbx`` invokes ``.venv/bin/python -m pytest`` as a subprocess
-5. Tests run in the repo's venv, not pipx's environment
-
-**Key insight:** You don't activate the venv - you directly invoke its Python executable!
-
-**Alternative: System-wide pip install**
+Users can configure a base directory and clone repository groups:
 
 .. code-block:: bash
 
-   pip install --user dbx-python-cli
+   # Configure base directory (e.g., ~/Developer/mongodb)
+   # Edit ~/.config/dbx-python-cli/config.toml
 
-**For Target Repositories**
+   # Clone repository groups
+   dbx repo clone -g pymongo
 
-**Strategy: One venv per repository**
-
-Each cloned repository should have its own virtual environment:
+This creates a structure like:
 
 .. code-block:: text
 
    ~/Developer/mongodb/
    ├── pymongo/
    │   ├── mongo-python-driver/
-   │   │   ├── .venv/              # Dedicated venv
-   │   │   ├── pyproject.toml
-   │   │   └── ...
    │   ├── specifications/
-   │   │   ├── .venv/              # Separate venv
-   │   │   └── ...
    │   └── drivers-evergreen-tools/
-   │       ├── .venv/              # Separate venv
-   │       └── ...
 
-**Why one venv per repo?**
+Future Work
+~~~~~~~~~~~
 
-- ✅ Dependency isolation (different versions, different Python versions)
-- ✅ Matches standard development workflow
-- ✅ Prevents version conflicts
-- ✅ Each repo can be tested independently
-- ✅ Easier to clean up (just delete .venv)
+**Virtual Environment Management**
 
-**Why NOT one venv per group?**
+``dbx`` will manage virtual environments for cloned repositories in ways TBD.
 
-- ❌ Dependency conflicts between repos in same group
-- ❌ Different repos may need different Python versions
-- ❌ Harder to isolate issues
-- ❌ Not standard practice
+Considerations include:
 
-Proposed Features
-~~~~~~~~~~~~~~~~~
+- How to create/detect/use venvs for repositories
+- Whether to auto-create venvs or require explicit commands
+- How commands (``dbx test``, ``dbx install``, etc.) interact with venvs
+- Whether to support multiple venv strategies (per-repo, per-group, workspace-level)
 
-**1. Venv Creation Command**
+**Technical Note: Running Commands in Venvs**
 
-Add ``dbx venv`` command:
-
-.. code-block:: bash
-
-   # Create venv for a repository
-   dbx venv create mongo-python-driver
-
-   # Create with specific Python version
-   dbx venv create mongo-python-driver --python 3.11
-
-   # List venvs
-   dbx venv list
-
-   # Remove venv
-   dbx venv remove mongo-python-driver
-
-**2. Auto-create During Install**
-
-Add ``--create-venv`` flag to ``dbx install``:
-
-.. code-block:: bash
-
-   # Create venv and install dependencies
-   dbx install mongo-python-driver --create-venv -e test
-
-   # Or make it the default behavior with opt-out
-   dbx install mongo-python-driver -e test  # Creates venv if missing
-   dbx install mongo-python-driver -e test --no-venv  # Skip venv creation
-
-**3. Venv Activation Helper**
-
-Since we can't activate a venv from a subprocess, provide helper:
-
-.. code-block:: bash
-
-   # Print activation command
-   dbx venv activate mongo-python-driver
-   # Output: source ~/Developer/mongodb/pymongo/mongo-python-driver/.venv/bin/activate
-
-   # Use with eval for convenience
-   eval "$(dbx venv activate mongo-python-driver)"
-
-**4. Venv-aware Commands**
-
-Commands should detect and use existing venvs:
-
-.. code-block:: bash
-
-   # If .venv exists, use it automatically
-   dbx test mongo-python-driver
-   dbx just mongo-python-driver lint
-   dbx install mongo-python-driver -e test
-
-Implementation Details
-~~~~~~~~~~~~~~~~~~~~~~
-
-**Venv Detection**
+When ``dbx`` (running in pipx's isolated environment) needs to execute commands in a repository's venv, it cannot use ``source`` or activation scripts in subprocesses. Instead, it must directly invoke the venv's Python executable:
 
 .. code-block:: python
 
-   def get_venv_path(repo_path):
-       """Get the venv path for a repository."""
-       venv_path = repo_path / ".venv"
-       if venv_path.exists():
-           return venv_path
-       return None
-
-   def get_venv_python(repo_path):
-       """Get the Python executable from the venv."""
-       venv_path = get_venv_path(repo_path)
-       if venv_path:
-           return venv_path / "bin" / "python"
-       return "python"  # Fallback to system Python
-
-   def get_venv_executable(repo_path, executable):
-       """Get an executable from the venv (e.g., pytest, ruff)."""
-       venv_path = get_venv_path(repo_path)
-       if venv_path:
-           exe_path = venv_path / "bin" / executable
-           if exe_path.exists():
-               return str(exe_path)
-       return executable  # Fallback to system executable
-
-**Running Commands in Venv Context**
-
-**IMPORTANT:** You cannot ``source`` a venv activation script in a subprocess!
-
-.. code-block:: python
-
-   # ❌ WRONG - This doesn't work!
-   subprocess.run(["source", ".venv/bin/activate", "&&", "pytest"])
-
-   # ❌ WRONG - Shell activation doesn't persist
+   # ❌ WRONG - Activation doesn't work in subprocess
    subprocess.run("source .venv/bin/activate && pytest", shell=True)
 
-   # ✅ CORRECT - Use the venv's Python directly
-   venv_python = get_venv_python(repo_path)
-   subprocess.run([str(venv_python), "-m", "pytest"], cwd=repo_path)
+   # ✅ CORRECT - Directly invoke venv's Python
+   subprocess.run([".venv/bin/python", "-m", "pytest"], cwd=repo_path)
 
-   # ✅ ALSO CORRECT - Use the venv's executable directly
-   pytest_exe = get_venv_executable(repo_path, "pytest")
-   subprocess.run([pytest_exe], cwd=repo_path)
+This is because:
 
-**Why this works:**
-
-1. **No activation needed** - The venv's Python knows where its packages are
-2. **Explicit path** - We directly invoke ``/path/to/repo/.venv/bin/python``
-3. **Subprocess-safe** - Works from any parent environment (pipx, system, another venv)
-4. **Portable** - Works on Linux, macOS, Windows (with path adjustments)
-
-**Example: Running pytest in a venv**
-
-.. code-block:: python
-
-   def run_tests(repo_path, keyword=None):
-       """Run pytest in the repository's venv."""
-       venv_python = get_venv_python(repo_path)
-
-       # Use python -m pytest to ensure we use the venv's pytest
-       pytest_cmd = [str(venv_python), "-m", "pytest"]
-
-       if keyword:
-           pytest_cmd.extend(["-k", keyword])
-
-       result = subprocess.run(
-           pytest_cmd,
-           cwd=str(repo_path),
-           check=False,
-       )
-
-       return result.returncode
-
-**Example: Running uv pip install in a venv**
-
-.. code-block:: python
-
-   def install_dependencies(repo_path, extras=None):
-       """Install dependencies using uv in the repository's venv."""
-       venv_python = get_venv_python(repo_path)
-
-       # Tell uv to use the venv's Python
-       install_cmd = ["uv", "pip", "install", "--python", str(venv_python), "-e", "."]
-
-       if extras:
-           install_cmd[-1] = f".[{extras}]"
-
-       result = subprocess.run(
-           install_cmd,
-           cwd=str(repo_path),
-           check=False,
-       )
-
-       return result.returncode
-
-**Venv Creation with uv**
-
-.. code-block:: python
-
-   def create_venv(repo_path, python_version=None):
-       """Create a virtual environment using uv."""
-       cmd = ["uv", "venv"]
-       if python_version:
-           cmd.extend(["--python", python_version])
-
-       subprocess.run(cmd, cwd=repo_path, check=True)
-
-Testing Strategy
-~~~~~~~~~~~~~~~~
-
-**Unit Tests**
-
-- Test venv detection logic
-- Test venv creation with different Python versions
-- Test venv-aware command execution
-
-**Integration Tests**
-
-- Test full workflow: clone → create venv → install → test
-- Test with and without venvs
-- Test venv reuse (don't recreate if exists)
-
-**Manual Testing Scenarios**
-
-1. Fresh install: ``pipx install dbx-python-cli``
-2. Clone repos: ``dbx repo clone -g pymongo``
-3. Create venv: ``dbx venv create mongo-python-driver``
-4. Install deps: ``dbx install mongo-python-driver -e test``
-5. Run tests: ``dbx test mongo-python-driver``
-
-Documentation Updates
-~~~~~~~~~~~~~~~~~~~~~
-
-- Add "Virtual Environment Guide" to docs
-- Update installation docs to recommend pipx
-- Add venv examples to all command docs
-- Create troubleshooting guide for venv issues
-
-Migration Path
-~~~~~~~~~~~~~~
-
-For existing users:
-
-1. Document the recommended approach
-2. Make venv creation opt-in initially
-3. Add warnings if no venv detected
-4. Consider making it default in v1.0
-
-Open Questions
-~~~~~~~~~~~~~~
-
-1. Should we default to creating venvs or require explicit flag?
-2. Should we support other venv tools (virtualenv, venv)?
-3. Should we integrate with direnv for auto-activation?
-4. Should we support workspace-level venvs (one venv for all repos)?
-
-**Rationale:**
-
-This strategy provides clear separation of concerns:
-
-- **dbx-python-cli** is a tool, installed globally and always available
-- **Target repositories** are development projects, each with isolated dependencies
-- **uv** provides fast, modern venv and package management
-- **Standard practices** align with how Python developers typically work
-
-**Trade-offs:**
-
-- Multiple venvs use more disk space (but disk is cheap)
-- Users need to activate the correct venv for each repo (but this is standard practice)
-- More complex than a single shared venv (but much more robust)
-
-**Implementation Priority:**
-
-1. **Phase 1** (Now): Document current best practices
-2. **Phase 2** (Next): Add ``dbx venv create/list/activate`` commands
-3. **Phase 3** (Later): Make commands venv-aware automatically
-4. **Phase 4** (Future): Auto-create venvs during install (opt-in → default)
+1. Activation scripts modify the current shell's environment
+2. Subprocess environments don't persist across commands
+3. The venv's Python executable knows where its packages are without activation
