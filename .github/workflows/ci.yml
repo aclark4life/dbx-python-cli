@@ -87,5 +87,4 @@ jobs:
 
     - name: Build documentation
       run: |
-        cd docs
-        make html
+        cd docs && python -m sphinx -b html . _build/html
