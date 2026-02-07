@@ -26,6 +26,13 @@ See the [full documentation](https://dbx-python-cli.readthedocs.io/) for detaile
 
 ## Installation
 
+### Via uv tool (Recommended)
+
+```bash
+# Install globally using uv tool
+uv tool install dbx-python-cli
+```
+
 ### Via pip (Coming Soon)
 
 ```bash
@@ -54,7 +61,10 @@ dbx install mongo-python-driver -e test
 dbx install mongo-python-driver -e test,aws
 
 # Install with dependency groups
-dbx install mongo-python-driver -e test -g dev,test
+dbx install mongo-python-driver -e test --groups dev,test
+
+# Use a different group's venv
+dbx install mongo-python-driver -g pymongo
 
 # Run tests in a repository
 dbx test mongo-python-driver
