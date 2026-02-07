@@ -46,9 +46,11 @@ def mock_config(tmp_path, temp_repos_dir):
     config_dir = tmp_path / ".config" / "dbx-python-cli"
     config_dir.mkdir(parents=True)
     config_path = config_dir / "config.toml"
+    # Convert path to use forward slashes for TOML compatibility on Windows
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
     config_content = f"""
 [repo]
-base_dir = "{temp_repos_dir}"
+base_dir = "{repos_dir_str}"
 
 [repo.groups.pymongo]
 repos = [

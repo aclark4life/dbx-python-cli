@@ -30,9 +30,11 @@ def temp_repos_dir(tmp_path):
 def mock_config(temp_config_dir, temp_repos_dir):
     """Create a mock config file."""
     config_path = temp_config_dir / "config.toml"
+    # Convert path to use forward slashes for TOML compatibility on Windows
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
     config_content = f"""
 [repo]
-base_dir = "{temp_repos_dir}"
+base_dir = "{repos_dir_str}"
 
 [repo.groups.test]
 repos = [
