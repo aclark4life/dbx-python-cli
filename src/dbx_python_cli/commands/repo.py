@@ -109,16 +109,17 @@ def clone(
             typer.echo(f"Error: No repositories defined for group '{group}'.", err=True)
             raise typer.Exit(1)
 
-        # Create base directory if it doesn't exist
-        base_dir.mkdir(parents=True, exist_ok=True)
+        # Create group directory under base directory
+        group_dir = base_dir / group
+        group_dir.mkdir(parents=True, exist_ok=True)
         typer.echo(
-            f"Cloning {len(repos)} repository(ies) from group '{group}' to {base_dir}"
+            f"Cloning {len(repos)} repository(ies) from group '{group}' to {group_dir}"
         )
 
         for repo_url in repos:
             # Extract repo name from URL
             repo_name = repo_url.rstrip("/").split("/")[-1].replace(".git", "")
-            repo_path = base_dir / repo_name
+            repo_path = group_dir / repo_name
 
             if repo_path.exists():
                 typer.echo(f"  ⏭️  {repo_name} (already exists)")
@@ -137,7 +138,7 @@ def clone(
                         f"  ❌ Failed to clone {repo_name}: {e.stderr}", err=True
                     )
 
-        typer.echo(f"\n✨ Done! Repositories cloned to {base_dir}")
+        typer.echo(f"\n✨ Done! Repositories cloned to {group_dir}")
 
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
