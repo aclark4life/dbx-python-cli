@@ -54,17 +54,25 @@ def get_repo_groups(config):
 
 
 @app.command()
-def init():
+def init(
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Skip confirmation prompt and overwrite existing config",
+    ),
+):
     """Initialize user configuration file."""
     user_config_path = get_config_path()
     default_config_path = get_default_config_path()
 
     if user_config_path.exists():
         typer.echo(f"Configuration file already exists at {user_config_path}")
-        overwrite = typer.confirm("Do you want to overwrite it?")
-        if not overwrite:
-            typer.echo("Aborted.")
-            raise typer.Exit(0)
+        if not yes:
+            overwrite = typer.confirm("Do you want to overwrite it?")
+            if not overwrite:
+                typer.echo("Aborted.")
+                raise typer.Exit(0)
 
     # Create config directory if it doesn't exist
     user_config_path.parent.mkdir(parents=True, exist_ok=True)

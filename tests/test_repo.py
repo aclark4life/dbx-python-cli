@@ -79,6 +79,21 @@ def test_repo_init_existing_config_no_overwrite(tmp_path):
         assert "Aborted" in result.stdout
 
 
+def test_repo_init_existing_config_with_yes_flag(tmp_path):
+    """Test that repo init --yes overwrites existing config without prompting."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        config_path = tmp_path / "config.toml"
+        config_path.write_text("existing content")
+        mock_get_path.return_value = config_path
+
+        # Use --yes flag to skip confirmation
+        result = runner.invoke(app, ["repo", "init", "--yes"])
+        assert result.exit_code == 0
+        assert "Configuration file created" in result.stdout
+        # Should not contain "Aborted" since we skipped the prompt
+        assert "Aborted" not in result.stdout
+
+
 def test_repo_clone_help():
     """Test that the repo clone help command works."""
     result = runner.invoke(app, ["repo", "clone", "--help"])
