@@ -34,6 +34,21 @@ html_theme_options = {
     "navigation_with_keys": True,
 }
 
+# Sidebar depth
+html_sidebars = {
+    "**": [
+        "sidebar/scroll-start.html",
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/navigation.html",
+        "sidebar/ethical-ads.html",
+        "sidebar/scroll-end.html",
+    ]
+}
+
+# Set the depth of the table of contents in the sidebar
+toctree_collapse = False
+
 # Intersphinx mapping
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
