@@ -3,7 +3,7 @@ Git Operations
 
 **Decision: Use subprocess with git CLI instead of GitPython**
 
-We chose to use Python's ``subprocess`` module to call the ``git`` command-line tool directly rather than using the GitPython library. This differs from `django-mongodb-cli <https://github.com/mongodb-labs/django-mongodb-cli>`_, which uses GitPython for its git operations. We evaluated both approaches and chose subprocess for the reasons outlined below.
+We chose to use Python's ``subprocess`` module to call the ``git`` command-line tool directly rather than using the GitPython library. This differs from `django-mongodb-cli <https://github.com/mongodb-labs/django-mongodb-cli>`_, which uses GitPython for its git operations. Based on experiences with django-mongodb-cli, we chose subprocess for the reasons outlined below.
 
 Rationale
 ---------
