@@ -1,7 +1,7 @@
 dbx-python-cli Documentation
 ============================
 
-A command line tool for DBX Python development tasks. AI first. De-siloing happens here.
+A command line tool for DBX Python development tasks. AI first. De-siloing happens here. Inspired by `django-mongodb-cli <https://github.com/mongodb-labs/django-mongodb-cli>`_.
 
 About
 -----
@@ -22,8 +22,6 @@ DBX Python is the MongoDB Database Experience Team for the MongoDB Python driver
        });
    });
    </script>
-
-**Inspired by:** `django-mongodb-cli <https://github.com/mongodb-labs/django-mongodb-cli>`_
 
 Feature Highlights
 ------------------
