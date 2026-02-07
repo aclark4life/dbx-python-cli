@@ -97,14 +97,19 @@ Run pytest in any cloned repository:
    # Run tests in a specific repository
    dbx test mongo-python-driver
 
-   # Short form
-   dbx test -l
+   # Install test extras before running tests
+   dbx test --install mongo-python-driver
+
+   # Short forms
+   dbx test -l  # list
+   dbx test -i mongo-python-driver  # install and test
 
 The ``test`` command will:
 
 1. Find the repository by name across all cloned groups
-2. Run ``pytest`` in the repository directory
-3. Display the test results
+2. Optionally install test extras with ``-i`` / ``--install`` flag
+3. Run ``pytest`` in the repository directory
+4. Display the test results
 
 **Example:**
 
@@ -125,7 +130,28 @@ The ``test`` command will:
    ...
    ✅ Tests passed in mongo-python-driver
 
+   $ dbx test -i mongo-python-driver
+   Installing test extras in ~/Developer/dbx-repos/pymongo/mongo-python-driver...
+
+   ✅ Test extras installed successfully
+
+   Running pytest in ~/Developer/dbx-repos/pymongo/mongo-python-driver...
+
+   ============================= test session starts ==============================
+   ...
+   ✅ Tests passed in mongo-python-driver
+
+**Install Test Extras:**
+
+The ``-i`` / ``--install`` flag will run ``uv pip install -e ".[test]"`` in the repository directory before running tests. This is useful when:
+
+- You need to install test dependencies for the first time
+- Test dependencies have been updated
+- You want to ensure all test extras are up to date
+
+If the installation fails, a warning is displayed but the test run continues.
+
 **Requirements:**
 
-- The repository must have pytest installed in its environment
 - The repository must be cloned first using ``dbx repo clone``
+- For the ``-i`` flag: The repository must have a ``pyproject.toml`` or ``setup.py`` with test extras defined

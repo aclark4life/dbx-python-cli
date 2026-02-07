@@ -43,6 +43,15 @@ dbx repo init
 
 # Clone repositories by group
 dbx repo clone -g pymongo
+
+# List available repositories
+dbx test -l
+
+# Run tests in a repository
+dbx test mongo-python-driver
+
+# Install test extras and run tests
+dbx test -i mongo-python-driver
 ```
 
 ## Development
