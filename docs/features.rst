@@ -44,12 +44,12 @@ Clone repositories from predefined groups:
 
 **Configuration:**
 
-Repository groups are defined in ``~/.config/dbx-python-cli/config.toml``. The default base directory for cloning is ``~/Developer``, which can be customized:
+Repository groups are defined in ``~/.config/dbx-python-cli/config.toml``. The default base directory for cloning is ``~/Developer/dbx-repos``, which can be customized:
 
 .. code-block:: toml
 
    [repo]
-   base_dir = "~/Developer"
+   base_dir = "~/Developer/dbx-repos"
 
    [repo.groups.pymongo]
    repos = [
