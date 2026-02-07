@@ -1,27 +1,10 @@
-API Reference
-=============
-
-dbx_python_cli package
-----------------------
-
-.. automodule:: dbx_python_cli
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-dbx_python_cli.cli module
--------------------------
-
-.. automodule:: dbx_python_cli.cli
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Commands
---------
+========
+
+The command modules implement the CLI commands for repository management, installation, testing, and more.
 
 dbx_python_cli.commands.env module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------
 
 .. automodule:: dbx_python_cli.commands.env
    :members:
@@ -29,7 +12,7 @@ dbx_python_cli.commands.env module
    :show-inheritance:
 
 dbx_python_cli.commands.install module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------
 
 .. automodule:: dbx_python_cli.commands.install
    :members:
@@ -37,7 +20,7 @@ dbx_python_cli.commands.install module
    :show-inheritance:
 
 dbx_python_cli.commands.just module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 .. automodule:: dbx_python_cli.commands.just
    :members:
@@ -45,7 +28,7 @@ dbx_python_cli.commands.just module
    :show-inheritance:
 
 dbx_python_cli.commands.repo module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 .. automodule:: dbx_python_cli.commands.repo
    :members:
@@ -53,7 +36,7 @@ dbx_python_cli.commands.repo module
    :show-inheritance:
 
 dbx_python_cli.commands.test module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 .. automodule:: dbx_python_cli.commands.test
    :members:
@@ -61,7 +44,7 @@ dbx_python_cli.commands.test module
    :show-inheritance:
 
 dbx_python_cli.commands.venv_utils module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------
 
 .. automodule:: dbx_python_cli.commands.venv_utils
    :members:

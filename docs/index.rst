@@ -171,7 +171,7 @@ Documentation
 
    features/index
    design/index
-   api/modules
+   api/index
 
 Indices and tables
 ==================
