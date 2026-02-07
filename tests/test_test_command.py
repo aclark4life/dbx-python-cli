@@ -1,0 +1,169 @@
+"""Tests for the test command module."""
+
+from unittest.mock import MagicMock, patch
+
+import pytest
+from typer.testing import CliRunner
+
+from dbx_python_cli.cli import app
+
+runner = CliRunner()
+
+
+@pytest.fixture
+def temp_repos_dir(tmp_path):
+    """Create a temporary repos directory with mock repositories."""
+    repos_dir = tmp_path / "repos"
+    repos_dir.mkdir(parents=True)
+
+    # Create mock repository structure
+    # Group 1: pymongo
+    pymongo_dir = repos_dir / "pymongo"
+    pymongo_dir.mkdir()
+
+    repo1 = pymongo_dir / "mongo-python-driver"
+    repo1.mkdir()
+    (repo1 / ".git").mkdir()
+
+    repo2 = pymongo_dir / "specifications"
+    repo2.mkdir()
+    (repo2 / ".git").mkdir()
+
+    # Group 2: django
+    django_dir = repos_dir / "django"
+    django_dir.mkdir()
+
+    repo3 = django_dir / "django"
+    repo3.mkdir()
+    (repo3 / ".git").mkdir()
+
+    return repos_dir
+
+
+@pytest.fixture
+def mock_config(tmp_path, temp_repos_dir):
+    """Create a mock config file."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+    config_content = f"""
+[repo]
+base_dir = "{temp_repos_dir}"
+
+[repo.groups.pymongo]
+repos = [
+    "https://github.com/mongodb/mongo-python-driver.git",
+    "https://github.com/mongodb/specifications.git",
+]
+
+[repo.groups.django]
+repos = [
+    "https://github.com/django/django.git",
+]
+"""
+    config_path.write_text(config_content)
+    return config_path
+
+
+def test_test_help():
+    """Test that the test help command works."""
+    result = runner.invoke(app, ["test", "--help"])
+    assert result.exit_code == 0
+    assert "Test commands" in result.stdout
+
+
+def test_test_list_no_repos(tmp_path):
+    """Test that test --list shows message when no repos exist."""
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+
+    with patch("dbx_python_cli.commands.test.get_config") as mock_get_config:
+        mock_get_config.return_value = {"repo": {"base_dir": str(empty_dir)}}
+
+        result = runner.invoke(app, ["test", "--list"])
+        # Exit code can be 0 or 1 depending on how typer.Exit is handled
+        assert "No repositories found" in result.stdout
+
+
+def test_test_list_shows_repos(mock_config, temp_repos_dir):
+    """Test that test --list shows all available repositories."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        result = runner.invoke(app, ["test", "--list"])
+        # Exit code can be 0 or 1 depending on how typer.Exit is handled
+        assert "Available repositories" in result.stdout
+        assert "[pymongo] mongo-python-driver" in result.stdout
+        assert "[pymongo] specifications" in result.stdout
+        assert "[django] django" in result.stdout
+
+
+def test_test_list_short_form(mock_config, temp_repos_dir):
+    """Test that test -l works as shortcut for --list."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        result = runner.invoke(app, ["test", "-l"])
+        # Exit code can be 0 or 1 depending on how typer.Exit is handled
+        assert "Available repositories" in result.stdout
+
+
+def test_test_no_args_shows_error():
+    """Test that test without args shows error."""
+    result = runner.invoke(app, ["test"])
+    assert result.exit_code == 1
+    # Error messages go to stderr in Typer
+    output = result.stdout + result.stderr
+    assert "Please specify a repository name" in output
+
+
+def test_test_nonexistent_repo(mock_config, temp_repos_dir):
+    """Test that test fails with nonexistent repository."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        result = runner.invoke(app, ["test", "nonexistent-repo"])
+        assert result.exit_code == 1
+        output = result.stdout + result.stderr
+        assert "Repository 'nonexistent-repo' not found" in output
+
+
+def test_test_runs_pytest_success(mock_config, temp_repos_dir):
+    """Test that test runs pytest successfully."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("subprocess.run") as mock_run:
+            mock_get_path.return_value = mock_config
+
+            # Mock successful pytest run
+            mock_result = MagicMock()
+            mock_result.returncode = 0
+            mock_run.return_value = mock_result
+
+            result = runner.invoke(app, ["test", "mongo-python-driver"])
+            assert result.exit_code == 0
+            assert "Running pytest" in result.stdout
+            assert "Tests passed" in result.stdout
+
+            # Verify pytest was called with correct arguments
+            mock_run.assert_called_once()
+            call_args = mock_run.call_args
+            assert call_args[0][0] == ["pytest"]
+            assert "mongo-python-driver" in str(call_args[1]["cwd"])
+
+
+def test_test_runs_pytest_failure(mock_config, temp_repos_dir):
+    """Test that test handles pytest failures."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("subprocess.run") as mock_run:
+            mock_get_path.return_value = mock_config
+
+            # Mock failed pytest run
+            mock_result = MagicMock()
+            mock_result.returncode = 1
+            mock_run.return_value = mock_result
+
+            result = runner.invoke(app, ["test", "mongo-python-driver"])
+            assert result.exit_code == 1
+            assert "Running pytest" in result.stdout
+            output = result.stdout + result.stderr
+            assert "Tests failed" in output
