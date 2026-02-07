@@ -133,8 +133,6 @@ def test_callback(
 
         if venv_type == "group":
             typer.echo(f"Using group venv: {group_path}/.venv\n")
-        elif venv_type == "repo":
-            typer.echo(f"Using repo venv: {repo_path}/.venv\n")
         else:
             typer.echo("⚠️  No venv found, using system Python\n")
 

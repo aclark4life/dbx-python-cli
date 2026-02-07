@@ -44,18 +44,12 @@ This approach aligns with our philosophy of keeping the tool simple, transparent
 Virtual Environment Strategy
 -----------------------------
 
-**Decision: One virtual environment per group, with optional per-repo venvs**
+**Decision: One virtual environment per group**
 
 dbx-python-cli Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``dbx-python-cli`` is expected to be installed via uvx:
-
-.. code-block:: bash
-
-   uvx --from dbx-python-cli dbx
-
-Or install it persistently:
+``dbx-python-cli`` is expected to be installed via uv tool:
 
 .. code-block:: bash
 
@@ -94,7 +88,6 @@ This creates a structure like:
 
 - **Group-level venvs** - Repos in the same group (e.g., pymongo repos) typically share dependencies
 - **Simpler management** - One venv per group instead of many per-repo venvs
-- **Flexibility** - Repos can still have their own ``.venv`` if needed (detected and used automatically)
 - **Disk efficient** - Fewer duplicate dependencies
 
 Command Behavior
@@ -114,38 +107,33 @@ Create a virtual environment for a group:
 
 **dbx install**
 
-Install dependencies, using group venv or repo venv if available:
+Install dependencies, using group venv if available:
 
 .. code-block:: bash
 
    # Uses pymongo group venv if it exists
    dbx install mongo-python-driver -e test
 
-   # If repo has its own .venv, uses that instead
    # Falls back to system Python if no venv found
 
 **dbx test**
 
-Run tests, using group venv or repo venv if available:
+Run tests, using group venv if available:
 
 .. code-block:: bash
 
    # Uses pymongo group venv if it exists
    dbx test mongo-python-driver
 
-   # If repo has its own .venv, uses that instead
    # Falls back to system Python if no venv found
 
-Venv Detection Priority
-~~~~~~~~~~~~~~~~~~~~~~~~
+Venv Detection
+~~~~~~~~~~~~~~
 
 Commands detect and use venvs in this order:
 
-1. **Repo-level venv** - ``<repo_path>/.venv`` (highest priority)
-2. **Group-level venv** - ``<group_path>/.venv``
-3. **System Python** - Fallback if no venv found
-
-This allows flexibility: most repos use the group venv, but individual repos can opt for their own venv if needed.
+1. **Group-level venv** - ``<group_path>/.venv``
+2. **System Python** - Fallback if no venv found
 
 Technical Implementation
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -173,12 +161,7 @@ This is because:
 .. code-block:: python
 
    def get_venv_python(repo_path, group_path):
-       """Get Python executable, checking repo then group venv."""
-       # Check repo-level venv first
-       repo_venv = repo_path / ".venv" / "bin" / "python"
-       if repo_venv.exists():
-           return str(repo_venv)
-
+       """Get Python executable from group venv."""
        # Check group-level venv
        group_venv = group_path / ".venv" / "bin" / "python"
        if group_venv.exists():
