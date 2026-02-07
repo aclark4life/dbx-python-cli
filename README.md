@@ -13,6 +13,8 @@ DBX Python is the MongoDB Database Experience Team for the MongoDB Python driver
 
 > **Note:** This is not [Databricks for Python developers](https://docs.databricks.com/aws/en/languages/python).
 
+**Inspired by:** [django-mongodb-cli](https://github.com/mongodb-labs/django-mongodb-cli)
+
 ## Feature Highlights
 
 - 🤖 **AI-First Design** - Built with AI-assisted development workflows in mind

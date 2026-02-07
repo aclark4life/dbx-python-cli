@@ -23,6 +23,8 @@ DBX Python is the MongoDB Database Experience Team for the MongoDB Python driver
    });
    </script>
 
+**Inspired by:** `django-mongodb-cli <https://github.com/mongodb-labs/django-mongodb-cli>`_
+
 Feature Highlights
 ------------------
 
