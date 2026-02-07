@@ -242,9 +242,9 @@ def install_callback(
 
         for repo in group_repos:
             repo_path = Path(repo["path"])
-            typer.echo(f"{'='*60}")
+            typer.echo(f"{'=' * 60}")
             typer.echo(f"Installing: {repo['name']}")
-            typer.echo(f"{'='*60}\n")
+            typer.echo(f"{'=' * 60}\n")
 
             # Detect venv
             python_path, venv_type = get_venv_info(repo_path, group_path)
@@ -304,9 +304,9 @@ def install_callback(
                     failed_items.append(repo["name"])
 
         # Summary
-        typer.echo(f"\n{'='*60}")
+        typer.echo(f"\n{'=' * 60}")
         typer.echo("Installation Summary")
-        typer.echo(f"{'='*60}")
+        typer.echo(f"{'=' * 60}")
         typer.echo(f"Total packages: {total_items}")
         typer.echo(f"Successful: {total_items - len(failed_items)}")
         if failed_items:
