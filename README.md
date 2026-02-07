@@ -181,7 +181,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Links
 
-- **Documentation:** [Read the Docs](https://dbx-python-cli.readthedocs.io/) (coming soon)
+- **Documentation:** [Read the Docs](https://dbx-python-cli.readthedocs.io/)
 - **Source Code:** [GitHub](https://github.com/aclark4life/dbx-python-cli)
 - **Issue Tracker:** [GitHub Issues](https://github.com/aclark4life/dbx-python-cli/issues)
 
