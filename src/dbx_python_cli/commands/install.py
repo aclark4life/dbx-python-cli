@@ -82,6 +82,16 @@ def install_package(
         work_dir = repo_path
         display_path = str(repo_path)
 
+    # Check if the directory has an installable package
+    has_setup_py = (work_dir / "setup.py").exists()
+    has_pyproject_toml = (work_dir / "pyproject.toml").exists()
+
+    if not has_setup_py and not has_pyproject_toml:
+        typer.echo(
+            f"⚠️  Skipping {display_path}: No setup.py or pyproject.toml found", err=True
+        )
+        return False
+
     # Build the install spec
     install_spec = "."
     if extras:

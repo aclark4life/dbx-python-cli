@@ -321,6 +321,9 @@ def test_install_group_all_repos(tmp_path):
     repo2_dir.mkdir(parents=True)
     (repo1_dir / ".git").mkdir()
     (repo2_dir / ".git").mkdir()
+    # Create setup.py files to make them installable
+    (repo1_dir / "setup.py").write_text("# setup.py")
+    (repo2_dir / "setup.py").write_text("# setup.py")
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
@@ -352,6 +355,9 @@ def test_install_group_all_repos_with_extras(tmp_path):
     repo2_dir.mkdir(parents=True)
     (repo1_dir / ".git").mkdir()
     (repo2_dir / ".git").mkdir()
+    # Create setup.py files to make them installable
+    (repo1_dir / "setup.py").write_text("# setup.py")
+    (repo2_dir / "setup.py").write_text("# setup.py")
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
