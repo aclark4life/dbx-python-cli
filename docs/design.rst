@@ -74,6 +74,18 @@ Install with pipx (recommended):
 - No venv activation needed
 - Standard practice for CLI tools
 
+**How pipx + repo venvs work together:**
+
+When you run ``dbx test mongo-python-driver``:
+
+1. Your shell finds ``dbx`` in pipx's isolated environment
+2. ``dbx`` (Python code) runs in pipx's environment
+3. ``dbx`` detects the repo's ``.venv`` directory
+4. ``dbx`` invokes ``.venv/bin/python -m pytest`` as a subprocess
+5. Tests run in the repo's venv, not pipx's environment
+
+**Key insight:** You don't activate the venv - you directly invoke its Python executable!
+
 **Alternative: System-wide pip install**
 
 .. code-block:: bash
@@ -194,6 +206,86 @@ Implementation Details
        if venv_path:
            return venv_path / "bin" / "python"
        return "python"  # Fallback to system Python
+
+   def get_venv_executable(repo_path, executable):
+       """Get an executable from the venv (e.g., pytest, ruff)."""
+       venv_path = get_venv_path(repo_path)
+       if venv_path:
+           exe_path = venv_path / "bin" / executable
+           if exe_path.exists():
+               return str(exe_path)
+       return executable  # Fallback to system executable
+
+**Running Commands in Venv Context**
+
+**IMPORTANT:** You cannot ``source`` a venv activation script in a subprocess!
+
+.. code-block:: python
+
+   # ❌ WRONG - This doesn't work!
+   subprocess.run(["source", ".venv/bin/activate", "&&", "pytest"])
+
+   # ❌ WRONG - Shell activation doesn't persist
+   subprocess.run("source .venv/bin/activate && pytest", shell=True)
+
+   # ✅ CORRECT - Use the venv's Python directly
+   venv_python = get_venv_python(repo_path)
+   subprocess.run([str(venv_python), "-m", "pytest"], cwd=repo_path)
+
+   # ✅ ALSO CORRECT - Use the venv's executable directly
+   pytest_exe = get_venv_executable(repo_path, "pytest")
+   subprocess.run([pytest_exe], cwd=repo_path)
+
+**Why this works:**
+
+1. **No activation needed** - The venv's Python knows where its packages are
+2. **Explicit path** - We directly invoke ``/path/to/repo/.venv/bin/python``
+3. **Subprocess-safe** - Works from any parent environment (pipx, system, another venv)
+4. **Portable** - Works on Linux, macOS, Windows (with path adjustments)
+
+**Example: Running pytest in a venv**
+
+.. code-block:: python
+
+   def run_tests(repo_path, keyword=None):
+       """Run pytest in the repository's venv."""
+       venv_python = get_venv_python(repo_path)
+
+       # Use python -m pytest to ensure we use the venv's pytest
+       pytest_cmd = [str(venv_python), "-m", "pytest"]
+
+       if keyword:
+           pytest_cmd.extend(["-k", keyword])
+
+       result = subprocess.run(
+           pytest_cmd,
+           cwd=str(repo_path),
+           check=False,
+       )
+
+       return result.returncode
+
+**Example: Running uv pip install in a venv**
+
+.. code-block:: python
+
+   def install_dependencies(repo_path, extras=None):
+       """Install dependencies using uv in the repository's venv."""
+       venv_python = get_venv_python(repo_path)
+
+       # Tell uv to use the venv's Python
+       install_cmd = ["uv", "pip", "install", "--python", str(venv_python), "-e", "."]
+
+       if extras:
+           install_cmd[-1] = f".[{extras}]"
+
+       result = subprocess.run(
+           install_cmd,
+           cwd=str(repo_path),
+           check=False,
+       )
+
+       return result.returncode
 
 **Venv Creation with uv**
 
