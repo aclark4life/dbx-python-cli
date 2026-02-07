@@ -7,6 +7,7 @@ from typing import Optional
 import typer
 
 from dbx_python_cli.commands.repo import get_base_dir, get_config
+from dbx_python_cli.commands.venv_utils import get_venv_info
 
 app = typer.Typer(
     help="Install commands",
@@ -121,6 +122,14 @@ def install_callback(
         raise typer.Exit(1)
 
     repo_path = Path(repo["path"])
+    group_path = repo_path.parent  # Group directory
+
+    # Detect venv
+    python_path, venv_type = get_venv_info(repo_path, group_path)
+
+    if verbose:
+        typer.echo(f"[verbose] Venv type: {venv_type}")
+        typer.echo(f"[verbose] Python: {python_path}\n")
 
     # Build the install command
     install_spec = "."
@@ -131,9 +140,17 @@ def install_callback(
         install_spec = f".[{','.join(extras_list)}]"
 
     # Install the package with extras
-    typer.echo(f"Installing dependencies in {repo_path}...\n")
+    typer.echo(f"Installing dependencies in {repo_path}...")
 
-    install_cmd = ["uv", "pip", "install", "-e", install_spec]
+    if venv_type == "group":
+        typer.echo(f"Using group venv: {group_path}/.venv\n")
+    elif venv_type == "repo":
+        typer.echo(f"Using repo venv: {repo_path}/.venv\n")
+    else:
+        typer.echo("⚠️  No venv found, using system Python\n")
+
+    # Use uv pip install with --python to target the venv
+    install_cmd = ["uv", "pip", "install", "--python", python_path, "-e", install_spec]
 
     if verbose:
         typer.echo(f"[verbose] Running command: {' '.join(install_cmd)}")
@@ -163,7 +180,15 @@ def install_callback(
         typer.echo(f"Installing dependency groups: {', '.join(groups_list)}...\n")
 
         for group in groups_list:
-            group_cmd = ["uv", "pip", "install", "--group", group]
+            group_cmd = [
+                "uv",
+                "pip",
+                "install",
+                "--python",
+                python_path,
+                "--group",
+                group,
+            ]
 
             if verbose:
                 typer.echo(f"[verbose] Running command: {' '.join(group_cmd)}")

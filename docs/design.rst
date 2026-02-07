@@ -44,12 +44,10 @@ This approach aligns with our philosophy of keeping the tool simple, transparent
 Virtual Environment Strategy
 -----------------------------
 
-**Status: Design in progress - implementation details TBD**
+**Decision: One virtual environment per group, with optional per-repo venvs**
 
-Current State
-~~~~~~~~~~~~~
-
-**dbx-python-cli Installation**
+dbx-python-cli Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``dbx-python-cli`` is expected to be installed via pipx:
 
@@ -59,17 +57,18 @@ Current State
 
 This keeps the ``dbx`` command available globally, isolated from project dependencies.
 
-**Repository Management**
+Repository and Virtual Environment Structure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Users can configure a base directory and clone repository groups:
+Users configure a base directory and clone repository groups. Virtual environments are created at the group level:
 
 .. code-block:: bash
 
-   # Configure base directory (e.g., ~/Developer/mongodb)
-   # Edit ~/.config/dbx-python-cli/config.toml
-
    # Clone repository groups
    dbx repo clone -g pymongo
+
+   # Create venv for the group
+   dbx env init -g pymongo
 
 This creates a structure like:
 
@@ -77,27 +76,77 @@ This creates a structure like:
 
    ~/Developer/mongodb/
    ├── pymongo/
+   │   ├── .venv/                      # Group-level venv
    │   ├── mongo-python-driver/
    │   ├── specifications/
    │   └── drivers-evergreen-tools/
+   ├── langchain/
+   │   ├── .venv/                      # Separate group venv
+   │   └── langchain/
 
-Future Work
-~~~~~~~~~~~
+**Rationale:**
 
-**Virtual Environment Management**
+- **Group-level venvs** - Repos in the same group (e.g., pymongo repos) typically share dependencies
+- **Simpler management** - One venv per group instead of many per-repo venvs
+- **Flexibility** - Repos can still have their own ``.venv`` if needed (detected and used automatically)
+- **Disk efficient** - Fewer duplicate dependencies
 
-``dbx`` will manage virtual environments for cloned repositories in ways TBD.
+Command Behavior
+~~~~~~~~~~~~~~~~
 
-Considerations include:
+**dbx env init**
 
-- How to create/detect/use venvs for repositories
-- Whether to auto-create venvs or require explicit commands
-- How commands (``dbx test``, ``dbx install``, etc.) interact with venvs
-- Whether to support multiple venv strategies (per-repo, per-group, workspace-level)
+Create a virtual environment for a group:
 
-**Technical Note: Running Commands in Venvs**
+.. code-block:: bash
 
-When ``dbx`` (running in pipx's isolated environment) needs to execute commands in a repository's venv, it cannot use ``source`` or activation scripts in subprocesses. Instead, it must directly invoke the venv's Python executable:
+   # Create venv for pymongo group
+   dbx env init -g pymongo
+
+   # Create with specific Python version
+   dbx env init -g pymongo --python 3.11
+
+**dbx install**
+
+Install dependencies, using group venv or repo venv if available:
+
+.. code-block:: bash
+
+   # Uses pymongo group venv if it exists
+   dbx install mongo-python-driver -e test
+
+   # If repo has its own .venv, uses that instead
+   # Falls back to system Python if no venv found
+
+**dbx test**
+
+Run tests, using group venv or repo venv if available:
+
+.. code-block:: bash
+
+   # Uses pymongo group venv if it exists
+   dbx test mongo-python-driver
+
+   # If repo has its own .venv, uses that instead
+   # Falls back to system Python if no venv found
+
+Venv Detection Priority
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Commands detect and use venvs in this order:
+
+1. **Repo-level venv** - ``<repo_path>/.venv`` (highest priority)
+2. **Group-level venv** - ``<group_path>/.venv``
+3. **System Python** - Fallback if no venv found
+
+This allows flexibility: most repos use the group venv, but individual repos can opt for their own venv if needed.
+
+Technical Implementation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Running Commands in Venvs**
+
+When ``dbx`` (running in pipx's isolated environment) needs to execute commands in a venv, it cannot use ``source`` or activation scripts in subprocesses. Instead, it must directly invoke the venv's Python executable:
 
 .. code-block:: python
 
@@ -112,3 +161,22 @@ This is because:
 1. Activation scripts modify the current shell's environment
 2. Subprocess environments don't persist across commands
 3. The venv's Python executable knows where its packages are without activation
+
+**Venv Detection Example**
+
+.. code-block:: python
+
+   def get_venv_python(repo_path, group_path):
+       """Get Python executable, checking repo then group venv."""
+       # Check repo-level venv first
+       repo_venv = repo_path / ".venv" / "bin" / "python"
+       if repo_venv.exists():
+           return str(repo_venv)
+
+       # Check group-level venv
+       group_venv = group_path / ".venv" / "bin" / "python"
+       if group_venv.exists():
+           return str(group_venv)
+
+       # Fallback to system Python
+       return "python"

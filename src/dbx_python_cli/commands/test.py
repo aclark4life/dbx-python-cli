@@ -5,6 +5,7 @@ import subprocess
 import typer
 
 from dbx_python_cli.commands.repo import get_base_dir, get_config
+from dbx_python_cli.commands.venv_utils import get_venv_info
 
 app = typer.Typer(
     help="Test commands",
@@ -111,16 +112,31 @@ def test_callback(
             raise typer.Exit(1)
 
         repo_path = repo["path"]
+        group_path = repo_path.parent  # Group directory
 
-        # Build pytest command
-        pytest_cmd = ["pytest"]
+        # Detect venv
+        python_path, venv_type = get_venv_info(repo_path, group_path)
+
+        if verbose:
+            typer.echo(f"[verbose] Venv type: {venv_type}")
+            typer.echo(f"[verbose] Python: {python_path}\n")
+
+        # Build pytest command using venv's Python
+        pytest_cmd = [python_path, "-m", "pytest"]
         if verbose:
             pytest_cmd.append("-v")  # Add pytest verbose flag
         if keyword:
             pytest_cmd.extend(["-k", keyword])
-            typer.echo(f"Running pytest -k '{keyword}' in {repo_path}...\n")
+            typer.echo(f"Running pytest -k '{keyword}' in {repo_path}...")
         else:
-            typer.echo(f"Running pytest in {repo_path}...\n")
+            typer.echo(f"Running pytest in {repo_path}...")
+
+        if venv_type == "group":
+            typer.echo(f"Using group venv: {group_path}/.venv\n")
+        elif venv_type == "repo":
+            typer.echo(f"Using repo venv: {repo_path}/.venv\n")
+        else:
+            typer.echo("⚠️  No venv found, using system Python\n")
 
         if verbose:
             typer.echo(f"[verbose] Running command: {' '.join(pytest_cmd)}")
