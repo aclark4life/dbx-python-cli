@@ -61,11 +61,11 @@ jobs:
 
     - name: Run ruff check
       run: |
-        ruff check .
+        python -m ruff check .
 
     - name: Run ruff format check
       run: |
-        ruff format --check .
+        python -m ruff format --check .
 
   docs:
     runs-on: ubuntu-latest
