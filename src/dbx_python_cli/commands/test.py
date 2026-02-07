@@ -52,6 +52,12 @@ def test_callback(
         "-l",
         help="List all available repositories",
     ),
+    install_extras: bool = typer.Option(
+        False,
+        "--install",
+        "-i",
+        help="Install test extras before running tests",
+    ),
 ):
     """Run pytest in a cloned repository."""
     # If a subcommand was invoked, don't run this logic
@@ -93,6 +99,27 @@ def test_callback(
             raise typer.Exit(1)
 
         repo_path = repo["path"]
+
+        # Install test extras if requested
+        if install_extras:
+            typer.echo(f"Installing test extras in {repo_path}...\n")
+            install_result = subprocess.run(
+                ["uv", "pip", "install", "-e", ".[test]"],
+                cwd=str(repo_path),
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            if install_result.returncode != 0:
+                typer.echo(
+                    f"⚠️  Warning: Failed to install test extras: {install_result.stderr}",
+                    err=True,
+                )
+                typer.echo("Continuing with test run...\n")
+            else:
+                typer.echo("✅ Test extras installed successfully\n")
+
         typer.echo(f"Running pytest in {repo_path}...\n")
 
         # Run pytest in the repository
