@@ -1,6 +1,7 @@
 """Test command for running pytest in repositories."""
 
 import subprocess
+from typing import Optional
 
 import typer
 
@@ -58,11 +59,11 @@ def test_callback(
         "-l",
         help="List all available repositories",
     ),
-    install_extras: bool = typer.Option(
-        False,
+    install_extras: Optional[str] = typer.Option(
+        None,
         "--install",
         "-i",
-        help="Install test extras before running tests",
+        help="Install extras before running tests (e.g., 'test', 'dev', 'docs')",
     ),
     keyword: str = typer.Option(
         None,
@@ -112,11 +113,11 @@ def test_callback(
 
         repo_path = repo["path"]
 
-        # Install test extras if requested
+        # Install extras if requested
         if install_extras:
-            typer.echo(f"Installing test extras in {repo_path}...\n")
+            typer.echo(f"Installing '{install_extras}' extras in {repo_path}...\n")
             install_result = subprocess.run(
-                ["uv", "pip", "install", "-e", ".[test]"],
+                ["uv", "pip", "install", "-e", f".[{install_extras}]"],
                 cwd=str(repo_path),
                 check=False,
                 capture_output=True,
@@ -125,12 +126,12 @@ def test_callback(
 
             if install_result.returncode != 0:
                 typer.echo(
-                    f"⚠️  Warning: Failed to install test extras: {install_result.stderr}",
+                    f"⚠️  Warning: Failed to install '{install_extras}' extras: {install_result.stderr}",
                     err=True,
                 )
                 typer.echo("Continuing with test run...\n")
             else:
-                typer.echo("✅ Test extras installed successfully\n")
+                typer.echo(f"✅ '{install_extras}' extras installed successfully\n")
 
         # Build pytest command
         pytest_cmd = ["pytest"]

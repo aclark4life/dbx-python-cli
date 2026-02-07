@@ -98,23 +98,27 @@ Run pytest in any cloned repository:
    dbx test mongo-python-driver
 
    # Install test extras before running tests
-   dbx test --install mongo-python-driver
+   dbx test mongo-python-driver --install test
+
+   # Install dev extras before running tests
+   dbx test mongo-python-driver --install dev
 
    # Run tests matching a keyword expression
    dbx test mongo-python-driver --keyword "test_connection"
 
    # Short forms
    dbx test -l  # list
-   dbx test -i mongo-python-driver  # install and test
+   dbx test mongo-python-driver -i test  # install test extras and run tests
+   dbx test mongo-python-driver -i dev  # install dev extras and run tests
    dbx test mongo-python-driver -k "test_auth"  # filter tests
 
    # Combine flags
-   dbx test -i mongo-python-driver -k "test_connection"
+   dbx test mongo-python-driver -i test -k "test_connection"
 
 The ``test`` command will:
 
 1. Find the repository by name across all cloned groups
-2. Optionally install test extras with ``-i`` / ``--install`` flag
+2. Optionally install extras with ``-i`` / ``--install`` flag (specify which extra, e.g., 'test', 'dev')
 3. Run ``pytest`` in the repository directory (with optional ``-k`` filter)
 4. Display the test results
 
@@ -137,10 +141,10 @@ The ``test`` command will:
    ...
    ✅ Tests passed in mongo-python-driver
 
-   $ dbx test -i mongo-python-driver
-   Installing test extras in ~/Developer/dbx-repos/pymongo/mongo-python-driver...
+   $ dbx test mongo-python-driver -i test
+   Installing 'test' extras in ~/Developer/dbx-repos/pymongo/mongo-python-driver...
 
-   ✅ Test extras installed successfully
+   ✅ 'test' extras installed successfully
 
    Running pytest in ~/Developer/dbx-repos/pymongo/mongo-python-driver...
 
@@ -148,9 +152,9 @@ The ``test`` command will:
    ...
    ✅ Tests passed in mongo-python-driver
 
-**Install Test Extras:**
+**Install Extras:**
 
-The ``-i`` / ``--install`` flag will run ``uv pip install -e ".[test]"`` in the repository directory before running tests. This is useful when:
+The ``-i`` / ``--install`` flag accepts an extra name (e.g., 'test', 'dev', 'docs') and will run ``uv pip install -e ".[<extra>]"`` in the repository directory before running tests. This is useful when:
 
 - You need to install test dependencies for the first time
 - Test dependencies have been updated
