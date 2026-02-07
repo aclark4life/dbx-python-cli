@@ -3,7 +3,7 @@
 # Copy this to ~/.config/dbx-python-cli/config.toml and customize as needed.
 
 [repo]
-base_dir = "~/Developer/dbx-repos"
+base_dir = "~/Developer/mongodb"
 
 [repo.groups.pymongo]
 repos = [
