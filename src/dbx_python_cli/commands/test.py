@@ -108,6 +108,9 @@ def test_callback(
             typer.echo(f"\n❌ Tests failed in {repo_name}", err=True)
             raise typer.Exit(result.returncode)
 
+    except typer.Exit:
+        # Re-raise typer.Exit to preserve the exit code
+        raise
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)

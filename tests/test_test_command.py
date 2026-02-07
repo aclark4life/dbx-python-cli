@@ -169,3 +169,33 @@ def test_test_runs_pytest_failure(mock_config, temp_repos_dir):
             assert "Running pytest" in result.stdout
             output = result.stdout + result.stderr
             assert "Tests failed" in output
+
+
+def test_test_list_base_dir_not_exists(tmp_path):
+    """Test that test -l handles non-existent base directory gracefully."""
+    from dbx_python_cli.commands.test import find_all_repos
+
+    # Test find_all_repos directly with non-existent directory
+    nonexistent_dir = tmp_path / "nonexistent_repos"
+    repos = find_all_repos(nonexistent_dir)
+    assert repos == []
+
+    # Also test via CLI
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+
+    repos_dir_str = str(nonexistent_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+"""
+    config_path.write_text(config_content)
+
+    # test.py imports get_config from repo.py, so we need to patch repo.get_config_path
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+        result = runner.invoke(app, ["test", "-l"])
+        # Should exit with 0 when listing (even if no repos found)
+        assert result.exit_code == 0
+        assert "No repositories found" in result.stdout

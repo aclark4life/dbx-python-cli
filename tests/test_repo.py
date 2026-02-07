@@ -141,3 +141,60 @@ def test_repo_clone_skips_existing(tmp_path, mock_config, temp_repos_dir):
             result = runner.invoke(app, ["repo", "clone", "-g", "test"])
             assert result.exit_code == 0
             assert "already exists" in result.stdout
+
+
+def test_repo_clone_git_failure(mock_config, temp_repos_dir):
+    """Test that repo clone handles git clone failures gracefully."""
+    import subprocess
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        # Mock subprocess.run to raise CalledProcessError
+        with patch("subprocess.run") as mock_run:
+            mock_run.side_effect = subprocess.CalledProcessError(
+                1, "git clone", stderr="fatal: repository not found"
+            )
+            result = runner.invoke(app, ["repo", "clone", "-g", "test"])
+            # Should still exit 0 (doesn't fail the whole command)
+            assert result.exit_code == 0
+            # Check stderr for error message
+            output = result.stdout + result.stderr
+            assert "Failed to clone" in output
+
+
+def test_repo_clone_empty_repos_list(temp_config_dir, temp_repos_dir):
+    """Test that repo clone handles groups with no repos defined."""
+    config_path = temp_config_dir / "config.toml"
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.empty]
+repos = []
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+        result = runner.invoke(app, ["repo", "clone", "-g", "empty"])
+        assert result.exit_code == 1
+        # Check both stdout and stderr
+        output = result.stdout + result.stderr
+        assert "No repositories defined for group 'empty'" in output
+
+
+def test_get_config_fallback_to_default(temp_config_dir):
+    """Test that get_config falls back to default config when user config doesn't exist."""
+    from dbx_python_cli.commands.repo import get_config
+
+    # Don't create user config, should fall back to package default
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        # Point to non-existent user config
+        mock_get_path.return_value = temp_config_dir / "nonexistent.toml"
+        config = get_config()
+        # Should have loaded the default config which has repo.groups structure
+        assert "repo" in config
+        assert "groups" in config["repo"]
+        assert "pymongo" in config["repo"]["groups"]
