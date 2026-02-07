@@ -62,10 +62,16 @@ dbx test mongo-python-driver
 # Run tests matching a keyword expression
 dbx test mongo-python-driver -k "test_connection"
 
+# Run just commands in a repository
+dbx just mongo-python-driver          # Show available just commands
+dbx just mongo-python-driver lint     # Run 'just lint'
+dbx just mongo-python-driver test -v  # Run 'just test -v'
+
 # Use verbose mode for more detailed output
 dbx -v install mongo-python-driver -e test
 dbx -v test mongo-python-driver
 dbx -v repo clone -g pymongo
+dbx -v just mongo-python-driver lint
 ```
 
 ## Development
