@@ -14,7 +14,6 @@ repos = [
 
 [repo.groups.langchain]
 repos = [
-    "git@github.com:langchain-ai/langchain.git",
     "git@github.com:mongodb-labs/pymongo-search-utils.git",
     "git@github.com:mongodb-labs/ai-ml-pipeline-testing.git",
     "git@github.com:langchain-ai/langchain-mongodb.git",
