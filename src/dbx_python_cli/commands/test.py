@@ -8,7 +8,11 @@ from dbx_python_cli.commands.repo import get_base_dir, get_config
 
 app = typer.Typer(
     help="Test commands",
-    context_settings={"help_option_names": ["-h", "--help"]},
+    context_settings={
+        "help_option_names": ["-h", "--help"],
+        "ignore_unknown_options": False,
+    },
+    no_args_is_help=False,
 )
 
 
@@ -42,7 +46,9 @@ def find_repo_by_name(repo_name, base_dir):
     return None
 
 
-@app.callback(invoke_without_command=True)
+@app.callback(
+    invoke_without_command=True, context_settings={"allow_interspersed_args": True}
+)
 def test_callback(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None, help="Repository name to test"),
