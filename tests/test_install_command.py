@@ -1,5 +1,6 @@
 """Tests for the install command."""
 
+import re
 from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
@@ -9,13 +10,20 @@ from dbx_python_cli.cli import app
 runner = CliRunner()
 
 
+def strip_ansi(text):
+    """Remove ANSI escape sequences from text."""
+    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+    return ansi_escape.sub("", text)
+
+
 def test_install_help():
     """Test install command help."""
     result = runner.invoke(app, ["install", "--help"])
     assert result.exit_code == 0
-    assert "Install commands" in result.stdout
-    assert "--extras" in result.stdout
-    assert "--groups" in result.stdout
+    output = strip_ansi(result.stdout)
+    assert "Install commands" in output
+    assert "--extras" in output
+    assert "--groups" in output
 
 
 def test_install_list_no_repos(tmp_path):
