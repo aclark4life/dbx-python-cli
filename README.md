@@ -46,7 +46,7 @@ pip install dbx-python-cli
 
 ```bash
 # Initialize configuration
-dbx repo init
+dbx init
 
 # Clone repositories by group
 dbx repo clone -g pymongo
