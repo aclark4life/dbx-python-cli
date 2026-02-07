@@ -49,11 +49,17 @@ Virtual Environment Strategy
 dbx-python-cli Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``dbx-python-cli`` is expected to be installed via pipx:
+``dbx-python-cli`` is expected to be installed via uvx:
 
 .. code-block:: bash
 
-   pipx install dbx-python-cli
+   uvx --from dbx-python-cli dbx
+
+Or install it persistently:
+
+.. code-block:: bash
+
+   uv tool install dbx-python-cli
 
 This keeps the ``dbx`` command available globally, isolated from project dependencies.
 
@@ -146,7 +152,7 @@ Technical Implementation
 
 **Running Commands in Venvs**
 
-When ``dbx`` (running in pipx's isolated environment) needs to execute commands in a venv, it cannot use ``source`` or activation scripts in subprocesses. Instead, it must directly invoke the venv's Python executable:
+When ``dbx`` (running in uvx's isolated environment) needs to execute commands in a venv, it cannot use ``source`` or activation scripts in subprocesses. Instead, it must directly invoke the venv's Python executable:
 
 .. code-block:: python
 
