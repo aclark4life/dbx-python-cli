@@ -9,6 +9,7 @@ base_dir = "~/Developer/mongodb"
 repos = [
     "https://github.com/mongodb/mongo-python-driver.git",
     "https://github.com/mongodb/specifications.git",
+    "https://github.com/mongodb-labs/drivers-evergreen-tools.git",
 ]
 
 [repo.groups.langchain]
