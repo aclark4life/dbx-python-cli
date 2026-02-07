@@ -63,7 +63,13 @@ dbx install mongo-python-driver -e test,aws
 # Install with dependency groups
 dbx install mongo-python-driver -e test --groups dev,test
 
-# Use a different group's venv
+# Install all repositories in a group
+dbx install -g pymongo
+
+# Install all repos in a group with extras
+dbx install -g pymongo -e test --groups dev
+
+# Use a different group's venv for a single repo
 dbx install mongo-python-driver -g pymongo
 
 # Run tests in a repository

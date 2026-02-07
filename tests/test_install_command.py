@@ -309,3 +309,91 @@ def test_install_failure(tmp_path):
                 assert result.exit_code == 1
                 # Check stderr instead of stdout for error messages
                 assert "Warning" in result.stdout or result.exit_code == 1
+
+
+def test_install_group_all_repos(tmp_path):
+    """Test install -g <group> installs all repos in the group."""
+    # Create mock repository structure with multiple repos
+    group_dir = tmp_path / "pymongo"
+    repo1_dir = group_dir / "mongo-python-driver"
+    repo2_dir = group_dir / "drivers-evergreen-tools"
+    repo1_dir.mkdir(parents=True)
+    repo2_dir.mkdir(parents=True)
+    (repo1_dir / ".git").mkdir()
+    (repo2_dir / ".git").mkdir()
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
+            with patch("subprocess.run") as mock_run:
+                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                mock_result = MagicMock()
+                mock_result.returncode = 0
+                mock_run.return_value = mock_result
+
+                result = runner.invoke(app, ["install", "-g", "pymongo"])
+                assert result.exit_code == 0
+                assert "Installing all repositories in group 'pymongo'" in result.stdout
+                assert "mongo-python-driver" in result.stdout
+                assert "drivers-evergreen-tools" in result.stdout
+                assert "Installation Summary" in result.stdout
+                assert "Total repositories: 2" in result.stdout
+
+                # Verify install was called for both repos
+                assert mock_run.call_count == 2
+
+
+def test_install_group_all_repos_with_extras(tmp_path):
+    """Test install -g <group> with extras installs all repos with extras."""
+    # Create mock repository structure with multiple repos
+    group_dir = tmp_path / "pymongo"
+    repo1_dir = group_dir / "mongo-python-driver"
+    repo2_dir = group_dir / "drivers-evergreen-tools"
+    repo1_dir.mkdir(parents=True)
+    repo2_dir.mkdir(parents=True)
+    (repo1_dir / ".git").mkdir()
+    (repo2_dir / ".git").mkdir()
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
+            with patch("subprocess.run") as mock_run:
+                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                mock_result = MagicMock()
+                mock_result.returncode = 0
+                mock_run.return_value = mock_result
+
+                result = runner.invoke(app, ["install", "-g", "pymongo", "-e", "test"])
+                assert result.exit_code == 0
+                assert "Installing all repositories in group 'pymongo'" in result.stdout
+
+                # Verify install was called with extras for both repos
+                assert mock_run.call_count == 2
+                for call_args in mock_run.call_args_list:
+                    assert ".[test]" in call_args[0][0]
+
+
+def test_install_group_nonexistent(tmp_path):
+    """Test install -g with nonexistent group."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
+            mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+            result = runner.invoke(app, ["install", "-g", "nonexistent"])
+            assert result.exit_code == 1
+            # Error messages go to stdout in typer
+            output = result.stdout + result.stderr
+            assert "not found" in output or result.exit_code == 1
+
+
+def test_install_group_no_repos(tmp_path):
+    """Test install -g with group that has no repos."""
+    # Create empty group directory
+    group_dir = tmp_path / "pymongo"
+    group_dir.mkdir(parents=True)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
+            mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+            result = runner.invoke(app, ["install", "-g", "pymongo"])
+            assert result.exit_code == 1
+            # Error messages go to stdout in typer
+            output = result.stdout + result.stderr
+            assert "No repositories found" in output or result.exit_code == 1

@@ -72,7 +72,7 @@ def install_callback(
         None,
         "--group",
         "-g",
-        help="Group name to use for venv (e.g., 'pymongo')",
+        help="Group name: use group's venv, or install all repos in group if no repo specified",
     ),
     list_repos: bool = typer.Option(
         False,
@@ -112,10 +112,158 @@ def install_callback(
             typer.echo(f"  • {repo['name']} ({repo['group']})")
         return
 
-    # Require repo_name if not listing
+    # Handle installing all repos in a group when only -g is provided
+    if not repo_name and group:
+        # Install all repos in the specified group
+        group_path = base_dir / group
+        if not group_path.exists():
+            typer.echo(f"❌ Error: Group '{group}' not found in {base_dir}", err=True)
+            raise typer.Exit(1)
+
+        # Find all repos in this group
+        all_repos = find_all_repos(base_dir)
+        group_repos = [r for r in all_repos if r["group"] == group]
+
+        if not group_repos:
+            typer.echo(f"❌ Error: No repositories found in group '{group}'", err=True)
+            typer.echo(f"\nClone repositories using: dbx repo clone -g {group}")
+            raise typer.Exit(1)
+
+        typer.echo(f"Installing all repositories in group '{group}'...\n")
+
+        # Install each repo in the group
+        failed_repos = []
+        for repo in group_repos:
+            repo_path = Path(repo["path"])
+            typer.echo(f"{'='*60}")
+            typer.echo(f"Installing: {repo['name']}")
+            typer.echo(f"{'='*60}\n")
+
+            # Detect venv
+            python_path, venv_type = get_venv_info(repo_path, group_path)
+
+            if verbose:
+                typer.echo(f"[verbose] Venv type: {venv_type}")
+                typer.echo(f"[verbose] Python: {python_path}\n")
+
+            # Build the install command
+            install_spec = "."
+
+            # Add extras if specified
+            if extras:
+                extras_list = [e.strip() for e in extras.split(",")]
+                install_spec = f".[{','.join(extras_list)}]"
+
+            # Install the package with extras
+            if venv_type == "group":
+                typer.echo(f"Using group venv: {group_path}/.venv\n")
+            else:
+                typer.echo("⚠️  No venv found, using system Python\n")
+
+            # Use uv pip install with --python to target the venv
+            install_cmd = [
+                "uv",
+                "pip",
+                "install",
+                "--python",
+                python_path,
+                "-e",
+                install_spec,
+            ]
+
+            if verbose:
+                typer.echo(f"[verbose] Running command: {' '.join(install_cmd)}")
+                typer.echo(f"[verbose] Working directory: {repo_path}\n")
+
+            install_result = subprocess.run(
+                install_cmd,
+                cwd=str(repo_path),
+                check=False,
+                capture_output=not verbose,
+                text=True,
+            )
+
+            if install_result.returncode != 0:
+                typer.echo(
+                    f"⚠️  Warning: Installation failed for {repo['name']}", err=True
+                )
+                if not verbose and install_result.stderr:
+                    typer.echo(install_result.stderr, err=True)
+                failed_repos.append(repo["name"])
+            else:
+                typer.echo(f"✅ {repo['name']} installed successfully\n")
+                if verbose and install_result.stdout:
+                    typer.echo(f"[verbose] Output:\n{install_result.stdout}")
+
+            # Install dependency groups if specified
+            if groups:
+                groups_list = [g.strip() for g in groups.split(",")]
+                typer.echo(
+                    f"Installing dependency groups: {', '.join(groups_list)}...\n"
+                )
+
+                for dep_group in groups_list:
+                    group_cmd = [
+                        "uv",
+                        "pip",
+                        "install",
+                        "--python",
+                        python_path,
+                        "--group",
+                        dep_group,
+                    ]
+
+                    if verbose:
+                        typer.echo(f"[verbose] Running command: {' '.join(group_cmd)}")
+                        typer.echo(f"[verbose] Working directory: {repo_path}\n")
+
+                    group_result = subprocess.run(
+                        group_cmd,
+                        cwd=str(repo_path),
+                        check=False,
+                        capture_output=not verbose,
+                        text=True,
+                    )
+
+                    if group_result.returncode != 0:
+                        typer.echo(
+                            f"⚠️  Warning: Failed to install group '{dep_group}' for {repo['name']}",
+                            err=True,
+                        )
+                        if not verbose and group_result.stderr:
+                            typer.echo(group_result.stderr, err=True)
+                    else:
+                        typer.echo(f"✅ Group '{dep_group}' installed successfully")
+                        if verbose and group_result.stdout:
+                            typer.echo(f"[verbose] Output:\n{group_result.stdout}")
+
+                typer.echo()  # Empty line
+
+        # Summary
+        typer.echo(f"\n{'='*60}")
+        typer.echo("Installation Summary")
+        typer.echo(f"{'='*60}")
+        typer.echo(f"Total repositories: {len(group_repos)}")
+        typer.echo(f"Successful: {len(group_repos) - len(failed_repos)}")
+        if failed_repos:
+            typer.echo(f"Failed: {len(failed_repos)}")
+            typer.echo("\nFailed repositories:")
+            for repo_name in failed_repos:
+                typer.echo(f"  • {repo_name}")
+            raise typer.Exit(1)
+        else:
+            typer.echo(
+                f"\n✅ All repositories in group '{group}' installed successfully!"
+            )
+        return
+
+    # Require repo_name if not listing and not installing group
     if not repo_name:
         typer.echo("❌ Error: Repository name is required", err=True)
         typer.echo("\nUsage: dbx install <repo_name> [OPTIONS]")
+        typer.echo(
+            "       dbx install -g <group> [OPTIONS]  # Install all repos in group"
+        )
         typer.echo("       dbx install --list")
         raise typer.Exit(1)
 
