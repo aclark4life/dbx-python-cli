@@ -1,53 +1,10 @@
-Design Decisions
-================
-
-This page documents key design decisions made in the development of dbx-python-cli.
-
-Git Operations
---------------
-
-**Decision: Use subprocess with git CLI instead of GitPython**
-
-We chose to use Python's ``subprocess`` module to call the ``git`` command-line tool directly rather than using the GitPython library.
-
-**Rationale:**
-
-1. **Simplicity** - Using subprocess with git CLI is straightforward and requires no additional dependencies beyond git itself, which developers already have installed.
-
-2. **Reliability** - The git CLI is the canonical implementation and is guaranteed to work correctly. We avoid potential bugs or limitations in third-party libraries.
-
-3. **Minimal Dependencies** - By not adding GitPython as a dependency, we keep the package lightweight and reduce potential dependency conflicts.
-
-4. **Transparency** - Subprocess calls make it clear exactly what git commands are being executed, making debugging easier.
-
-5. **Performance** - For simple clone operations, the overhead of spawning a subprocess is negligible, and we avoid loading a large library.
-
-**Trade-offs:**
-
-- We need to handle subprocess errors and parse output manually
-- Less Pythonic than using a native Python library
-- Requires git to be installed on the system
-
-**Implementation:**
-
-.. code-block:: python
-
-   subprocess.run(
-       ["git", "clone", repo_url, str(repo_path)],
-       check=True,
-       capture_output=True,
-       text=True,
-   )
-
-This approach aligns with our philosophy of keeping the tool simple, transparent, and focused on developer workflows.
-
 Virtual Environment Strategy
------------------------------
+============================
 
 **Decision: One virtual environment per group**
 
 dbx-python-cli Installation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
 ``dbx-python-cli`` is expected to be installed via uv tool:
 
@@ -58,7 +15,7 @@ dbx-python-cli Installation
 This keeps the ``dbx`` command available globally, isolated from project dependencies.
 
 Repository and Virtual Environment Structure
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------
 
 Users configure a base directory and clone repository groups. Virtual environments are created at the group level:
 
@@ -84,16 +41,18 @@ This creates a structure like:
    │   ├── .venv/                      # Separate group venv
    │   └── langchain/
 
-**Rationale:**
+Rationale
+---------
 
 - **Group-level venvs** - Repos in the same group (e.g., pymongo repos) typically share dependencies
 - **Simpler management** - One venv per group instead of many per-repo venvs
 - **Disk efficient** - Fewer duplicate dependencies
 
 Command Behavior
-~~~~~~~~~~~~~~~~
+----------------
 
-**dbx env init**
+dbx env init
+~~~~~~~~~~~~
 
 Create a virtual environment for a group:
 
@@ -105,7 +64,8 @@ Create a virtual environment for a group:
    # Create with specific Python version
    dbx env init -g pymongo --python 3.11
 
-**dbx install**
+dbx install
+~~~~~~~~~~~
 
 Install dependencies, using group venv if available:
 
@@ -116,7 +76,8 @@ Install dependencies, using group venv if available:
 
    # Falls back to system Python if no venv found
 
-**dbx test**
+dbx test
+~~~~~~~~
 
 Run tests, using group venv if available:
 
@@ -128,7 +89,7 @@ Run tests, using group venv if available:
    # Falls back to system Python if no venv found
 
 Venv Detection
-~~~~~~~~~~~~~~
+--------------
 
 Commands detect and use venvs in this order:
 
@@ -136,9 +97,10 @@ Commands detect and use venvs in this order:
 2. **System Python** - Fallback if no venv found
 
 Technical Implementation
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
-**Running Commands in Venvs**
+Running Commands in Venvs
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When ``dbx`` (running in uvx's isolated environment) needs to execute commands in a venv, it cannot use ``source`` or activation scripts in subprocesses. Instead, it must directly invoke the venv's Python executable:
 
@@ -156,7 +118,8 @@ This is because:
 2. Subprocess environments don't persist across commands
 3. The venv's Python executable knows where its packages are without activation
 
-**Venv Detection Example**
+Venv Detection Example
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 

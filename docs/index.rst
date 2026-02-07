@@ -170,7 +170,7 @@ Documentation
    :maxdepth: 2
 
    features/index
-   design
+   design/index
    api/modules
 
 Indices and tables
