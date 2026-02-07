@@ -8,4 +8,3 @@ from typer.testing import CliRunner
 def cli_runner():
     """Provide a CLI runner for testing."""
     return CliRunner()
-
