@@ -18,6 +18,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "typer",
+    "tomli>=2.0.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
