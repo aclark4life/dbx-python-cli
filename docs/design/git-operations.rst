@@ -21,6 +21,8 @@ Rationale
 
 5. **Performance** - For simple clone operations, the overhead of spawning a subprocess is negligible, and we avoid loading a large library.
 
+6. **Industry Standard** - This approach mirrors how IDEs and other development tools integrate git. Tools like VS Code, IntelliJ IDEA, and PyCharm all invoke the git CLI rather than reimplementing git operations. This proven pattern provides a reliable foundation for repository management.
+
 Trade-offs
 ----------
 
