@@ -27,27 +27,13 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "furo"
 html_title = "dbx-python-cli"
 html_static_path = ["_static"]
+html_favicon = "_static/mongodb-leaf-32x32.png"
 
 # Furo theme options
 html_theme_options = {
     "sidebar_hide_name": False,
     "navigation_with_keys": True,
 }
-
-# Sidebar depth
-html_sidebars = {
-    "**": [
-        "sidebar/scroll-start.html",
-        "sidebar/brand.html",
-        "sidebar/search.html",
-        "sidebar/navigation.html",
-        "sidebar/ethical-ads.html",
-        "sidebar/scroll-end.html",
-    ]
-}
-
-# Set the depth of the table of contents in the sidebar
-toctree_collapse = False
 
 # Intersphinx mapping
 intersphinx_mapping = {

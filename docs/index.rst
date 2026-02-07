@@ -169,7 +169,7 @@ Documentation
 .. toctree::
    :maxdepth: 2
 
-   features
+   features/index
    design
    api/modules
 
