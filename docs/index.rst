@@ -1,27 +1,20 @@
 dbx-python-cli Documentation
 ============================
 
-A command line tool for DBX Python development tasks. AI first. De-siloing happens here. Inspired by `django-mongodb-cli <https://github.com/mongodb-labs/django-mongodb-cli>`_.
+A command line tool for DBX Python development tasks. AI first. De-siloing happens here.
 
-About
------
+**Get started:** :doc:`introduction/installation` | :doc:`introduction/quick-start` | :doc:`introduction/overview`
 
-DBX Python is the MongoDB Database Experience Team for the MongoDB Python driver.
+What is dbx-python-cli?
+-----------------------
 
-.. note::
-   This is not `Databricks for Python developers <https://docs.databricks.com/aws/en/languages/python>`__.
+dbx-python-cli is a unified command-line interface for managing Python development workflows across multiple related repositories. It provides tools for:
 
-.. raw:: html
-
-   <script>
-   document.addEventListener('DOMContentLoaded', function() {
-       var links = document.querySelectorAll('a[href="https://docs.databricks.com/aws/en/languages/python"]');
-       links.forEach(function(link) {
-           link.setAttribute('target', '_blank');
-           link.setAttribute('rel', 'noopener noreferrer');
-       });
-   });
-   </script>
+- 📦 **Repository Management** - Clone, sync, and organize related repositories
+- 🐍 **Virtual Environments** - Group-level venvs with smart detection
+- ⚡ **Fast Installation** - Dependency management powered by uv
+- ✅ **Testing** - Run tests across repositories with consistent commands
+- 🔧 **Task Automation** - Execute just commands and custom workflows
 
 Feature Highlights
 ------------------
@@ -33,48 +26,40 @@ Feature Highlights
 - 📚 **Well Documented** - Sphinx documentation with the beautiful Furo theme
 - ✅ **Fully Tested** - Comprehensive test suite with pytest and coverage reporting
 
-See :doc:`features/index` for detailed feature documentation.
-
-Installation
-------------
-
-Via uv tool (Recommended)
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-   # Install directly from GitHub
-   uv tool install git+https://github.com/aclark4life/dbx-python-cli.git
-
-This will install ``dbx-python-cli`` globally and make the ``dbx`` command available in your terminal.
-
 Quick Start
 -----------
 
+Install dbx-python-cli and get started in minutes:
+
 .. code-block:: bash
 
+   # Install via uv tool
+   uv tool install git+https://github.com/aclark4life/dbx-python-cli.git
+
    # Initialize configuration
-   dbx init
+   dbx repo init
 
    # Clone repositories by group
    dbx repo clone -g pymongo
 
-Contributing
-------------
+   # Create virtual environment
+   dbx env init -g pymongo
 
-Interested in contributing? See the :doc:`development/index` section for detailed information on:
+   # Install dependencies
+   dbx install mongo-python-driver -e test
 
-- Setting up your development environment
-- Running tests
-- Building documentation
-- Contributing guidelines
+   # Run tests
+   dbx test mongo-python-driver
 
-Documentation
--------------
+See :doc:`introduction/quick-start` for a detailed walkthrough.
+
+Documentation Sections
+----------------------
 
 .. toctree::
    :maxdepth: 2
 
+   introduction/index
    features/index
    design/index
    api/index
