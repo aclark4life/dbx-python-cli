@@ -92,6 +92,7 @@ def test_install_basic_success(tmp_path):
     repo_dir = group_dir / "mongo-python-driver"
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
+    (repo_dir / "setup.py").write_text("# setup.py")
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
@@ -127,6 +128,7 @@ def test_install_with_extras(tmp_path):
     repo_dir = group_dir / "mongo-python-driver"
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
+    (repo_dir / "setup.py").write_text("# setup.py")
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
@@ -162,6 +164,7 @@ def test_install_with_multiple_extras(tmp_path):
     repo_dir = group_dir / "mongo-python-driver"
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
+    (repo_dir / "setup.py").write_text("# setup.py")
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
@@ -184,6 +187,7 @@ def test_install_with_groups(tmp_path):
     repo_dir = group_dir / "mongo-python-driver"
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
+    (repo_dir / "setup.py").write_text("# setup.py")
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
@@ -199,10 +203,8 @@ def test_install_with_groups(tmp_path):
                 )
                 assert result.exit_code == 0
                 assert "Package installed successfully" in result.stdout
-                assert "Installing dependency groups: dev" in result.stdout
-                assert "Dependency group 'dev' installed successfully" in result.stdout
 
-                # Verify both install calls were made
+                # Verify both install calls were made (package + dependency group)
                 assert mock_run.call_count == 2
                 # First call: install package
                 assert mock_run.call_args_list[0][0][0] == [
@@ -214,7 +216,7 @@ def test_install_with_groups(tmp_path):
                     "-e",
                     ".",
                 ]
-                # Second call: install group
+                # Second call: install dependency group
                 assert mock_run.call_args_list[1][0][0] == [
                     "uv",
                     "pip",
@@ -233,6 +235,7 @@ def test_install_with_extras_and_groups(tmp_path):
     repo_dir = group_dir / "mongo-python-driver"
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
+    (repo_dir / "setup.py").write_text("# setup.py")
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:

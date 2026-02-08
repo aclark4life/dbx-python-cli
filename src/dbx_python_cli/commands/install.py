@@ -366,85 +366,58 @@ def install_callback(
         typer.echo(f"[verbose] Venv type: {venv_type}")
         typer.echo(f"[verbose] Python: {python_path}\n")
 
-    # Build the install command
-    install_spec = "."
-
-    # Add extras if specified
-    if extras:
-        extras_list = [e.strip() for e in extras.split(",")]
-        install_spec = f".[{','.join(extras_list)}]"
-
-    # Install the package with extras
-    typer.echo(f"Installing dependencies in {repo_path}...")
-
+    # Show venv info
     if venv_type == "group":
         typer.echo(f"Using group venv: {group_path}/.venv\n")
     else:
         typer.echo("⚠️  No venv found, using system Python\n")
 
-    # Use uv pip install with --python to target the venv
-    install_cmd = ["uv", "pip", "install", "--python", python_path, "-e", install_spec]
+    # Check if this repo has install_dirs (monorepo)
+    install_dirs = get_install_dirs(config, repo["group"], repo["name"])
 
-    if verbose:
-        typer.echo(f"[verbose] Running command: {' '.join(install_cmd)}")
-        typer.echo(f"[verbose] Working directory: {repo_path}\n")
+    if install_dirs:
+        # Monorepo: install each directory separately
+        typer.echo(f"Monorepo detected: installing {len(install_dirs)} packages...\n")
 
-    install_result = subprocess.run(
-        install_cmd,
-        cwd=str(repo_path),
-        check=False,
-        capture_output=not verbose,  # Show output in real-time if verbose
-        text=True,
-    )
+        failed_items = []
+        for install_dir in install_dirs:
+            typer.echo(f"  → Installing from {install_dir}...")
 
-    if install_result.returncode != 0:
-        typer.echo("⚠️  Warning: Installation failed", err=True)
-        if not verbose and install_result.stderr:
-            typer.echo(install_result.stderr, err=True)
-        raise typer.Exit(1)
-    else:
-        typer.echo("✅ Package installed successfully\n")
-        if verbose and install_result.stdout:
-            typer.echo(f"[verbose] Output:\n{install_result.stdout}")
-
-    # Install dependency groups if specified
-    if dependency_groups:
-        groups_list = [g.strip() for g in dependency_groups.split(",")]
-        typer.echo(f"Installing dependency groups: {', '.join(groups_list)}...\n")
-
-        for dep_group in groups_list:
-            group_cmd = [
-                "uv",
-                "pip",
-                "install",
-                "--python",
+            success = install_package(
+                repo_path,
                 python_path,
-                "--group",
-                dep_group,
-            ]
-
-            if verbose:
-                typer.echo(f"[verbose] Running command: {' '.join(group_cmd)}")
-                typer.echo(f"[verbose] Working directory: {repo_path}\n")
-
-            group_result = subprocess.run(
-                group_cmd,
-                cwd=str(repo_path),
-                check=False,
-                capture_output=not verbose,  # Show output in real-time if verbose
-                text=True,
+                install_dir=install_dir,
+                extras=extras,
+                groups=dependency_groups,
+                verbose=verbose,
             )
 
-            if group_result.returncode != 0:
-                typer.echo(
-                    f"⚠️  Warning: Failed to install dependency group '{dep_group}'",
-                    err=True,
-                )
-                if not verbose and group_result.stderr:
-                    typer.echo(group_result.stderr, err=True)
+            if success:
+                typer.echo(f"  ✅ {install_dir} installed successfully\n")
             else:
-                typer.echo(f"✅ Dependency group '{dep_group}' installed successfully")
-                if verbose and group_result.stdout:
-                    typer.echo(f"[verbose] Output:\n{group_result.stdout}")
+                failed_items.append(f"{repo['name']}/{install_dir}")
 
-        typer.echo()  # Empty line at the end
+        if failed_items:
+            typer.echo(f"\n❌ Failed to install {len(failed_items)} package(s):")
+            for item in failed_items:
+                typer.echo(f"  • {item}")
+            raise typer.Exit(1)
+        else:
+            typer.echo(f"\n✅ All packages in {repo['name']} installed successfully!")
+    else:
+        # Regular repo: install from root
+        typer.echo(f"Installing dependencies in {repo_path}...")
+
+        success = install_package(
+            repo_path,
+            python_path,
+            install_dir=None,
+            extras=extras,
+            groups=dependency_groups,
+            verbose=verbose,
+        )
+
+        if not success:
+            raise typer.Exit(1)
+
+        typer.echo("✅ Package installed successfully")
