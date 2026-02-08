@@ -70,6 +70,10 @@ def init(
 @app.command()
 def clone(
     ctx: typer.Context,
+    repo_name: str = typer.Argument(
+        None,
+        help="Repository name to clone (e.g., django-mongodb-backend)",
+    ),
     group: str = typer.Option(
         None,
         "--group",
@@ -88,7 +92,7 @@ def clone(
         help="Clone from your fork instead of upstream (provide GitHub username, or use config default if no value given)",
     ),
 ):
-    """Clone repositories from a specified group."""
+    """Clone a repository by name or all repositories from a group."""
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
 
@@ -113,24 +117,62 @@ def clone(
                 typer.echo(f"  • {group_name} ({repo_count} repositories)")
             return
 
-        # Require group if not listing
-        if not group:
-            typer.echo("❌ Error: Group name required", err=True)
-            typer.echo("\nUsage: dbx clone -g <group>")
+        # Handle individual repo clone
+        if repo_name:
+            # Find the repo in all groups
+            found_repo = None
+            found_group = None
+
+            for group_name, group_config in groups.items():
+                for repo_url in group_config.get("repos", []):
+                    # Extract repo name from URL
+                    url_repo_name = repo_url.split("/")[-1].replace(".git", "")
+                    if url_repo_name == repo_name:
+                        found_repo = repo_url
+                        found_group = group_name
+                        break
+                if found_repo:
+                    break
+
+            if not found_repo:
+                typer.echo(
+                    f"❌ Error: Repository '{repo_name}' not found in any group.",
+                    err=True,
+                )
+                typer.echo(
+                    "\nUse 'dbx clone --list' to see available groups and repositories"
+                )
+                raise typer.Exit(1)
+
+            # Clone single repo
+            repos = [found_repo]
+            group = found_group
+
+            if verbose:
+                typer.echo(f"[verbose] Found '{repo_name}' in group '{group}'")
+
+        # Handle group clone
+        elif group:
+            # Get repositories for the group
+            if group not in groups:
+                typer.echo(
+                    f"❌ Error: Group '{group}' not found in configuration.", err=True
+                )
+                typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
+                raise typer.Exit(1)
+
+            repos = groups[group].get("repos", [])
+            if not repos:
+                typer.echo(
+                    f"❌ Error: No repositories found in group '{group}'.", err=True
+                )
+                raise typer.Exit(1)
+
+        else:
+            typer.echo("❌ Error: Repository name or group required", err=True)
+            typer.echo("\nUsage: dbx clone <repo-name>")
+            typer.echo("   or: dbx clone -g <group>")
             typer.echo("   or: dbx clone --list")
-            raise typer.Exit(1)
-
-        # Get repositories for the group
-        if group not in groups:
-            typer.echo(
-                f"❌ Error: Group '{group}' not found in configuration.", err=True
-            )
-            typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
-            raise typer.Exit(1)
-
-        repos = groups[group].get("repos", [])
-        if not repos:
-            typer.echo(f"❌ Error: No repositories found in group '{group}'.", err=True)
             raise typer.Exit(1)
 
         # Handle fork flag
@@ -155,14 +197,24 @@ def clone(
         group_dir = base_dir / group
         group_dir.mkdir(parents=True, exist_ok=True)
 
-        if fork_user:
-            typer.echo(
-                f"Cloning {len(repos)} repository(ies) from {fork_user}'s forks to {group_dir}"
-            )
+        # Display appropriate message
+        if len(repos) == 1:
+            single_repo_name = repos[0].split("/")[-1].replace(".git", "")
+            if fork_user:
+                typer.echo(
+                    f"Cloning {single_repo_name} from {fork_user}'s fork to {group_dir}"
+                )
+            else:
+                typer.echo(f"Cloning {single_repo_name} to {group_dir}")
         else:
-            typer.echo(
-                f"Cloning {len(repos)} repository(ies) from group '{group}' to {group_dir}"
-            )
+            if fork_user:
+                typer.echo(
+                    f"Cloning {len(repos)} repository(ies) from {fork_user}'s forks to {group_dir}"
+                )
+            else:
+                typer.echo(
+                    f"Cloning {len(repos)} repository(ies) from group '{group}' to {group_dir}"
+                )
 
         for repo_url in repos:
             # Extract repository name from URL

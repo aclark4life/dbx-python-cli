@@ -35,7 +35,7 @@ repos = [
 
         result = runner.invoke(app, ["clone", "-g", "test"])
         assert result.exit_code == 0
-        assert "Cloning 1 repository(ies) from group 'test'" in result.stdout
+        assert "Cloning bare_repo to" in result.stdout
         assert "bare_repo cloned successfully" in result.stdout
 
         # Verify the repo was actually cloned

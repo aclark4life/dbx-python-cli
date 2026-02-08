@@ -145,7 +145,9 @@ def test_repo_clone_help():
     """Test that the repo clone help command works."""
     result = runner.invoke(app, ["clone", "--help"])
     assert result.exit_code == 0
-    assert "Clone repositories from a specified group" in result.stdout
+    assert (
+        "Clone a repository by name or all repositories from a group" in result.stdout
+    )
 
 
 def test_repo_clone_invalid_group(tmp_path, mock_config):
@@ -293,7 +295,112 @@ def test_repo_clone_no_group_shows_error(mock_config):
         result = runner.invoke(app, ["clone"])
         assert result.exit_code == 1
         output = result.stdout + result.stderr
-        assert "Group name required" in output
+        assert "Repository name or group required" in output
+
+
+def test_repo_clone_single_repo_by_name(tmp_path, temp_repos_dir):
+    """Test cloning a single repository by name."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.django]
+repos = [
+    "git@github.com:mongodb-labs/django-mongodb-backend.git",
+    "git@github.com:mongodb-labs/django-mongodb-extensions.git",
+]
+
+[repo.groups.pymongo]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+            mock_run.return_value = None
+
+            result = runner.invoke(app, ["clone", "django-mongodb-backend"])
+            assert result.exit_code == 0
+            assert "django-mongodb-backend" in result.stdout
+
+            # Verify git clone was called
+            clone_calls = [
+                call for call in mock_run.call_args_list if call[0][0][1] == "clone"
+            ]
+            assert len(clone_calls) == 1
+            assert "django-mongodb-backend.git" in clone_calls[0][0][0][2]
+
+
+def test_repo_clone_single_repo_not_found(tmp_path, temp_repos_dir):
+    """Test cloning a repository that doesn't exist."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.django]
+repos = [
+    "git@github.com:mongodb-labs/django-mongodb-backend.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        result = runner.invoke(app, ["clone", "nonexistent-repo"])
+        assert result.exit_code == 1
+        output = result.stdout + result.stderr
+        assert "not found in any group" in output
+
+
+def test_repo_clone_single_repo_with_fork(tmp_path, temp_repos_dir):
+    """Test cloning a single repository with fork flag."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.django]
+repos = [
+    "git@github.com:mongodb-labs/django-mongodb-backend.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+            mock_run.return_value = None
+
+            result = runner.invoke(
+                app, ["clone", "django-mongodb-backend", "--fork", "aclark4life"]
+            )
+            assert result.exit_code == 0
+            assert "aclark4life's fork" in result.stdout
+
+            # Verify git clone was called with fork URL
+            clone_calls = [
+                call for call in mock_run.call_args_list if call[0][0][1] == "clone"
+            ]
+            assert len(clone_calls) == 1
+            assert "aclark4life/django-mongodb-backend.git" in clone_calls[0][0][0][2]
+
+            # Verify upstream remote was added
+            remote_calls = [
+                call for call in mock_run.call_args_list if "remote" in call[0][0]
+            ]
+            assert len(remote_calls) == 1
 
 
 def test_repo_clone_with_fork_user(tmp_path, temp_repos_dir):
@@ -321,7 +428,7 @@ repos = [
                 app, ["clone", "-g", "test", "--fork", "aclark4life"]
             )
             assert result.exit_code == 0
-            assert "aclark4life's forks" in result.stdout
+            assert "aclark4life's fork" in result.stdout
 
             # Verify git clone was called with fork URL
             clone_calls = [
@@ -366,7 +473,7 @@ repos = [
             # Use --fork without a value to use config default
             result = runner.invoke(app, ["clone", "-g", "test", "--fork", ""])
             assert result.exit_code == 0
-            assert "aclark4life's forks" in result.stdout
+            assert "aclark4life's fork" in result.stdout
 
 
 def test_repo_clone_fork_without_config_shows_error(tmp_path, temp_repos_dir):
