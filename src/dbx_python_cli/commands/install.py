@@ -339,23 +339,39 @@ def install_callback(
         typer.echo("       dbx install --list")
         raise typer.Exit(1)
 
-    # Find the repository
-    repo = find_repo_by_name(repo_name, base_dir)
-    if not repo:
-        typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
-        typer.echo("\nRun 'dbx install --list' to see available repositories")
-        raise typer.Exit(1)
-
-    repo_path = Path(repo["path"])
-
-    # Determine which group's venv to use
+    # Determine which group to use
     if group:
-        # Use specified group's venv
+        # Use specified group
         group_path = base_dir / group
         if not group_path.exists():
             typer.echo(f"❌ Error: Group '{group}' not found in {base_dir}", err=True)
             raise typer.Exit(1)
+
+        # Look for the repo in the specified group
+        repo_path = group_path / repo_name
+        if not repo_path.exists() or not (repo_path / ".git").exists():
+            typer.echo(
+                f"❌ Error: Repository '{repo_name}' not found in group '{group}'",
+                err=True,
+            )
+            typer.echo("\nRun 'dbx install --list' to see available repositories")
+            raise typer.Exit(1)
+
+        # Build repo dict for consistency with find_repo_by_name
+        repo = {
+            "name": repo_name,
+            "path": repo_path,
+            "group": group,
+        }
     else:
+        # Find the repository (will return first match if multiple exist)
+        repo = find_repo_by_name(repo_name, base_dir)
+        if not repo:
+            typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
+            typer.echo("\nRun 'dbx install --list' to see available repositories")
+            raise typer.Exit(1)
+
+        repo_path = Path(repo["path"])
         # Default to repo's own group
         group_path = repo_path.parent
 
