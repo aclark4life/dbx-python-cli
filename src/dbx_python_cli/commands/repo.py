@@ -9,7 +9,42 @@ import typer
 app = typer.Typer(
     help="Repository management commands",
     context_settings={"help_option_names": ["-h", "--help"]},
+    no_args_is_help=True,
 )
+
+
+@app.callback(invoke_without_command=True)
+def repo_callback(
+    ctx: typer.Context,
+    list_repos: bool = typer.Option(
+        False,
+        "--list",
+        "-l",
+        help="List all cloned repositories",
+    ),
+):
+    """Repository management commands."""
+    if list_repos:
+        from dbx_python_cli.commands.repo_utils import find_all_repos
+
+        config = get_config()
+        base_dir = get_base_dir(config)
+
+        repos = find_all_repos(base_dir)
+
+        if not repos:
+            typer.echo("No repositories found.")
+            typer.echo(f"\nBase directory: {base_dir}")
+            typer.echo("\nClone repositories using: dbx repo clone -g <group>")
+            raise typer.Exit(0)
+
+        typer.echo("Cloned repositories:\n")
+        # Sort by group then name
+        for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
+            typer.echo(f"  [{repo['group']}] {repo['name']}")
+
+        typer.echo(f"\nBase directory: {base_dir}")
+        raise typer.Exit(0)
 
 
 def get_config_path():
