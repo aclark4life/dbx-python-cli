@@ -124,7 +124,7 @@ def clone(
         False,
         "--list",
         "-l",
-        help="List available groups to clone",
+        help="List available groups",
     ),
     fork: str = typer.Option(
         None,
@@ -305,7 +305,7 @@ def sync(
         False,
         "--list",
         "-l",
-        help="List cloned repositories available to sync",
+        help="List cloned repositories",
     ),
     force: bool = typer.Option(
         False,
