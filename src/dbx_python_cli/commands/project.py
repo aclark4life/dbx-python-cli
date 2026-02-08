@@ -21,6 +21,55 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+
+@app.callback(invoke_without_command=True)
+def project_callback(
+    ctx: typer.Context,
+    list_projects: bool = typer.Option(
+        False,
+        "--list",
+        "-l",
+        help="List all projects in the projects directory",
+    ),
+):
+    """Project management commands."""
+    if list_projects:
+        config = get_config()
+        base_dir = get_base_dir(config)
+        projects_dir = base_dir / "projects"
+
+        if not projects_dir.exists():
+            typer.echo(f"Projects directory: {projects_dir}\n")
+            typer.echo("No projects directory found.")
+            typer.echo("\nCreate a project using: dbx project add <name>")
+            raise typer.Exit(0)
+
+        # Find all projects (directories with pyproject.toml)
+        projects = []
+        for item in projects_dir.iterdir():
+            if item.is_dir() and (item / "pyproject.toml").exists():
+                projects.append(item.name)
+
+        if not projects:
+            typer.echo(f"Projects directory: {projects_dir}\n")
+            typer.echo("No projects found.")
+            typer.echo("\nCreate a project using: dbx project add <name>")
+            raise typer.Exit(0)
+
+        typer.echo(f"Projects directory: {projects_dir}\n")
+        typer.echo(f"Found {len(projects)} project(s):\n")
+        for project in sorted(projects):
+            project_path = projects_dir / project
+            has_frontend = (project_path / "frontend").exists()
+            frontend_marker = " 🎨" if has_frontend else ""
+            typer.echo(f"  • {project}{frontend_marker}")
+
+        if any((projects_dir / p / "frontend").exists() for p in projects):
+            typer.echo("\n🎨 = has frontend")
+
+        raise typer.Exit(0)
+
+
 # Constants for random name generation
 ADJECTIVES = [
     "happy",
