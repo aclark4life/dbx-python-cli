@@ -23,7 +23,7 @@ def test_install_help():
     output = strip_ansi(result.stdout)
     assert "Install commands" in output
     assert "--extras" in output
-    assert "--groups" in output
+    assert "--dependency-groups" in output
 
 
 def test_install_list_no_repos(tmp_path):
@@ -194,12 +194,13 @@ def test_install_with_groups(tmp_path):
                 mock_run.return_value = mock_result
 
                 result = runner.invoke(
-                    app, ["install", "mongo-python-driver", "--groups", "dev"]
+                    app,
+                    ["install", "mongo-python-driver", "--dependency-groups", "dev"],
                 )
                 assert result.exit_code == 0
                 assert "Package installed successfully" in result.stdout
                 assert "Installing dependency groups: dev" in result.stdout
-                assert "Group 'dev' installed successfully" in result.stdout
+                assert "Dependency group 'dev' installed successfully" in result.stdout
 
                 # Verify both install calls were made
                 assert mock_run.call_count == 2
@@ -248,7 +249,7 @@ def test_install_with_extras_and_groups(tmp_path):
                         "mongo-python-driver",
                         "-e",
                         "test,aws",
-                        "--groups",
+                        "--dependency-groups",
                         "dev,test",
                     ],
                 )

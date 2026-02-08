@@ -178,9 +178,9 @@ def install_callback(
         "-e",
         help="Comma-separated list of extras to install (e.g., 'test', 'dev', 'aws')",
     ),
-    groups: Optional[str] = typer.Option(
+    dependency_groups: Optional[str] = typer.Option(
         None,
-        "--groups",
+        "--dependency-groups",
         help="Comma-separated list of dependency groups to install (e.g., 'dev', 'test')",
     ),
     group: Optional[str] = typer.Option(
@@ -287,7 +287,7 @@ def install_callback(
                         python_path,
                         install_dir=install_dir,
                         extras=extras,
-                        groups=groups,
+                        groups=dependency_groups,
                         verbose=verbose,
                     )
 
@@ -304,7 +304,7 @@ def install_callback(
                     python_path,
                     install_dir=None,
                     extras=extras,
-                    groups=groups,
+                    groups=dependency_groups,
                     verbose=verbose,
                 )
 
@@ -408,11 +408,11 @@ def install_callback(
             typer.echo(f"[verbose] Output:\n{install_result.stdout}")
 
     # Install dependency groups if specified
-    if groups:
-        groups_list = [g.strip() for g in groups.split(",")]
+    if dependency_groups:
+        groups_list = [g.strip() for g in dependency_groups.split(",")]
         typer.echo(f"Installing dependency groups: {', '.join(groups_list)}...\n")
 
-        for group in groups_list:
+        for dep_group in groups_list:
             group_cmd = [
                 "uv",
                 "pip",
@@ -420,7 +420,7 @@ def install_callback(
                 "--python",
                 python_path,
                 "--group",
-                group,
+                dep_group,
             ]
 
             if verbose:
@@ -436,11 +436,14 @@ def install_callback(
             )
 
             if group_result.returncode != 0:
-                typer.echo(f"⚠️  Warning: Failed to install group '{group}'", err=True)
+                typer.echo(
+                    f"⚠️  Warning: Failed to install dependency group '{dep_group}'",
+                    err=True,
+                )
                 if not verbose and group_result.stderr:
                     typer.echo(group_result.stderr, err=True)
             else:
-                typer.echo(f"✅ Group '{group}' installed successfully")
+                typer.echo(f"✅ Dependency group '{dep_group}' installed successfully")
                 if verbose and group_result.stdout:
                     typer.echo(f"[verbose] Output:\n{group_result.stdout}")
 
