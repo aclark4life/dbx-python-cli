@@ -212,6 +212,6 @@ This is useful when:
 Requirements
 ------------
 
-- The repository must be cloned first using ``dbx repo clone``
+- The repository must be cloned first using ``dbx clone``
 - The repository must have a ``pyproject.toml`` or ``setup.py``
 - For monorepos, each ``install_dirs`` directory must have a ``pyproject.toml`` or ``setup.py``

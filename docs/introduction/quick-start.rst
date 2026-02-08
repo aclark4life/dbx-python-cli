@@ -10,7 +10,7 @@ First, initialize the configuration file:
 
 .. code-block:: bash
 
-   dbx repo init
+   dbx init
 
 This creates a configuration file at ``~/.config/dbx-python-cli/config.toml`` with default settings.
 
@@ -29,7 +29,7 @@ Clone a group of related repositories:
 .. code-block:: bash
 
    # Clone the pymongo group
-   dbx repo clone -g pymongo
+   dbx clone -g pymongo
 
 This will clone all repositories in the pymongo group to ``~/Developer/mongodb/pymongo/``.
 
@@ -37,7 +37,7 @@ To see available groups:
 
 .. code-block:: bash
 
-   dbx repo clone --list
+   dbx clone --list
 
 Step 3: Create a Virtual Environment
 -------------------------------------
@@ -101,7 +101,7 @@ See what's available:
 .. code-block:: bash
 
    # List all cloned repositories
-   dbx repo list
+   dbx -l
 
    # List all virtual environments
    dbx env list
@@ -136,10 +136,10 @@ Keep your repositories up to date:
 .. code-block:: bash
 
    # Sync a single repository
-   dbx repo sync mongo-python-driver
+   dbx sync mongo-python-driver
 
    # Sync all repositories in a group
-   dbx repo sync -g pymongo
+   dbx sync -g pymongo
 
 Working with Multiple Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -149,7 +149,7 @@ You can work with multiple repository groups:
 .. code-block:: bash
 
    # Clone langchain group
-   dbx repo clone -g langchain
+   dbx clone -g langchain
 
    # Create venv for langchain
    dbx env init -g langchain

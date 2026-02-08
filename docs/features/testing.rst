@@ -61,5 +61,5 @@ The keyword expression is passed directly to pytest, so all pytest ``-k`` syntax
 Requirements
 ------------
 
-- The repository must be cloned first using ``dbx repo clone``
+- The repository must be cloned first using ``dbx clone``
 - The repository must have pytest installed

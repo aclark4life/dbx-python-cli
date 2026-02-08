@@ -78,7 +78,7 @@ def test_callback(
                 typer.echo(f"Base directory: {base_dir}\n")
                 typer.echo("No repositories found.")
                 typer.echo(
-                    "Run 'dbx repo clone -g <group>' to clone repositories first."
+                    "Run 'dbx clone -g <group>' to clone repositories first."
                 )
             raise typer.Exit(0)
 

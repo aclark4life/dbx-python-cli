@@ -85,7 +85,7 @@ This will show:
 Requirements
 ------------
 
-- The repository must be cloned first using ``dbx repo clone``
+- The repository must be cloned first using ``dbx clone``
 - The repository must have a ``justfile`` or ``Justfile`` in its root directory
 - The ``just`` command must be installed on your system
 

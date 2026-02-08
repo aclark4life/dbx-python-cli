@@ -78,7 +78,7 @@ def just_callback(
         else:
             typer.echo(f"Base directory: {base_dir}\n")
             typer.echo("No repositories found.")
-            typer.echo("\nClone repositories using: dbx repo clone -g <group>")
+            typer.echo("\nClone repositories using: dbx clone -g <group>")
         return
 
     # Require repo_name if not listing

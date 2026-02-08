@@ -48,10 +48,11 @@ repos = [
 
 
 def test_repo_help():
-    """Test that the repo help command works."""
-    result = runner.invoke(app, ["repo", "--help"])
+    """Test that the clone and sync commands are available."""
+    result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    assert "Repository management commands" in result.stdout
+    assert "clone" in result.stdout
+    assert "sync" in result.stdout
 
 
 def test_repo_list_no_repos():
@@ -60,7 +61,7 @@ def test_repo_list_no_repos():
         with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = []
-            result = runner.invoke(app, ["repo", "-l"])
+            result = runner.invoke(app, ["-l"])
             assert result.exit_code == 0
             assert "No repositories found" in result.stdout
             assert "Base directory:" in result.stdout
@@ -75,7 +76,7 @@ def test_repo_list_with_repos():
                 {"group": "django", "name": "django"},
                 {"group": "pymongo", "name": "mongo-python-driver"},
             ]
-            result = runner.invoke(app, ["repo", "-l"])
+            result = runner.invoke(app, ["-l"])
             assert result.exit_code == 0
             assert "Repository status:" in result.stdout
             # Check for tree format
@@ -94,7 +95,7 @@ def test_repo_list_long_form():
         with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = []
-            result = runner.invoke(app, ["repo", "--list"])
+            result = runner.invoke(app, ["--list"])
             assert result.exit_code == 0
             assert "No repositories found" in result.stdout
 
@@ -142,7 +143,7 @@ def test_repo_init_existing_config_with_yes_flag(tmp_path):
 
 def test_repo_clone_help():
     """Test that the repo clone help command works."""
-    result = runner.invoke(app, ["repo", "clone", "--help"])
+    result = runner.invoke(app, ["clone", "--help"])
     assert result.exit_code == 0
     assert "Clone repositories from a specified group" in result.stdout
 
@@ -152,7 +153,7 @@ def test_repo_clone_invalid_group(tmp_path, mock_config):
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
-        result = runner.invoke(app, ["repo", "clone", "-g", "nonexistent"])
+        result = runner.invoke(app, ["clone", "-g", "nonexistent"])
         assert result.exit_code == 1
         output = result.stdout + result.stderr
         assert "Group 'nonexistent' not found" in output
@@ -165,7 +166,7 @@ def test_repo_clone_success(tmp_path, mock_config, temp_repos_dir):
             mock_get_path.return_value = mock_config
             mock_run.return_value = None
 
-            result = runner.invoke(app, ["repo", "clone", "-g", "test"])
+            result = runner.invoke(app, ["clone", "-g", "test"])
             assert result.exit_code == 0
             assert "Cloning 2 repository(ies)" in result.stdout
             assert "test" in result.stdout
@@ -178,7 +179,7 @@ def test_repo_clone_creates_group_directory(tmp_path, mock_config, temp_repos_di
             mock_get_path.return_value = mock_config
             mock_run.return_value = None
 
-            result = runner.invoke(app, ["repo", "clone", "-g", "test"])
+            result = runner.invoke(app, ["clone", "-g", "test"])
             assert result.exit_code == 0
 
             # Check that group directory was created
@@ -199,7 +200,7 @@ def test_repo_clone_skips_existing(tmp_path, mock_config, temp_repos_dir):
         existing_repo.mkdir()
 
         with patch("subprocess.run"):
-            result = runner.invoke(app, ["repo", "clone", "-g", "test"])
+            result = runner.invoke(app, ["clone", "-g", "test"])
             assert result.exit_code == 0
             assert "already exists" in result.stdout
 
@@ -216,7 +217,7 @@ def test_repo_clone_git_failure(mock_config, temp_repos_dir):
             mock_run.side_effect = subprocess.CalledProcessError(
                 1, "git clone", stderr="fatal: repository not found"
             )
-            result = runner.invoke(app, ["repo", "clone", "-g", "test"])
+            result = runner.invoke(app, ["clone", "-g", "test"])
             # Should still exit 0 (doesn't fail the whole command)
             assert result.exit_code == 0
             # Check stderr for error message
@@ -239,11 +240,11 @@ repos = []
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
-        result = runner.invoke(app, ["repo", "clone", "-g", "empty"])
+        result = runner.invoke(app, ["clone", "-g", "empty"])
         assert result.exit_code == 1
         # Check both stdout and stderr
         output = result.stdout + result.stderr
-        assert "No repositories defined for group 'empty'" in output
+        assert "No repositories found in group 'empty'" in output
 
 
 def test_get_config_fallback_to_default(temp_config_dir):
@@ -266,7 +267,7 @@ def test_repo_clone_list_groups(mock_config):
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
-        result = runner.invoke(app, ["repo", "clone", "--list"])
+        result = runner.invoke(app, ["clone", "--list"])
         assert result.exit_code == 0
         assert "Available groups:" in result.stdout
         assert "test" in result.stdout
@@ -278,7 +279,7 @@ def test_repo_clone_list_groups_short_form(mock_config):
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
-        result = runner.invoke(app, ["repo", "clone", "-l"])
+        result = runner.invoke(app, ["clone", "-l"])
         assert result.exit_code == 0
         assert "Available groups:" in result.stdout
         assert "test" in result.stdout
@@ -289,7 +290,7 @@ def test_repo_clone_no_group_shows_error(mock_config):
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
-        result = runner.invoke(app, ["repo", "clone"])
+        result = runner.invoke(app, ["clone"])
         assert result.exit_code == 1
         output = result.stdout + result.stderr
         assert "Group name required" in output
@@ -312,12 +313,12 @@ repos = [
     config_path.write_text(config_content)
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("subprocess.run") as mock_run:
+        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
 
             result = runner.invoke(
-                app, ["repo", "clone", "-g", "test", "--fork", "aclark4life"]
+                app, ["clone", "-g", "test", "--fork", "aclark4life"]
             )
             assert result.exit_code == 0
             assert "aclark4life's forks" in result.stdout
@@ -363,7 +364,7 @@ repos = [
             mock_run.return_value = None
 
             # Use --fork without a value to use config default
-            result = runner.invoke(app, ["repo", "clone", "-g", "test", "--fork", ""])
+            result = runner.invoke(app, ["clone", "-g", "test", "--fork", ""])
             assert result.exit_code == 0
             assert "aclark4life's forks" in result.stdout
 
@@ -387,7 +388,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["repo", "clone", "-g", "test", "--fork", ""])
+        result = runner.invoke(app, ["clone", "-g", "test", "--fork", ""])
         assert result.exit_code == 1
         output = result.stdout + result.stderr
         assert "fork_user" in output or "GitHub username" in output
@@ -410,12 +411,12 @@ repos = [
     config_path.write_text(config_content)
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("subprocess.run") as mock_run:
+        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
 
             result = runner.invoke(
-                app, ["repo", "clone", "-g", "test", "--fork", "aclark4life"]
+                app, ["clone", "-g", "test", "--fork", "aclark4life"]
             )
             assert result.exit_code == 0
 
@@ -429,7 +430,7 @@ repos = [
 
 def test_repo_sync_help():
     """Test that the repo sync help command works."""
-    result = runner.invoke(app, ["repo", "sync", "--help"])
+    result = runner.invoke(app, ["sync", "--help"])
     assert result.exit_code == 0
     assert "Sync repository with upstream" in result.stdout
 
@@ -457,7 +458,7 @@ repos = [
     (repo_dir / ".git").mkdir()
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.commands.repo.subprocess.run") as mock_run:
+        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
             # Mock git commands
@@ -482,7 +483,7 @@ repos = [
 
             mock_run.side_effect = mock_run_side_effect
 
-            result = runner.invoke(app, ["repo", "sync", "mongo-python-driver"])
+            result = runner.invoke(app, ["sync", "mongo-python-driver"])
             assert result.exit_code == 0
             assert "Syncing mongo-python-driver" in result.stdout
             assert "synced and pushed successfully" in result.stdout
@@ -524,7 +525,7 @@ repos = [
         (repo_dir / ".git").mkdir()
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.commands.repo.subprocess.run") as mock_run:
+        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
             # Mock git commands
@@ -546,7 +547,7 @@ repos = [
 
             mock_run.side_effect = mock_run_side_effect
 
-            result = runner.invoke(app, ["repo", "sync", "-g", "test"])
+            result = runner.invoke(app, ["sync", "-g", "test"])
             assert result.exit_code == 0
             assert "Syncing 2 repository(ies)" in result.stdout
             assert "mongo-python-driver" in result.stdout
@@ -582,7 +583,7 @@ repos = [
     (repo_dir / ".git").mkdir()
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.commands.repo.subprocess.run") as mock_run:
+        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
             # Mock git remote to return only origin (no upstream)
@@ -599,7 +600,7 @@ repos = [
 
             mock_run.side_effect = mock_run_side_effect
 
-            result = runner.invoke(app, ["repo", "sync", "mongo-python-driver"])
+            result = runner.invoke(app, ["sync", "mongo-python-driver"])
             assert result.exit_code == 0
             # The warning message goes to stderr
             output = result.stdout + result.stderr
@@ -629,7 +630,7 @@ repos = []
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["repo", "sync", "-l"])
+        result = runner.invoke(app, ["sync", "-l"])
         assert result.exit_code == 0
         assert "Repository status" in result.stdout
         assert "mongo-python-driver" in result.stdout
@@ -653,7 +654,7 @@ repos = []
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["repo", "sync"])
+        result = runner.invoke(app, ["sync"])
         assert result.exit_code == 1
         output = result.stdout + result.stderr
         assert "Repository name or group required" in output

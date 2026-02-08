@@ -1,7 +1,7 @@
 Repository Management
 =====================
 
-The ``dbx repo`` command provides repository management functionality for cloning and managing groups of related repositories.
+The ``dbx clone`` and ``dbx sync`` commands provide repository management functionality for cloning and managing groups of related repositories.
 
 Initialize Configuration
 ------------------------
@@ -23,16 +23,16 @@ Clone repositories from predefined groups:
 .. code-block:: bash
 
    # Clone pymongo repositories
-   dbx repo clone -g pymongo
+   dbx clone -g pymongo
 
    # Clone langchain repositories
-   dbx repo clone -g langchain
+   dbx clone -g langchain
 
    # Clone django repositories
-   dbx repo clone -g django
+   dbx clone -g django
 
    # List available groups
-   dbx repo clone -l
+   dbx clone -l
 
 Fork-Based Workflow
 ~~~~~~~~~~~~~~~~~~~
@@ -42,7 +42,7 @@ For contributing to upstream repositories, you can clone from your personal fork
 .. code-block:: bash
 
    # Clone from your GitHub fork instead of the upstream org
-   dbx repo clone -g pymongo --fork aclark4life
+   dbx clone -g pymongo --fork aclark4life
 
 This will:
 
@@ -55,7 +55,7 @@ This will:
 .. code-block:: bash
 
    # Clone your forks with upstream remotes configured
-   dbx repo clone -g pymongo --fork aclark4life
+   dbx clone -g pymongo --fork aclark4life
 
    # Now you can work with the standard fork workflow
    cd ~/Developer/mongodb/pymongo/mongo-python-driver
@@ -89,10 +89,10 @@ With this configuration, you can simply run:
 .. code-block:: bash
 
    # Uses fork_user from config
-   dbx repo clone -g pymongo --fork
+   dbx clone -g pymongo --fork
 
    # Or override the config
-   dbx repo clone -g pymongo --fork different-user
+   dbx clone -g pymongo --fork different-user
 
 Sync Fork with Upstream
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,16 +102,16 @@ After cloning with the fork workflow, you can easily sync your local repository 
 .. code-block:: bash
 
    # Sync a specific repository
-   dbx repo sync mongo-python-driver
+   dbx sync mongo-python-driver
 
    # Sync all repositories in a group
-   dbx repo sync -g pymongo
+   dbx sync -g pymongo
 
    # Force push after rebasing (use if previous sync failed to push)
-   dbx repo sync mongo-python-driver --force
+   dbx sync mongo-python-driver --force
 
    # List available repositories
-   dbx repo sync -l
+   dbx sync -l
 
 This command will:
 
@@ -125,7 +125,7 @@ This command will:
 .. code-block:: bash
 
    # Clone your fork with upstream configured
-   dbx repo clone -g pymongo --fork aclark4life
+   dbx clone -g pymongo --fork aclark4life
 
    # Make some changes in your fork
    cd ~/Developer/mongodb/pymongo/mongo-python-driver
@@ -134,7 +134,7 @@ This command will:
    git commit -am "Add new feature"
 
    # Sync with upstream to get latest changes and push
-   dbx repo sync mongo-python-driver
+   dbx sync mongo-python-driver
    # Fetches from upstream, rebases your branch, and pushes to origin
 
    # Your changes are now in your fork, ready for a pull request!

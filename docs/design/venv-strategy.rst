@@ -22,7 +22,7 @@ Users configure a base directory and clone repository groups. Virtual environmen
 .. code-block:: bash
 
    # Clone repository groups
-   dbx repo clone -g pymongo
+   dbx clone -g pymongo
 
    # Create venv for the group
    dbx env init -g pymongo

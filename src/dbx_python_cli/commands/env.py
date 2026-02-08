@@ -82,7 +82,7 @@ def init(
                 f"Error: Group directory '{group_dir}' does not exist.", err=True
             )
             typer.echo(
-                f"Clone the group first with: dbx repo clone -g {group}", err=True
+                f"Clone the group first with: dbx clone -g {group}", err=True
             )
             raise typer.Exit(1)
 

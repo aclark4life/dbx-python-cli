@@ -32,7 +32,7 @@ New Approach
 
    # Use from anywhere
    cd ~/Developer/mongodb/
-   dbx repo clone -g pymongo
+   dbx clone -g pymongo
 
 Key Differences
 ---------------

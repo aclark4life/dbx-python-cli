@@ -33,7 +33,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["repo", "clone", "-g", "test"])
+        result = runner.invoke(app, ["clone", "-g", "test"])
         assert result.exit_code == 0
         assert "Cloning 1 repository(ies) from group 'test'" in result.stdout
         assert "bare_repo cloned successfully" in result.stdout
@@ -80,7 +80,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["repo", "clone", "-g", "test"])
+        result = runner.invoke(app, ["clone", "-g", "test"])
         assert result.exit_code == 0
         assert "already exists" in result.stdout
 
@@ -158,7 +158,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["repo", "sync", "bare_repo"])
+        result = runner.invoke(app, ["sync", "bare_repo"])
         assert result.exit_code == 0
         assert "Syncing bare_repo" in result.stdout
         assert "synced and pushed successfully" in result.stdout

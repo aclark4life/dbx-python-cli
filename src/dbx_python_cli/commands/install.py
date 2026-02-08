@@ -302,7 +302,7 @@ def install_callback(
         else:
             typer.echo(f"Base directory: {base_dir}\n")
             typer.echo("No repositories found.")
-            typer.echo("\nClone repositories using: dbx repo clone -g <group>")
+            typer.echo("\nClone repositories using: dbx clone -g <group>")
         return
 
     # Handle --show-options flag
@@ -324,7 +324,7 @@ def install_callback(
                 typer.echo(
                     f"❌ Error: No repositories found in group '{group}'", err=True
                 )
-                typer.echo(f"\nClone repositories using: dbx repo clone -g {group}")
+                typer.echo(f"\nClone repositories using: dbx clone -g {group}")
                 raise typer.Exit(1)
 
             typer.echo(f"📦 Showing options for all repositories in group '{group}':\n")
@@ -467,7 +467,7 @@ def install_callback(
 
         if not group_repos:
             typer.echo(f"❌ Error: No repositories found in group '{group}'", err=True)
-            typer.echo(f"\nClone repositories using: dbx repo clone -g {group}")
+            typer.echo(f"\nClone repositories using: dbx clone -g {group}")
             raise typer.Exit(1)
 
         typer.echo(f"Installing all repositories in group '{group}'...\n")
