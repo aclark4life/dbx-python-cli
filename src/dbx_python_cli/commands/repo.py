@@ -20,7 +20,7 @@ def repo_callback(
         False,
         "--list",
         "-l",
-        help="List all cloned repositories",
+        help="Show repository status (cloned vs available)",
     ),
 ):
     """Repository management commands."""
@@ -30,7 +30,7 @@ def repo_callback(
         config = get_config()
         base_dir = get_base_dir(config)
 
-        formatted_output = format_repos(base_dir)
+        formatted_output = format_repos(base_dir, config=config)
 
         if not formatted_output:
             typer.echo("No repositories found.")
@@ -38,8 +38,11 @@ def repo_callback(
             typer.echo("\nClone repositories using: dbx repo clone -g <group>")
             raise typer.Exit(0)
 
-        typer.echo("Cloned repositories:\n")
+        typer.echo("Repository status:\n")
         typer.echo(formatted_output)
+        typer.echo(
+            "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
+        )
 
         typer.echo(f"\nBase directory: {base_dir}")
         raise typer.Exit(0)
@@ -303,7 +306,7 @@ def sync(
         False,
         "--list",
         "-l",
-        help="List cloned repositories",
+        help="Show repository status (cloned vs available)",
     ),
     force: bool = typer.Option(
         False,
@@ -331,14 +334,17 @@ def sync(
         if list_repos:
             from dbx_python_cli.commands.repo_utils import list_repos as format_repos
 
-            formatted_output = format_repos(base_dir)
+            formatted_output = format_repos(base_dir, config=config)
             if not formatted_output:
                 typer.echo("No repositories found.")
                 typer.echo("\nClone repositories using: dbx repo clone -g <group>")
                 return
 
-            typer.echo(f"Available repositories in {base_dir}:\n")
+            typer.echo(f"Repository status in {base_dir}:\n")
             typer.echo(formatted_output)
+            typer.echo(
+                "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
+            )
             return
 
         # Handle group sync

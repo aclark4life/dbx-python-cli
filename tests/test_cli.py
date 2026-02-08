@@ -97,13 +97,15 @@ def test_list_flag_with_repos():
             ]
             result = runner.invoke(app, ["-l"])
             assert result.exit_code == 0
-            assert "Cloned repositories:" in result.stdout
+            assert "Repository status:" in result.stdout
             # Check for tree format
             assert "django/" in result.stdout
             assert "pymongo/" in result.stdout
             assert "django" in result.stdout
             assert "mongo-python-driver" in result.stdout
             assert "├──" in result.stdout or "└──" in result.stdout
+            # Check for legend
+            assert "Legend:" in result.stdout
 
 
 def test_list_flag_short_form():
@@ -126,4 +128,4 @@ def test_list_flag_in_help():
     output = strip_ansi(result.stdout)
     assert "--list" in output
     assert "-l" in output
-    assert "List all cloned repositories" in output
+    assert "Show repository status" in output

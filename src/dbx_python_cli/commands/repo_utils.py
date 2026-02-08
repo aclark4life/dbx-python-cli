@@ -1,6 +1,24 @@
 """Shared utilities for repository operations."""
 
 
+def extract_repo_name_from_url(url):
+    """
+    Extract repository name from a git URL.
+
+    Args:
+        url: Git URL (e.g., "git@github.com:mongodb/mongo-python-driver.git")
+
+    Returns:
+        str: Repository name (e.g., "mongo-python-driver")
+    """
+    # Handle both SSH and HTTPS URLs
+    # SSH: git@github.com:mongodb/mongo-python-driver.git
+    # HTTPS: https://github.com/mongodb/mongo-python-driver.git
+    if url.endswith(".git"):
+        url = url[:-4]
+    return url.split("/")[-1]
+
+
 def find_all_repos(base_dir):
     """
     Find all cloned repositories in the base directory.
@@ -48,43 +66,78 @@ def find_repo_by_name(repo_name, base_dir):
     return None
 
 
-def list_repos(base_dir, format_style="default"):
+def list_repos(base_dir, format_style="default", config=None):
     """
     List all repositories in a formatted way.
 
     Args:
         base_dir: Path to the base directory containing group subdirectories
         format_style: Output format style ('default', 'tree', 'grouped', or 'simple')
+        config: Optional config dict to compare available vs cloned repos
 
     Returns:
         str: Formatted list of repositories
     """
     repos = find_all_repos(base_dir)
 
-    if not repos:
+    # If config is provided, get available repos from config
+    available_repos = {}
+    if config:
+        groups = config.get("repo", {}).get("groups", {})
+        for group_name, group_config in groups.items():
+            repo_urls = group_config.get("repos", [])
+            for url in repo_urls:
+                repo_name = extract_repo_name_from_url(url)
+                if group_name not in available_repos:
+                    available_repos[group_name] = []
+                available_repos[group_name].append(repo_name)
+
+    # If no repos cloned and no config, return None
+    if not repos and not available_repos:
         return None
 
     if format_style == "tree":
         # Tree format with group as parent
         from collections import defaultdict
 
-        grouped = defaultdict(list)
+        # Build cloned repos dict
+        cloned = defaultdict(list)
         for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
-            grouped[repo["group"]].append(repo["name"])
+            cloned[repo["group"]].append(repo["name"])
+
+        # Merge available and cloned groups
+        all_groups = set(cloned.keys()) | set(available_repos.keys())
 
         lines = []
-        sorted_groups = sorted(grouped.keys())
+        sorted_groups = sorted(all_groups)
         for i, group in enumerate(sorted_groups):
             is_last_group = i == len(sorted_groups) - 1
             group_prefix = "└──" if is_last_group else "├──"
             lines.append(f"{group_prefix} {group}/")
 
-            repo_names = grouped[group]
-            for j, repo_name in enumerate(repo_names):
-                is_last_repo = j == len(repo_names) - 1
+            # Get all repos for this group (available and cloned)
+            available_in_group = set(available_repos.get(group, []))
+            cloned_in_group = set(cloned.get(group, []))
+            all_repos_in_group = sorted(available_in_group | cloned_in_group)
+
+            for j, repo_name in enumerate(all_repos_in_group):
+                is_last_repo = j == len(all_repos_in_group) - 1
                 continuation = "    " if is_last_group else "│   "
                 repo_prefix = "└──" if is_last_repo else "├──"
-                lines.append(f"{continuation}{repo_prefix} {repo_name}")
+
+                # Add status indicator if config is provided
+                if config:
+                    is_cloned = repo_name in cloned_in_group
+                    is_available = repo_name in available_in_group
+                    if is_cloned and is_available:
+                        status = "✓"  # Cloned
+                    elif is_cloned and not is_available:
+                        status = "?"  # Cloned but not in config
+                    else:
+                        status = "○"  # Available but not cloned
+                    lines.append(f"{continuation}{repo_prefix} {status} {repo_name}")
+                else:
+                    lines.append(f"{continuation}{repo_prefix} {repo_name}")
         return "\n".join(lines)
 
     elif format_style == "grouped":
@@ -113,21 +166,42 @@ def list_repos(base_dir, format_style="default"):
         # Default format: tree structure
         from collections import defaultdict
 
-        grouped = defaultdict(list)
+        # Build cloned repos dict
+        cloned = defaultdict(list)
         for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
-            grouped[repo["group"]].append(repo["name"])
+            cloned[repo["group"]].append(repo["name"])
+
+        # Merge available and cloned groups
+        all_groups = set(cloned.keys()) | set(available_repos.keys())
 
         lines = []
-        sorted_groups = sorted(grouped.keys())
+        sorted_groups = sorted(all_groups)
         for i, group in enumerate(sorted_groups):
             is_last_group = i == len(sorted_groups) - 1
             group_prefix = "└──" if is_last_group else "├──"
             lines.append(f"{group_prefix} {group}/")
 
-            repo_names = grouped[group]
-            for j, repo_name in enumerate(repo_names):
-                is_last_repo = j == len(repo_names) - 1
+            # Get all repos for this group (available and cloned)
+            available_in_group = set(available_repos.get(group, []))
+            cloned_in_group = set(cloned.get(group, []))
+            all_repos_in_group = sorted(available_in_group | cloned_in_group)
+
+            for j, repo_name in enumerate(all_repos_in_group):
+                is_last_repo = j == len(all_repos_in_group) - 1
                 continuation = "    " if is_last_group else "│   "
                 repo_prefix = "└──" if is_last_repo else "├──"
-                lines.append(f"{continuation}{repo_prefix} {repo_name}")
+
+                # Add status indicator if config is provided
+                if config:
+                    is_cloned = repo_name in cloned_in_group
+                    is_available = repo_name in available_in_group
+                    if is_cloned and is_available:
+                        status = "✓"  # Cloned
+                    elif is_cloned and not is_available:
+                        status = "?"  # Cloned but not in config
+                    else:
+                        status = "○"  # Available but not cloned
+                    lines.append(f"{continuation}{repo_prefix} {status} {repo_name}")
+                else:
+                    lines.append(f"{continuation}{repo_prefix} {repo_name}")
         return "\n".join(lines)

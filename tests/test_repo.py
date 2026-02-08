@@ -77,13 +77,15 @@ def test_repo_list_with_repos():
             ]
             result = runner.invoke(app, ["repo", "-l"])
             assert result.exit_code == 0
-            assert "Cloned repositories:" in result.stdout
+            assert "Repository status:" in result.stdout
             # Check for tree format
             assert "django/" in result.stdout
             assert "pymongo/" in result.stdout
             assert "django" in result.stdout
             assert "mongo-python-driver" in result.stdout
             assert "├──" in result.stdout or "└──" in result.stdout
+            # Check for legend
+            assert "Legend:" in result.stdout
 
 
 def test_repo_list_long_form():
@@ -629,8 +631,9 @@ repos = []
 
         result = runner.invoke(app, ["repo", "sync", "-l"])
         assert result.exit_code == 0
-        assert "Available repositories" in result.stdout
+        assert "Repository status" in result.stdout
         assert "mongo-python-driver" in result.stdout
+        assert "Legend:" in result.stdout
 
 
 def test_repo_sync_no_args_shows_error(tmp_path, temp_repos_dir):
