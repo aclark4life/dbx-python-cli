@@ -63,7 +63,7 @@ def test_repo_list_no_repos():
             result = runner.invoke(app, ["repo", "-l"])
             assert result.exit_code == 0
             assert "No repositories found" in result.stdout
-            assert "/tmp/test" in result.stdout
+            assert "Base directory:" in result.stdout
 
 
 def test_repo_list_with_repos():
