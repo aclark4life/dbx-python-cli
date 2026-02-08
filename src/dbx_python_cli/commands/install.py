@@ -14,6 +14,56 @@ from dbx_python_cli.commands.repo_utils import (
 )
 from dbx_python_cli.commands.venv_utils import get_venv_info
 
+
+def install_frontend_if_exists(repo_path, verbose=False):
+    """
+    Check if a frontend directory exists and install npm dependencies if found.
+
+    Args:
+        repo_path: Path to the repository/project root
+        verbose: Whether to show verbose output
+
+    Returns:
+        bool: True if frontend was found and installed successfully, False if no frontend or failed
+    """
+    frontend_path = repo_path / "frontend"
+    package_json = frontend_path / "package.json"
+
+    if not frontend_path.exists() or not package_json.exists():
+        return False
+
+    typer.echo(f"\n🎨 Frontend detected at {frontend_path}")
+    typer.echo("📦 Installing npm dependencies...")
+
+    try:
+        result = subprocess.run(
+            ["npm", "install"],
+            cwd=frontend_path,
+            check=False,
+            capture_output=not verbose,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            typer.echo("⚠️  npm install failed", err=True)
+            if not verbose and result.stderr:
+                typer.echo(result.stderr, err=True)
+            return False
+
+        typer.echo("✅ Frontend dependencies installed successfully")
+        return True
+
+    except FileNotFoundError:
+        typer.echo(
+            "⚠️  npm not found. Please ensure Node.js and npm are installed.",
+            err=True,
+        )
+        return False
+    except Exception as e:
+        typer.echo(f"⚠️  Unexpected error during frontend installation: {e}", err=True)
+        return False
+
+
 app = typer.Typer(
     help="Install commands",
     context_settings={
@@ -487,7 +537,10 @@ def install_callback(
                 )
 
                 if success:
-                    typer.echo(f"✅ {repo['name']} installed successfully\n")
+                    typer.echo(f"✅ {repo['name']} installed successfully")
+                    # Check for frontend and install if present
+                    install_frontend_if_exists(repo_path, verbose=verbose)
+                    typer.echo()
                 else:
                     failed_items.append(repo["name"])
 
@@ -614,6 +667,9 @@ def install_callback(
             raise typer.Exit(1)
         else:
             typer.echo(f"\n✅ All packages in {repo['name']} installed successfully!")
+
+        # Check for frontend and install if present (even for monorepos)
+        install_frontend_if_exists(repo_path, verbose=verbose)
     else:
         # Regular repo: install from root
         typer.echo(f"Installing dependencies in {repo_path}...")
@@ -631,3 +687,6 @@ def install_callback(
             raise typer.Exit(1)
 
         typer.echo("✅ Package installed successfully")
+
+        # Check for frontend and install if present
+        install_frontend_if_exists(repo_path, verbose=verbose)

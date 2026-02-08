@@ -79,7 +79,9 @@ Projects can be installed using the standard ``dbx install`` command:
 This will:
 
 1. Install the project's Python dependencies using pip
-2. Install frontend npm dependencies if a frontend exists
+2. Automatically detect and install frontend npm dependencies if a ``frontend/`` directory with ``package.json`` exists
+
+The ``dbx install`` command now supports frontend installation for both projects and regular repositories. If a ``frontend/`` directory is detected with a ``package.json`` file, npm dependencies will be installed automatically after the Python package installation completes.
 
 Removing Projects
 -----------------
