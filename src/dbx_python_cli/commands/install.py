@@ -1,6 +1,7 @@
 """Install command for installing dependencies in repositories."""
 
 import subprocess
+import tomllib
 from pathlib import Path
 from typing import Optional
 
@@ -47,6 +48,45 @@ def find_repo_by_name(repo_name, base_dir):
         if repo["name"] == repo_name:
             return repo
     return None
+
+
+def get_package_options(work_dir):
+    """
+    Extract available extras and dependency groups from pyproject.toml.
+
+    Args:
+        work_dir: Path to the directory containing pyproject.toml
+
+    Returns:
+        dict: Dictionary with 'extras' and 'dependency_groups' lists
+    """
+    pyproject_path = work_dir / "pyproject.toml"
+
+    if not pyproject_path.exists():
+        return {"extras": [], "dependency_groups": []}
+
+    try:
+        with open(pyproject_path, "rb") as f:
+            data = tomllib.load(f)
+
+        # Extract extras from [project.optional-dependencies]
+        extras = []
+        if "project" in data and "optional-dependencies" in data["project"]:
+            extras = list(data["project"]["optional-dependencies"].keys())
+
+        # Extract dependency groups from [dependency-groups] (PEP 735)
+        dependency_groups = []
+        if "dependency-groups" in data:
+            dependency_groups = list(data["dependency-groups"].keys())
+
+        return {
+            "extras": sorted(extras),
+            "dependency_groups": sorted(dependency_groups),
+        }
+
+    except Exception:
+        # If we can't parse the file, return empty lists
+        return {"extras": [], "dependency_groups": []}
 
 
 def install_package(
@@ -195,6 +235,11 @@ def install_callback(
         "-l",
         help="List all available repositories",
     ),
+    show_options: bool = typer.Option(
+        False,
+        "--show-options",
+        help="Show available extras and dependency groups for the repository",
+    ),
 ):
     """Install dependencies in a cloned repository using uv pip install."""
     # If a subcommand was invoked, don't run this logic
@@ -225,6 +270,66 @@ def install_callback(
         typer.echo("Available repositories:\n")
         for repo in repos:
             typer.echo(f"  • {repo['name']} ({repo['group']})")
+        return
+
+    # Handle --show-options flag
+    if show_options:
+        if not repo_name:
+            typer.echo(
+                "❌ Error: Repository name required with --show-options", err=True
+            )
+            typer.echo("\nUsage: dbx install <repo-name> --show-options")
+            raise typer.Exit(1)
+
+        # Find the repository
+        repo = find_repo_by_name(repo_name, base_dir)
+        if not repo:
+            typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
+            typer.echo("\nUse 'dbx install --list' to see available repositories")
+            raise typer.Exit(1)
+
+        repo_path = repo["path"]
+        repo_group = repo["group"]
+        install_dirs = get_install_dirs(config, repo_group, repo_name)
+
+        if install_dirs:
+            # Monorepo: show options for each package
+            typer.echo(f"📦 {repo_name} (monorepo with {len(install_dirs)} packages)\n")
+
+            for install_dir in install_dirs:
+                work_dir = repo_path / install_dir
+                options = get_package_options(work_dir)
+
+                typer.echo(f"  Package: {install_dir}")
+                if options["extras"]:
+                    typer.echo(f"    Extras: {', '.join(options['extras'])}")
+                else:
+                    typer.echo("    Extras: (none)")
+
+                if options["dependency_groups"]:
+                    typer.echo(
+                        f"    Dependency groups: {', '.join(options['dependency_groups'])}"
+                    )
+                else:
+                    typer.echo("    Dependency groups: (none)")
+                typer.echo()
+        else:
+            # Regular repo: show options for the package
+            options = get_package_options(repo_path)
+
+            typer.echo(f"📦 {repo_name}\n")
+            if options["extras"]:
+                typer.echo(f"  Extras: {', '.join(options['extras'])}")
+            else:
+                typer.echo("  Extras: (none)")
+
+            if options["dependency_groups"]:
+                typer.echo(
+                    f"  Dependency groups: {', '.join(options['dependency_groups'])}"
+                )
+            else:
+                typer.echo("  Dependency groups: (none)")
+
         return
 
     # Handle installing all repos in a group when only -g is provided

@@ -442,3 +442,112 @@ def test_install_duplicate_repo_warning(tmp_path):
                 assert "found in multiple groups" in output
                 assert "pymongo" in output or "langchain" in output
                 assert "Use -g to specify" in output
+
+
+def test_install_show_options(tmp_path):
+    """Test --show-options flag shows available extras and dependency groups."""
+    # Create mock repository structure
+    group_dir = tmp_path / "pymongo"
+    repo_dir = group_dir / "mongo-python-driver"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+
+    # Create pyproject.toml with extras and dependency groups
+    pyproject_content = """
+[project]
+name = "pymongo"
+
+[project.optional-dependencies]
+test = ["pytest"]
+aws = ["boto3"]
+encryption = ["pymongocrypt"]
+
+[dependency-groups]
+dev = ["ruff", "mypy"]
+docs = ["sphinx"]
+"""
+    (repo_dir / "pyproject.toml").write_text(pyproject_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
+            mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+
+            result = runner.invoke(
+                app, ["install", "mongo-python-driver", "--show-options"]
+            )
+            assert result.exit_code == 0
+            assert "📦 mongo-python-driver" in result.stdout
+            assert "Extras: aws, encryption, test" in result.stdout
+            assert "Dependency groups: dev, docs" in result.stdout
+
+
+def test_install_show_options_no_repo(tmp_path):
+    """Test --show-options without repo name shows error."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
+            mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+
+            result = runner.invoke(app, ["install", "--show-options"])
+            assert result.exit_code == 1
+            output = result.stdout + result.stderr
+            assert "Repository name required with --show-options" in output
+
+
+def test_install_show_options_monorepo(tmp_path):
+    """Test --show-options with monorepo shows options for each package."""
+    # Create mock repository structure
+    group_dir = tmp_path / "langchain"
+    repo_dir = group_dir / "langchain-mongodb"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+
+    # Create subdirectories for monorepo
+    pkg1_dir = repo_dir / "libs" / "langchain-mongodb"
+    pkg2_dir = repo_dir / "libs" / "langgraph-checkpoint-mongodb"
+    pkg1_dir.mkdir(parents=True)
+    pkg2_dir.mkdir(parents=True)
+
+    # Create pyproject.toml for each package
+    pyproject1 = """
+[project]
+name = "langchain-mongodb"
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[dependency-groups]
+dev = ["ruff"]
+"""
+    pyproject2 = """
+[project]
+name = "langgraph-checkpoint-mongodb"
+
+[project.optional-dependencies]
+test = ["pytest"]
+docs = ["sphinx"]
+"""
+    (pkg1_dir / "pyproject.toml").write_text(pyproject1)
+    (pkg2_dir / "pyproject.toml").write_text(pyproject2)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
+            with patch(
+                "dbx_python_cli.commands.install.get_install_dirs"
+            ) as mock_install_dirs:
+                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                mock_install_dirs.return_value = [
+                    "libs/langchain-mongodb/",
+                    "libs/langgraph-checkpoint-mongodb/",
+                ]
+
+                result = runner.invoke(
+                    app, ["install", "langchain-mongodb", "--show-options"]
+                )
+                assert result.exit_code == 0
+                assert (
+                    "📦 langchain-mongodb (monorepo with 2 packages)" in result.stdout
+                )
+                assert "Package: libs/langchain-mongodb/" in result.stdout
+                assert "Package: libs/langgraph-checkpoint-mongodb/" in result.stdout
+                assert "Extras: test" in result.stdout
+                assert "Dependency groups: dev" in result.stdout

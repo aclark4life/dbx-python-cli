@@ -128,6 +128,43 @@ Monorepos are configured in ``config.toml`` using the ``install_dirs`` setting:
 
 Each directory in ``install_dirs`` must contain a ``pyproject.toml`` or ``setup.py`` file.
 
+Showing Available Options
+-------------------------
+
+Before installing, you can see what extras and dependency groups are available for a repository:
+
+.. code-block:: bash
+
+   # Show available options for a regular repository
+   $ dbx install mongo-python-driver --show-options
+
+   📦 mongo-python-driver
+
+     Extras: aws, encryption, test
+     Dependency groups: dev, docs
+
+   # Show available options for a monorepo
+   $ dbx install langchain-mongodb --show-options
+
+   📦 langchain-mongodb (monorepo with 3 packages)
+
+     Package: libs/langchain-mongodb/
+       Extras: test
+       Dependency groups: dev
+
+     Package: libs/langgraph-checkpoint-mongodb/
+       Extras: test, docs
+       Dependency groups: (none)
+
+     Package: libs/langgraph-store-mongodb/
+       Extras: (none)
+       Dependency groups: dev
+
+The ``--show-options`` flag parses the ``pyproject.toml`` file(s) to extract:
+
+- **Extras** from ``[project.optional-dependencies]``
+- **Dependency groups** from ``[dependency-groups]`` (PEP 735)
+
 Install Command Options
 -----------------------
 
@@ -136,6 +173,7 @@ The ``install`` command uses ``uv pip install`` to install dependencies:
 - ``-e`` / ``--extras``: Comma-separated list of extras to install (e.g., 'test', 'dev', 'aws')
 - ``--dependency-groups``: Comma-separated list of dependency groups to install (e.g., 'dev', 'test')
 - ``-g`` / ``--group``: Specify which group to use (useful when a repo exists in multiple groups)
+- ``--show-options``: Show available extras and dependency groups without installing
 
 This is useful when:
 
@@ -143,6 +181,7 @@ This is useful when:
 - Dependencies have been updated
 - You want to install specific extras or dependency groups
 - You're working with monorepos that have multiple packages
+- You want to see what options are available before installing
 
 Requirements
 ------------
