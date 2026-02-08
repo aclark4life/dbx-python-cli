@@ -6,6 +6,7 @@ from typing import Optional
 import typer
 
 from dbx_python_cli.commands.repo import get_base_dir, get_config
+from dbx_python_cli.commands.repo_utils import find_all_repos, find_repo_by_name
 from dbx_python_cli.commands.venv_utils import get_venv_info
 
 app = typer.Typer(
@@ -16,36 +17,6 @@ app = typer.Typer(
     },
     no_args_is_help=False,
 )
-
-
-def find_all_repos(base_dir):
-    """Find all cloned repositories in the base directory."""
-    repos = []
-    if not base_dir.exists():
-        return repos
-
-    # Look for repos in group subdirectories
-    for group_dir in base_dir.iterdir():
-        if group_dir.is_dir():
-            for repo_dir in group_dir.iterdir():
-                if repo_dir.is_dir() and (repo_dir / ".git").exists():
-                    repos.append(
-                        {
-                            "name": repo_dir.name,
-                            "path": repo_dir,
-                            "group": group_dir.name,
-                        }
-                    )
-    return repos
-
-
-def find_repo_by_name(repo_name, base_dir):
-    """Find a repository by name in the base directory."""
-    all_repos = find_all_repos(base_dir)
-    for repo in all_repos:
-        if repo["name"] == repo_name:
-            return repo
-    return None
 
 
 @app.callback(

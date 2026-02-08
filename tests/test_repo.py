@@ -213,3 +213,169 @@ def test_get_config_fallback_to_default(temp_config_dir):
         assert "repo" in config
         assert "groups" in config["repo"]
         assert "pymongo" in config["repo"]["groups"]
+
+
+def test_repo_clone_list_groups(mock_config):
+    """Test that repo clone --list shows available groups."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        result = runner.invoke(app, ["repo", "clone", "--list"])
+        assert result.exit_code == 0
+        assert "Available groups:" in result.stdout
+        assert "test" in result.stdout
+        assert "2 repositories" in result.stdout
+
+
+def test_repo_clone_list_groups_short_form(mock_config):
+    """Test that repo clone -l works as shortcut for --list."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        result = runner.invoke(app, ["repo", "clone", "-l"])
+        assert result.exit_code == 0
+        assert "Available groups:" in result.stdout
+        assert "test" in result.stdout
+
+
+def test_repo_clone_no_group_shows_error(mock_config):
+    """Test that repo clone without -g or -l shows error."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        result = runner.invoke(app, ["repo", "clone"])
+        assert result.exit_code == 1
+        output = result.stdout + result.stderr
+        assert "Group name required" in output
+
+
+def test_repo_clone_with_fork_user(tmp_path, temp_repos_dir):
+    """Test cloning with --fork flag and explicit username."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+            mock_run.return_value = None
+
+            result = runner.invoke(
+                app, ["repo", "clone", "-g", "test", "--fork", "aclark4life"]
+            )
+            assert result.exit_code == 0
+            assert "aclark4life's forks" in result.stdout
+
+            # Verify git clone was called with fork URL
+            clone_calls = [
+                call for call in mock_run.call_args_list if call[0][0][1] == "clone"
+            ]
+            assert len(clone_calls) == 1
+            assert "aclark4life/mongo-python-driver.git" in clone_calls[0][0][0][2]
+
+            # Verify upstream remote was added
+            remote_calls = [
+                call for call in mock_run.call_args_list if "remote" in call[0][0]
+            ]
+            assert len(remote_calls) == 1
+            remote_cmd = remote_calls[0][0][0]
+            assert "add" in remote_cmd
+            assert "upstream" in remote_cmd
+            assert "git@github.com:mongodb/mongo-python-driver.git" in remote_cmd
+
+
+def test_repo_clone_with_fork_from_config(tmp_path, temp_repos_dir):
+    """Test cloning with --fork flag using fork_user from config."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+fork_user = "aclark4life"
+
+[repo.groups.test]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+            mock_run.return_value = None
+
+            # Use --fork without a value to use config default
+            result = runner.invoke(app, ["repo", "clone", "-g", "test", "--fork", ""])
+            assert result.exit_code == 0
+            assert "aclark4life's forks" in result.stdout
+
+
+def test_repo_clone_fork_without_config_shows_error(tmp_path, temp_repos_dir):
+    """Test that --fork without username and no config fork_user shows error."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        result = runner.invoke(app, ["repo", "clone", "-g", "test", "--fork", ""])
+        assert result.exit_code == 1
+        output = result.stdout + result.stderr
+        assert "fork_user" in output or "GitHub username" in output
+
+
+def test_repo_clone_fork_https_url(tmp_path, temp_repos_dir):
+    """Test cloning with --fork flag using HTTPS URL."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = [
+    "https://github.com/mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+            mock_run.return_value = None
+
+            result = runner.invoke(
+                app, ["repo", "clone", "-g", "test", "--fork", "aclark4life"]
+            )
+            assert result.exit_code == 0
+
+            # Verify git clone was called with fork URL (HTTPS format)
+            clone_calls = [
+                call for call in mock_run.call_args_list if call[0][0][1] == "clone"
+            ]
+            assert len(clone_calls) == 1
+            assert "aclark4life/mongo-python-driver.git" in clone_calls[0][0][0][2]

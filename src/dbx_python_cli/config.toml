@@ -4,6 +4,7 @@
 
 [repo]
 base_dir = "~/Developer/mongodb"
+# fork_user = "your-github-username"  # Uncomment and set to enable fork workflow by default
 
 [repo.groups.pymongo]
 repos = [

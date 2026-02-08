@@ -8,6 +8,7 @@ from typing import Optional
 import typer
 
 from dbx_python_cli.commands.repo import get_base_dir, get_config, get_install_dirs
+from dbx_python_cli.commands.repo_utils import find_all_repos, find_repo_by_name
 from dbx_python_cli.commands.venv_utils import get_venv_info
 
 app = typer.Typer(
@@ -18,36 +19,6 @@ app = typer.Typer(
     },
     no_args_is_help=False,
 )
-
-
-def find_all_repos(base_dir):
-    """Find all cloned repositories in the base directory."""
-    repos = []
-    if not base_dir.exists():
-        return repos
-
-    # Look for repos in group subdirectories
-    for group_dir in base_dir.iterdir():
-        if group_dir.is_dir():
-            for repo_dir in group_dir.iterdir():
-                if repo_dir.is_dir() and (repo_dir / ".git").exists():
-                    repos.append(
-                        {
-                            "name": repo_dir.name,
-                            "path": repo_dir,
-                            "group": group_dir.name,
-                        }
-                    )
-    return repos
-
-
-def find_repo_by_name(repo_name, base_dir):
-    """Find a repository by name in the base directory."""
-    all_repos = find_all_repos(base_dir)
-    for repo in all_repos:
-        if repo["name"] == repo_name:
-            return repo
-    return None
 
 
 def get_package_options(work_dir):
@@ -272,9 +243,9 @@ def install_callback(
             typer.echo("\nClone repositories using: dbx repo clone -g <group>")
             return
 
-        typer.echo("Available repositories:\n")
-        for repo in repos:
-            typer.echo(f"  • {repo['name']} ({repo['group']})")
+        typer.echo(f"Available repositories in {base_dir}:\n")
+        for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
+            typer.echo(f"  [{repo['group']}] {repo['name']}")
         return
 
     # Handle --show-options flag

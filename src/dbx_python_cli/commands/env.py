@@ -16,7 +16,7 @@ app = typer.Typer(
 def init(
     ctx: typer.Context,
     group: str = typer.Option(
-        ...,
+        None,
         "--group",
         "-g",
         help="Repository group to create venv for (e.g., pymongo, langchain, django)",
@@ -26,6 +26,12 @@ def init(
         "--python",
         "-p",
         help="Python version to use (e.g., 3.11, 3.12)",
+    ),
+    list_groups: bool = typer.Option(
+        False,
+        "--list",
+        "-l",
+        help="List all available groups",
     ),
 ):
     """Create a virtual environment for a repository group."""
@@ -40,6 +46,29 @@ def init(
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}")
             typer.echo(f"[verbose] Available groups: {list(groups.keys())}\n")
+
+        # Handle --list flag
+        if list_groups:
+            if not groups:
+                typer.echo("No groups found in configuration.")
+                return
+
+            typer.echo("Available groups:\n")
+            for group_name in sorted(groups.keys()):
+                group_dir = base_dir / group_name
+                venv_path = group_dir / ".venv"
+                if venv_path.exists():
+                    typer.echo(f"  • {group_name} (venv exists)")
+                else:
+                    typer.echo(f"  • {group_name} (no venv)")
+            return
+
+        # Require group if not listing
+        if not group:
+            typer.echo("❌ Error: Group name required", err=True)
+            typer.echo("\nUsage: dbx env init -g <group>")
+            typer.echo("   or: dbx env init --list")
+            raise typer.Exit(1)
 
         if group not in groups:
             typer.echo(f"Error: Group '{group}' not found in configuration.", err=True)
