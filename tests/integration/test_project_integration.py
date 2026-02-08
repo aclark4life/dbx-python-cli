@@ -339,3 +339,28 @@ base_dir = "{base_dir_str}"
         assert result.exit_code == 0
         assert "Found 1 project(s)" in result.stdout
         assert "testproject" in result.stdout
+
+
+def test_project_run_nonexistent(tmp_path):
+    """Test running a nonexistent project."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+
+    base_dir = tmp_path / "repos"
+    base_dir_str = str(base_dir).replace("\\", "/")
+
+    config_content = f"""[repo]
+base_dir = "{base_dir_str}"
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        # Try to run a nonexistent project
+        result = runner.invoke(app, ["project", "run", "nonexistent"])
+        assert result.exit_code == 1
+        # Error messages go to stdout in typer
+        output = result.stdout + (result.stderr or "")
+        assert "not found" in output.lower()

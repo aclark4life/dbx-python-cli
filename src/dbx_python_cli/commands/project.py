@@ -435,6 +435,127 @@ def remove_project(
     typer.echo(f"🗑️ Removed project {name}")
 
 
+@app.command("run")
+def run_project(
+    name: str,
+    directory: Path = typer.Option(
+        None,
+        "--directory",
+        "-d",
+        help="Custom directory where the project is located (defaults to base_dir/projects/)",
+    ),
+    host: str = typer.Option(
+        "127.0.0.1",
+        "--host",
+        help="Host to bind the Django server to",
+    ),
+    port: int = typer.Option(
+        8000,
+        "--port",
+        "-p",
+        help="Port to bind the Django server to",
+    ),
+    settings: str = typer.Option(
+        "base",
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (e.g., 'base', 'qe')",
+    ),
+):
+    """
+    Run a Django project with manage.py runserver.
+
+    If a frontend directory exists, it will be run automatically alongside the Django server.
+
+    Examples:
+        dbx project run myproject
+        dbx project run myproject --settings qe
+        dbx project run myproject -s qe --port 8080
+    """
+    import os
+    import signal
+
+    # Determine project directory
+    if directory is None:
+        # Use base_dir/projects/ as default
+        config = get_config()
+        base_dir = get_base_dir(config)
+        projects_dir = base_dir / "projects"
+        project_path = projects_dir / name
+    else:
+        project_path = directory / name
+
+    if not project_path.exists():
+        typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
+        raise typer.Exit(code=1)
+
+    # Check if frontend exists
+    frontend_path = project_path / "frontend"
+    has_frontend = frontend_path.exists() and (frontend_path / "package.json").exists()
+
+    typer.echo(f"🚀 Running project '{name}' on http://{host}:{port}")
+
+    # Set up environment
+    env = os.environ.copy()
+    settings_path = f"settings.{settings}"
+    env["DJANGO_SETTINGS_MODULE"] = f"{name}.{settings_path}"
+    env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
+    typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
+
+    if has_frontend:
+        # Ensure frontend is installed
+        typer.echo("📦 Checking frontend dependencies...")
+        try:
+            _install_npm(name, directory=project_path.parent)
+        except Exception as e:
+            typer.echo(f"⚠️  Frontend installation check failed: {e}", err=True)
+            # Continue anyway - frontend might already be installed
+
+        # Start frontend process in background
+        typer.echo("🎨 Starting frontend development server...")
+        frontend_proc = subprocess.Popen(
+            ["npm", "run", "watch"],
+            cwd=frontend_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        # Handle CTRL-C to kill both processes
+        def signal_handler(signum, frame):
+            typer.echo("\n🛑 Stopping servers...")
+            frontend_proc.terminate()
+            raise KeyboardInterrupt
+
+        signal.signal(signal.SIGINT, signal_handler)
+
+        try:
+            typer.echo("🌐 Starting Django development server...")
+            subprocess.run(
+                [sys.executable, "manage.py", "runserver", f"{host}:{port}"],
+                cwd=project_path,
+                env=env,
+                check=True,
+            )
+        except KeyboardInterrupt:
+            typer.echo("\n✅ Servers stopped")
+        finally:
+            if frontend_proc.poll() is None:
+                frontend_proc.terminate()
+                frontend_proc.wait()
+    else:
+        # No frontend - just run Django
+        try:
+            typer.echo("🌐 Starting Django development server...")
+            subprocess.run(
+                [sys.executable, "manage.py", "runserver", f"{host}:{port}"],
+                cwd=project_path,
+                env=env,
+                check=True,
+            )
+        except KeyboardInterrupt:
+            typer.echo("\n✅ Server stopped")
+
+
 def _install_npm(
     project_name: str,
     frontend_dir: str = "frontend",
