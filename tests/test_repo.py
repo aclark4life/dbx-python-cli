@@ -54,6 +54,45 @@ def test_repo_help():
     assert "Repository management commands" in result.stdout
 
 
+def test_repo_list_no_repos():
+    """Test that 'dbx repo -l' shows message when no repos are cloned."""
+    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+            mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
+            mock_find.return_value = []
+            result = runner.invoke(app, ["repo", "-l"])
+            assert result.exit_code == 0
+            assert "No repositories found" in result.stdout
+            assert "/tmp/test" in result.stdout
+
+
+def test_repo_list_with_repos():
+    """Test that 'dbx repo -l' lists all cloned repositories."""
+    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+            mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
+            mock_find.return_value = [
+                {"group": "django", "name": "django"},
+                {"group": "pymongo", "name": "mongo-python-driver"},
+            ]
+            result = runner.invoke(app, ["repo", "-l"])
+            assert result.exit_code == 0
+            assert "Cloned repositories:" in result.stdout
+            assert "[django] django" in result.stdout
+            assert "[pymongo] mongo-python-driver" in result.stdout
+
+
+def test_repo_list_long_form():
+    """Test that 'dbx repo --list' works."""
+    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+            mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
+            mock_find.return_value = []
+            result = runner.invoke(app, ["repo", "--list"])
+            assert result.exit_code == 0
+            assert "No repositories found" in result.stdout
+
+
 def test_repo_init_creates_config(tmp_path):
     """Test that init creates a config file."""
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:

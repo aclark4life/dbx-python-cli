@@ -68,3 +68,58 @@ def test_verbose_flag_with_install_command():
             result = runner.invoke(app, ["-v", "install", "--list"])
             assert result.exit_code == 0
             assert "[verbose]" in result.stdout
+
+
+def test_list_flag_no_repos():
+    """Test that the -l flag shows message when no repos are cloned."""
+    from unittest.mock import patch
+
+    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+            mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
+            mock_find.return_value = []
+            result = runner.invoke(app, ["-l"])
+            assert result.exit_code == 0
+            assert "No repositories found" in result.stdout
+            assert "/tmp/test" in result.stdout
+
+
+def test_list_flag_with_repos():
+    """Test that the -l flag lists all cloned repositories."""
+    from unittest.mock import patch
+
+    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+            mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
+            mock_find.return_value = [
+                {"group": "django", "name": "django"},
+                {"group": "pymongo", "name": "mongo-python-driver"},
+            ]
+            result = runner.invoke(app, ["-l"])
+            assert result.exit_code == 0
+            assert "Cloned repositories:" in result.stdout
+            assert "[django] django" in result.stdout
+            assert "[pymongo] mongo-python-driver" in result.stdout
+
+
+def test_list_flag_short_form():
+    """Test that the -l short form works."""
+    from unittest.mock import patch
+
+    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+            mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
+            mock_find.return_value = []
+            result = runner.invoke(app, ["-l"])
+            assert result.exit_code == 0
+            assert "No repositories found" in result.stdout
+
+
+def test_list_flag_in_help():
+    """Test that the -l flag appears in help."""
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    output = strip_ansi(result.stdout)
+    assert "--list" in output
+    assert "-l" in output
+    assert "List all cloned repositories" in output
