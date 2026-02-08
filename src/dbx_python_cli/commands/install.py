@@ -281,15 +281,37 @@ def install_callback(
             typer.echo("\nUsage: dbx install <repo-name> --show-options")
             raise typer.Exit(1)
 
-        # Find the repository
-        repo = find_repo_by_name(repo_name, base_dir)
-        if not repo:
-            typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
-            typer.echo("\nUse 'dbx install --list' to see available repositories")
-            raise typer.Exit(1)
+        # Find the repository, optionally filtering by group
+        if group:
+            # Look for repo in the specified group
+            group_path = base_dir / group
+            if not group_path.exists():
+                typer.echo(
+                    f"❌ Error: Group '{group}' not found in {base_dir}", err=True
+                )
+                raise typer.Exit(1)
 
-        repo_path = repo["path"]
-        repo_group = repo["group"]
+            repo_path = group_path / repo_name
+            if not repo_path.exists() or not (repo_path / ".git").exists():
+                typer.echo(
+                    f"❌ Error: Repository '{repo_name}' not found in group '{group}'",
+                    err=True,
+                )
+                typer.echo("\nUse 'dbx install --list' to see available repositories")
+                raise typer.Exit(1)
+
+            repo_group = group
+        else:
+            # Find the repository across all groups
+            repo = find_repo_by_name(repo_name, base_dir)
+            if not repo:
+                typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
+                typer.echo("\nUse 'dbx install --list' to see available repositories")
+                raise typer.Exit(1)
+
+            repo_path = repo["path"]
+            repo_group = repo["group"]
+
         install_dirs = get_install_dirs(config, repo_group, repo_name)
 
         if install_dirs:
