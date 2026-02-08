@@ -240,6 +240,11 @@ def install_callback(
         "--show-options",
         help="Show available extras and dependency groups for the repository",
     ),
+    repo_group: Optional[str] = typer.Option(
+        None,
+        "-G",
+        help="Specify which group to use when repo exists in multiple groups (for single repo operations)",
+    ),
 ):
     """Install dependencies in a cloned repository using uv pip install."""
     # If a subcommand was invoked, don't run this logic
@@ -274,16 +279,8 @@ def install_callback(
 
     # Handle --show-options flag
     if show_options:
-        if not repo_name:
-            typer.echo(
-                "❌ Error: Repository name required with --show-options", err=True
-            )
-            typer.echo("\nUsage: dbx install <repo-name> --show-options")
-            raise typer.Exit(1)
-
-        # Find the repository, optionally filtering by group
-        if group:
-            # Look for repo in the specified group
+        # Case 1: Show options for all repos in a group (-g <group>)
+        if group and not repo_name:
             group_path = base_dir / group
             if not group_path.exists():
                 typer.echo(
@@ -291,16 +288,90 @@ def install_callback(
                 )
                 raise typer.Exit(1)
 
+            # Find all repos in this group
+            all_repos = find_all_repos(base_dir)
+            group_repos = [r for r in all_repos if r["group"] == group]
+
+            if not group_repos:
+                typer.echo(
+                    f"❌ Error: No repositories found in group '{group}'", err=True
+                )
+                typer.echo(f"\nClone repositories using: dbx repo clone -g {group}")
+                raise typer.Exit(1)
+
+            typer.echo(f"📦 Showing options for all repositories in group '{group}':\n")
+
+            for repo in group_repos:
+                repo_path = repo["path"]
+                repo_name = repo["name"]
+                install_dirs = get_install_dirs(config, group, repo_name)
+
+                if install_dirs:
+                    # Monorepo
+                    typer.echo(
+                        f"  {repo_name} (monorepo with {len(install_dirs)} packages):"
+                    )
+                    for install_dir in install_dirs:
+                        work_dir = repo_path / install_dir
+                        options = get_package_options(work_dir)
+                        typer.echo(f"    Package: {install_dir}")
+                        if options["extras"]:
+                            typer.echo(f"      Extras: {', '.join(options['extras'])}")
+                        else:
+                            typer.echo("      Extras: (none)")
+                        if options["dependency_groups"]:
+                            typer.echo(
+                                f"      Dependency groups: {', '.join(options['dependency_groups'])}"
+                            )
+                        else:
+                            typer.echo("      Dependency groups: (none)")
+                else:
+                    # Regular repo
+                    options = get_package_options(repo_path)
+                    typer.echo(f"  {repo_name}:")
+                    if options["extras"]:
+                        typer.echo(f"    Extras: {', '.join(options['extras'])}")
+                    else:
+                        typer.echo("    Extras: (none)")
+                    if options["dependency_groups"]:
+                        typer.echo(
+                            f"    Dependency groups: {', '.join(options['dependency_groups'])}"
+                        )
+                    else:
+                        typer.echo("    Dependency groups: (none)")
+                typer.echo()
+
+            return
+
+        # Case 2: Show options for a single repo
+        if not repo_name:
+            typer.echo(
+                "❌ Error: Repository name required with --show-options", err=True
+            )
+            typer.echo("\nUsage: dbx install <repo-name> --show-options")
+            typer.echo("   or: dbx install --show-options -g <group>")
+            raise typer.Exit(1)
+
+        # Find the repository, optionally filtering by -G flag
+        if repo_group:
+            # Look for repo in the specified group (-G flag)
+            group_path = base_dir / repo_group
+            if not group_path.exists():
+                typer.echo(
+                    f"❌ Error: Group '{repo_group}' not found in {base_dir}", err=True
+                )
+                raise typer.Exit(1)
+
             repo_path = group_path / repo_name
             if not repo_path.exists() or not (repo_path / ".git").exists():
                 typer.echo(
-                    f"❌ Error: Repository '{repo_name}' not found in group '{group}'",
+                    f"❌ Error: Repository '{repo_name}' not found in group '{repo_group}'",
                     err=True,
                 )
                 typer.echo("\nUse 'dbx install --list' to see available repositories")
                 raise typer.Exit(1)
 
-            repo_group = group
+            selected_group = repo_group
         else:
             # Find the repository across all groups
             repo = find_repo_by_name(repo_name, base_dir)
@@ -310,9 +381,9 @@ def install_callback(
                 raise typer.Exit(1)
 
             repo_path = repo["path"]
-            repo_group = repo["group"]
+            selected_group = repo["group"]
 
-        install_dirs = get_install_dirs(config, repo_group, repo_name)
+        install_dirs = get_install_dirs(config, selected_group, repo_name)
 
         if install_dirs:
             # Monorepo: show options for each package

@@ -554,7 +554,7 @@ docs = ["sphinx"]
 
 
 def test_install_show_options_with_group(tmp_path):
-    """Test --show-options with -g flag to specify group."""
+    """Test --show-options with -G flag to specify group for single repo."""
     # Create mock repository structure with same repo in two groups
     group1_dir = tmp_path / "pymongo"
     group2_dir = tmp_path / "langchain"
@@ -589,20 +589,75 @@ langchain = ["langchain"]
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
 
-            # Show options for pymongo group
+            # Show options for pymongo group using -G flag
             result = runner.invoke(
                 app,
-                ["install", "mongo-python-driver", "--show-options", "-g", "pymongo"],
+                ["install", "mongo-python-driver", "--show-options", "-G", "pymongo"],
             )
             assert result.exit_code == 0
             assert "📦 mongo-python-driver" in result.stdout
             assert "Extras: aws, test" in result.stdout
 
-            # Show options for langchain group
+            # Show options for langchain group using -G flag
             result = runner.invoke(
                 app,
-                ["install", "mongo-python-driver", "--show-options", "-g", "langchain"],
+                ["install", "mongo-python-driver", "--show-options", "-G", "langchain"],
             )
             assert result.exit_code == 0
             assert "📦 mongo-python-driver" in result.stdout
             assert "Extras: langchain, test" in result.stdout
+
+
+def test_install_show_options_all_repos_in_group(tmp_path):
+    """Test --show-options with -g flag to show all repos in a group."""
+    # Create mock repository structure with multiple repos in a group
+    group_dir = tmp_path / "pymongo"
+    repo1_dir = group_dir / "mongo-python-driver"
+    repo2_dir = group_dir / "motor"
+    repo1_dir.mkdir(parents=True)
+    repo2_dir.mkdir(parents=True)
+    (repo1_dir / ".git").mkdir()
+    (repo2_dir / ".git").mkdir()
+
+    # Create pyproject.toml for each repo
+    pyproject1 = """
+[project]
+name = "pymongo"
+
+[project.optional-dependencies]
+test = ["pytest"]
+aws = ["boto3"]
+
+[dependency-groups]
+dev = ["ruff"]
+"""
+    pyproject2 = """
+[project]
+name = "motor"
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[dependency-groups]
+dev = ["ruff"]
+docs = ["sphinx"]
+"""
+    (repo1_dir / "pyproject.toml").write_text(pyproject1)
+    (repo2_dir / "pyproject.toml").write_text(pyproject2)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
+            mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+
+            # Show options for all repos in pymongo group
+            result = runner.invoke(app, ["install", "--show-options", "-g", "pymongo"])
+            assert result.exit_code == 0
+            assert (
+                "Showing options for all repositories in group 'pymongo'"
+                in result.stdout
+            )
+            assert "mongo-python-driver:" in result.stdout
+            assert "motor:" in result.stdout
+            assert "Extras: aws, test" in result.stdout
+            assert "Dependency groups: dev" in result.stdout
+            assert "Dependency groups: dev, docs" in result.stdout

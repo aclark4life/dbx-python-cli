@@ -160,20 +160,36 @@ Before installing, you can see what extras and dependency groups are available f
        Extras: (none)
        Dependency groups: dev
 
-   # Show options for a specific group (when repo exists in multiple groups)
-   $ dbx install mongo-python-driver --show-options -g pymongo
+   # Show options for all repos in a group
+   $ dbx install --show-options -g pymongo
+
+   📦 Showing options for all repositories in group 'pymongo':
+
+     mongo-python-driver:
+       Extras: aws, encryption, test
+       Dependency groups: dev, docs
+
+     motor:
+       Extras: test
+       Dependency groups: dev
+
+   # Show options for a specific group when repo exists in multiple groups
+   $ dbx install mongo-python-driver --show-options -G langchain
 
    📦 mongo-python-driver
 
-     Extras: aws, encryption, test
-     Dependency groups: dev, docs
+     Extras: langchain, test
+     Dependency groups: (none)
 
 The ``--show-options`` flag parses the ``pyproject.toml`` file(s) to extract:
 
 - **Extras** from ``[project.optional-dependencies]``
 - **Dependency groups** from ``[dependency-groups]`` (PEP 735)
 
-You can combine ``--show-options`` with ``-g`` to specify which group's version of a repository to inspect when the same repository exists in multiple groups.
+You can combine ``--show-options`` with:
+
+- ``-g <group>`` to show options for all repositories in a group
+- ``-G <group>`` to specify which group's version of a repository to inspect when the same repository exists in multiple groups
 
 Install Command Options
 -----------------------
