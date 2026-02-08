@@ -1,0 +1,19 @@
+[project]
+name = "example_project (overwritten by `dm project`)"
+version = "0.1.0"
+description = "An example Python project"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Your Name", email = "" },
+]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+]
+dependencies = [
+  "numpy>=1.19.5",
+  "requests>=2.25.1",
+]

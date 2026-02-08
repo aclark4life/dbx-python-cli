@@ -37,7 +37,10 @@ dev = [
 dbx = "dbx_python_cli.cli:app"
 
 [tool.setuptools.package-data]
-dbx_python_cli = ["config.toml"]
+dbx_python_cli = [
+    "config.toml",
+    "templates/**/*",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
