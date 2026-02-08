@@ -210,7 +210,24 @@ def add_project(
             if reason:
                 typer.echo(f"   Reason: {reason}", err=True)
 
+            # Also show stdout if available for debugging
+            if result.stdout:
+                typer.echo(f"   Output: {result.stdout.strip()}", err=True)
+
             raise typer.Exit(code=result.returncode)
+
+    # Verify the project directory was created
+    if not project_path.exists():
+        typer.echo(
+            f"❌ Project directory was not created at {project_path}. "
+            "The django-admin command may have failed silently.",
+            err=True,
+        )
+        if result.stdout:
+            typer.echo(f"   django-admin stdout: {result.stdout.strip()}", err=True)
+        if result.stderr:
+            typer.echo(f"   django-admin stderr: {result.stderr.strip()}", err=True)
+        raise typer.Exit(code=1)
 
     # Add pyproject.toml after project creation
     _create_pyproject_toml(project_path, name, settings_path)
