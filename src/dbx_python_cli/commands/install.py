@@ -371,6 +371,20 @@ def install_callback(
             typer.echo("\nRun 'dbx install --list' to see available repositories")
             raise typer.Exit(1)
 
+        # Check if repo exists in multiple groups
+        all_repos = find_all_repos(base_dir)
+        matching_repos = [r for r in all_repos if r["name"] == repo_name]
+        if len(matching_repos) > 1:
+            groups = [r["group"] for r in matching_repos]
+            typer.echo(
+                f"⚠️  Warning: Repository '{repo_name}' found in multiple groups: {', '.join(groups)}",
+                err=True,
+            )
+            typer.echo(
+                f"⚠️  Using '{repo['group']}' group. Use -g to specify a different group.\n",
+                err=True,
+            )
+
         repo_path = Path(repo["path"])
         # Default to repo's own group
         group_path = repo_path.parent

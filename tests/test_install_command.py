@@ -407,3 +407,38 @@ def test_install_group_no_repos(tmp_path):
             # Error messages go to stdout in typer
             output = result.stdout + result.stderr
             assert "No repositories found" in output or result.exit_code == 1
+
+
+def test_install_duplicate_repo_warning(tmp_path):
+    """Test warning when repo exists in multiple groups."""
+    # Create same repo in two different groups
+    pymongo_group = tmp_path / "pymongo"
+    langchain_group = tmp_path / "langchain"
+
+    pymongo_repo = pymongo_group / "mongo-python-driver"
+    langchain_repo = langchain_group / "mongo-python-driver"
+
+    pymongo_repo.mkdir(parents=True)
+    langchain_repo.mkdir(parents=True)
+
+    (pymongo_repo / ".git").mkdir()
+    (langchain_repo / ".git").mkdir()
+    (pymongo_repo / "setup.py").write_text("# setup.py")
+    (langchain_repo / "setup.py").write_text("# setup.py")
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
+            with patch("subprocess.run") as mock_run:
+                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                mock_result = MagicMock()
+                mock_result.returncode = 0
+                mock_run.return_value = mock_result
+
+                result = runner.invoke(app, ["install", "mongo-python-driver"])
+                assert result.exit_code == 0
+
+                # Check for warning about duplicate repos
+                output = result.stdout + result.stderr
+                assert "found in multiple groups" in output
+                assert "pymongo" in output or "langchain" in output
+                assert "Use -g to specify" in output
