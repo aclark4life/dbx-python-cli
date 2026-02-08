@@ -77,9 +77,7 @@ def test_callback(
             else:
                 typer.echo(f"Base directory: {base_dir}\n")
                 typer.echo("No repositories found.")
-                typer.echo(
-                    "Run 'dbx clone -g <group>' to clone repositories first."
-                )
+                typer.echo("Run 'dbx clone -g <group>' to clone repositories first.")
             raise typer.Exit(0)
 
         # Require repo_name if not listing

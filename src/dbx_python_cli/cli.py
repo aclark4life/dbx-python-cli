@@ -122,7 +122,9 @@ def clone(
 
         # Get repositories for the group
         if group not in groups:
-            typer.echo(f"❌ Error: Group '{group}' not found in configuration.", err=True)
+            typer.echo(
+                f"❌ Error: Group '{group}' not found in configuration.", err=True
+            )
             typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
             raise typer.Exit(1)
 
@@ -191,7 +193,9 @@ def clone(
                     if len(parts) == 2:
                         repo_part = parts[1].split("/", 1)
                         if len(repo_part) == 2:
-                            clone_url = f"{parts[0]}github.com/{fork_user}/{repo_part[1]}"
+                            clone_url = (
+                                f"{parts[0]}github.com/{fork_user}/{repo_part[1]}"
+                            )
             else:
                 clone_url = repo_url
                 upstream_url = None
