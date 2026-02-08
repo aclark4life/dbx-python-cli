@@ -7,6 +7,7 @@ from dbx_python_cli.commands import env, install, just, repo, test
 app = typer.Typer(
     help="A command line tool for DBX Python development tasks. AI first. De-siloing happens here.",
     context_settings={"help_option_names": ["-h", "--help"]},
+    no_args_is_help=True,
 )
 
 # Add subcommands
@@ -63,7 +64,7 @@ def init(
         raise typer.Exit(1)
 
 
-@app.callback()
+@app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
     version: bool = typer.Option(
@@ -79,10 +80,39 @@ def main(
         "-v",
         help="Show more detailed output.",
     ),
+    list_repos: bool = typer.Option(
+        False,
+        "--list",
+        "-l",
+        help="List all cloned repositories",
+    ),
 ):
     """A command line tool for DBX Python development tasks. AI first. De-siloing happens here."""
     # Store verbose flag in context for subcommands to access
     ctx.obj = {"verbose": verbose}
+
+    # Handle list repos flag
+    if list_repos:
+        from dbx_python_cli.commands.repo_utils import find_all_repos
+
+        config = repo.get_config()
+        base_dir = repo.get_base_dir(config)
+
+        repos = find_all_repos(base_dir)
+
+        if not repos:
+            typer.echo("No repositories found.")
+            typer.echo(f"\nBase directory: {base_dir}")
+            typer.echo("\nClone repositories using: dbx repo clone -g <group>")
+            raise typer.Exit(0)
+
+        typer.echo("Cloned repositories:\n")
+        # Sort by group then name
+        for repo_info in sorted(repos, key=lambda r: (r["group"], r["name"])):
+            typer.echo(f"  [{repo_info['group']}] {repo_info['name']}")
+
+        typer.echo(f"\nBase directory: {base_dir}")
+        raise typer.Exit(0)
 
 
 if __name__ == "__main__":
