@@ -1,5 +1,6 @@
 """Tests for the repo command module."""
 
+import subprocess
 from unittest.mock import patch
 
 import pytest
@@ -379,3 +380,222 @@ repos = [
             ]
             assert len(clone_calls) == 1
             assert "aclark4life/mongo-python-driver.git" in clone_calls[0][0][0][2]
+
+
+def test_repo_sync_help():
+    """Test that the repo sync help command works."""
+    result = runner.invoke(app, ["repo", "sync", "--help"])
+    assert result.exit_code == 0
+    assert "Sync repository with upstream" in result.stdout
+
+
+def test_repo_sync_single_repo(tmp_path, temp_repos_dir):
+    """Test syncing a single repository."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    # Create mock repository
+    group_dir = temp_repos_dir / "test"
+    repo_dir = group_dir / "mongo-python-driver"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.repo.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+
+            # Mock git commands
+            def mock_run_side_effect(*args, **kwargs):
+                cmd = args[0]
+                if "remote" in cmd and "add" not in cmd:
+                    # git remote command (list remotes)
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="origin\nupstream\n", stderr=""
+                    )
+                    return result
+                elif "branch" in cmd and "--show-current" in cmd:
+                    # git branch --show-current
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="main\n", stderr=""
+                    )
+                    return result
+                else:
+                    # Other commands (fetch, rebase)
+                    result = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                    return result
+
+            mock_run.side_effect = mock_run_side_effect
+
+            result = runner.invoke(app, ["repo", "sync", "mongo-python-driver"])
+            assert result.exit_code == 0
+            assert "Syncing mongo-python-driver" in result.stdout
+            assert "synced successfully" in result.stdout
+
+            # Verify git commands were called
+            calls = mock_run.call_args_list
+            # Should have: remote, branch --show-current, fetch, rebase
+            assert len(calls) >= 4
+
+
+def test_repo_sync_group(tmp_path, temp_repos_dir):
+    """Test syncing all repositories in a group."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+    "git@github.com:mongodb/specifications.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    # Create mock repositories
+    group_dir = temp_repos_dir / "test"
+    for repo_name in ["mongo-python-driver", "specifications"]:
+        repo_dir = group_dir / repo_name
+        repo_dir.mkdir(parents=True)
+        (repo_dir / ".git").mkdir()
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.repo.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+
+            # Mock git commands
+            def mock_run_side_effect(*args, **kwargs):
+                cmd = args[0]
+                if "remote" in cmd and "add" not in cmd:
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="origin\nupstream\n", stderr=""
+                    )
+                    return result
+                elif "branch" in cmd and "--show-current" in cmd:
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="main\n", stderr=""
+                    )
+                    return result
+                else:
+                    result = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                    return result
+
+            mock_run.side_effect = mock_run_side_effect
+
+            result = runner.invoke(app, ["repo", "sync", "-g", "test"])
+            assert result.exit_code == 0
+            assert "Syncing 2 repository(ies)" in result.stdout
+            assert "mongo-python-driver" in result.stdout
+            assert "specifications" in result.stdout
+
+
+def test_repo_sync_no_upstream_remote(tmp_path, temp_repos_dir):
+    """Test syncing a repository without upstream remote."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    # Create mock repository
+    group_dir = temp_repos_dir / "test"
+    repo_dir = group_dir / "mongo-python-driver"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.repo.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+
+            # Mock git remote to return only origin (no upstream)
+            def mock_run_side_effect(*args, **kwargs):
+                cmd = args[0]
+                if "remote" in cmd and "add" not in cmd:
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="origin\n", stderr=""
+                    )
+                    return result
+                else:
+                    result = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                    return result
+
+            mock_run.side_effect = mock_run_side_effect
+
+            result = runner.invoke(app, ["repo", "sync", "mongo-python-driver"])
+            assert result.exit_code == 0
+            # The warning message goes to stderr
+            output = result.stdout + result.stderr
+            assert "No 'upstream' remote found" in output
+
+
+def test_repo_sync_list_repos(tmp_path, temp_repos_dir):
+    """Test listing repositories for sync."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = []
+"""
+    config_path.write_text(config_content)
+
+    # Create mock repository
+    group_dir = temp_repos_dir / "test"
+    repo_dir = group_dir / "mongo-python-driver"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        result = runner.invoke(app, ["repo", "sync", "-l"])
+        assert result.exit_code == 0
+        assert "Available repositories" in result.stdout
+        assert "mongo-python-driver" in result.stdout
+
+
+def test_repo_sync_no_args_shows_error(tmp_path, temp_repos_dir):
+    """Test that repo sync without args shows error."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = []
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        result = runner.invoke(app, ["repo", "sync"])
+        assert result.exit_code == 1
+        output = result.stdout + result.stderr
+        assert "Repository name or group required" in output

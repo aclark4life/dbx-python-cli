@@ -94,6 +94,56 @@ With this configuration, you can simply run:
    # Or override the config
    dbx repo clone -g pymongo --fork different-user
 
+Sync Fork with Upstream
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+After cloning with the fork workflow, you can easily sync your local repository with upstream changes:
+
+.. code-block:: bash
+
+   # Sync a specific repository
+   dbx repo sync mongo-python-driver
+
+   # Sync all repositories in a group
+   dbx repo sync -g pymongo
+
+   # List available repositories
+   dbx repo sync -l
+
+This command will:
+
+1. Fetch the latest changes from the ``upstream`` remote
+2. Rebase your current branch on top of ``upstream/<current-branch>``
+3. Keep your local changes on top of the latest upstream code
+
+**Example workflow:**
+
+.. code-block:: bash
+
+   # Clone your fork with upstream configured
+   dbx repo clone -g pymongo --fork aclark4life
+
+   # Make some changes in your fork
+   cd ~/Developer/mongodb/pymongo/mongo-python-driver
+   git checkout -b my-feature
+   # ... make changes ...
+   git commit -am "Add new feature"
+
+   # Sync with upstream to get latest changes
+   dbx repo sync mongo-python-driver
+   # Fetches from upstream and rebases your branch
+
+   # Push to your fork
+   git push origin my-feature
+
+**Notes:**
+
+- The ``sync`` command requires an ``upstream`` remote to be configured
+- If you cloned with ``--fork``, the upstream remote is automatically set up
+- The command will rebase your current branch on ``upstream/<current-branch>``
+- If there are conflicts, you'll need to resolve them manually
+- Works with any repository that has an ``upstream`` remote, not just forks
+
 **Available Groups (Default):**
 
 - ``pymongo`` - MongoDB Python driver repositories (PyMongo, Specifications)
@@ -136,6 +186,7 @@ You can add your own custom groups by editing the configuration file.
 - Clones all repositories in a group to the configured base directory
 - Skips repositories that already exist locally
 - Fork-based workflow support with automatic upstream remote configuration
+- Sync command to fetch from upstream and rebase current branch
 - Provides clear progress feedback with emoji indicators
 - Handles errors gracefully and continues with remaining repositories
 - Easy to add custom repository groups

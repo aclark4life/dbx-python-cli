@@ -251,3 +251,207 @@ def clone(
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
+
+
+@app.command()
+def sync(
+    ctx: typer.Context,
+    repo_name: str = typer.Argument(
+        None,
+        help="Repository name to sync (e.g., mongo-python-driver)",
+    ),
+    group: str = typer.Option(
+        None,
+        "--group",
+        "-g",
+        help="Sync all repositories in a group",
+    ),
+    list_repos: bool = typer.Option(
+        False,
+        "--list",
+        "-l",
+        help="List all available repositories",
+    ),
+):
+    """Sync repository with upstream by fetching and rebasing."""
+    from dbx_python_cli.commands.repo_utils import find_all_repos, find_repo_by_name
+
+    # Get verbose flag from parent context
+    verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+
+    try:
+        config = get_config()
+        base_dir = get_base_dir(config)
+        groups = get_repo_groups(config)
+
+        if verbose:
+            typer.echo(f"[verbose] Using base directory: {base_dir}")
+            typer.echo(f"[verbose] Available groups: {list(groups.keys())}\n")
+
+        # Handle --list flag
+        if list_repos:
+            repos = find_all_repos(base_dir)
+            if not repos:
+                typer.echo("No repositories found.")
+                typer.echo("\nClone repositories using: dbx repo clone -g <group>")
+                return
+
+            typer.echo(f"Available repositories in {base_dir}:\n")
+            for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
+                typer.echo(f"  [{repo['group']}] {repo['name']}")
+            return
+
+        # Handle group sync
+        if group:
+            if group not in groups:
+                typer.echo(
+                    f"❌ Error: Group '{group}' not found in configuration.", err=True
+                )
+                typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
+                raise typer.Exit(1)
+
+            # Find all repos in the group
+            all_repos = find_all_repos(base_dir)
+            group_repos = [r for r in all_repos if r["group"] == group]
+
+            if not group_repos:
+                typer.echo(
+                    f"❌ Error: No repositories found for group '{group}'.", err=True
+                )
+                typer.echo(f"\nClone repositories using: dbx repo clone -g {group}")
+                raise typer.Exit(1)
+
+            typer.echo(
+                f"Syncing {len(group_repos)} repository(ies) in group '{group}':\n"
+            )
+
+            for repo in group_repos:
+                _sync_repository(repo["path"], repo["name"], verbose)
+
+            typer.echo(f"\n✨ Done! Synced {len(group_repos)} repository(ies)")
+            return
+
+        # Handle single repo sync
+        if not repo_name:
+            typer.echo("❌ Error: Repository name or group required", err=True)
+            typer.echo("\nUsage: dbx repo sync <repo-name>")
+            typer.echo("   or: dbx repo sync -g <group>")
+            typer.echo("   or: dbx repo sync --list")
+            raise typer.Exit(1)
+
+        # Find the repository
+        repo = find_repo_by_name(repo_name, base_dir)
+        if not repo:
+            typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
+            typer.echo("\nUse 'dbx repo sync --list' to see available repositories")
+            raise typer.Exit(1)
+
+        _sync_repository(repo["path"], repo["name"], verbose)
+
+    except Exception as e:
+        typer.echo(f"❌ Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+def _sync_repository(repo_path: Path, repo_name: str, verbose: bool = False):
+    """Sync a single repository with upstream."""
+    typer.echo(f"  🔄 Syncing {repo_name}...")
+
+    if verbose:
+        typer.echo(f"  [verbose] Repository path: {repo_path}")
+
+    # Check if upstream remote exists
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_path), "remote"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        remotes = result.stdout.strip().split("\n")
+
+        if "upstream" not in remotes:
+            typer.echo(
+                f"  ⚠️  {repo_name}: No 'upstream' remote found (skipping)",
+                err=True,
+            )
+            return
+
+    except subprocess.CalledProcessError as e:
+        typer.echo(
+            f"  ❌ {repo_name}: Failed to check remotes: {e.stderr}",
+            err=True,
+        )
+        return
+
+    # Get current branch
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_path), "branch", "--show-current"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        current_branch = result.stdout.strip()
+
+        if not current_branch:
+            typer.echo(
+                f"  ⚠️  {repo_name}: Not on a branch (detached HEAD state)",
+                err=True,
+            )
+            return
+
+        if verbose:
+            typer.echo(f"  [verbose] Current branch: {current_branch}")
+
+    except subprocess.CalledProcessError as e:
+        typer.echo(
+            f"  ❌ {repo_name}: Failed to get current branch: {e.stderr}",
+            err=True,
+        )
+        return
+
+    # Fetch from upstream
+    try:
+        if verbose:
+            typer.echo("  [verbose] Fetching from upstream...")
+
+        subprocess.run(
+            ["git", "-C", str(repo_path), "fetch", "upstream"],
+            check=True,
+            capture_output=not verbose,
+            text=True,
+        )
+
+    except subprocess.CalledProcessError as e:
+        typer.echo(
+            f"  ❌ {repo_name}: Failed to fetch from upstream: {e.stderr if not verbose else ''}",
+            err=True,
+        )
+        return
+
+    # Rebase on upstream/<current_branch>
+    try:
+        if verbose:
+            typer.echo(f"  [verbose] Rebasing on upstream/{current_branch}...")
+
+        subprocess.run(
+            ["git", "-C", str(repo_path), "rebase", f"upstream/{current_branch}"],
+            check=True,
+            capture_output=not verbose,
+            text=True,
+        )
+
+        typer.echo(f"  ✅ {repo_name} synced successfully")
+
+    except subprocess.CalledProcessError as e:
+        typer.echo(
+            f"  ❌ {repo_name}: Failed to rebase on upstream/{current_branch}",
+            err=True,
+        )
+        if not verbose and e.stderr:
+            typer.echo(f"     {e.stderr.strip()}", err=True)
+        typer.echo(
+            f"     You may need to resolve conflicts manually in {repo_path}",
+            err=True,
+        )
