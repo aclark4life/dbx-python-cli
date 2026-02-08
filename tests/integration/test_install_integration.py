@@ -1,25 +1,13 @@
 """Integration tests for install commands."""
 
-import shutil
 import subprocess
 from unittest.mock import patch
 
-import pytest
 from typer.testing import CliRunner
 
 from dbx_python_cli.cli import app
 
 runner = CliRunner()
-
-
-# Check if uv is available
-def is_uv_available():
-    """Check if uv is installed and available."""
-    return shutil.which("uv") is not None
-
-
-# Skip all tests in this module if uv is not available
-pytestmark = pytest.mark.skipif(not is_uv_available(), reason="uv is not installed")
 
 
 def test_install_real_package(tmp_path, test_git_repo):
@@ -64,6 +52,10 @@ repos = [
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["install", "test_repo"])
+        if result.exit_code != 0:
+            print(f"STDOUT: {result.stdout}")
+            print(f"STDERR: {result.stderr}")
+            print(f"Exception: {result.exception}")
         assert result.exit_code == 0
         assert "Installing test_repo" in result.stdout or "Installing" in result.stdout
 
