@@ -96,29 +96,31 @@ def test_install_basic_success(tmp_path):
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
-            with patch("subprocess.run") as mock_run:
-                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+            with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
+                with patch("subprocess.run") as mock_run:
+                    mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                    mock_venv.return_value = ("python", "system")
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["install", "mongo-python-driver"])
-                assert result.exit_code == 0
-                assert "Installing dependencies" in result.stdout
-                assert "Package installed successfully" in result.stdout
+                    result = runner.invoke(app, ["install", "mongo-python-driver"])
+                    assert result.exit_code == 0
+                    assert "Installing dependencies" in result.stdout
+                    assert "Package installed successfully" in result.stdout
 
-                # Verify uv pip install was called
-                mock_run.assert_called_once()
-                call_args = mock_run.call_args
-                assert call_args[0][0] == [
-                    "uv",
-                    "pip",
-                    "install",
-                    "--python",
-                    "python",
-                    "-e",
-                    ".",
-                ]
+                    # Verify uv pip install was called
+                    mock_run.assert_called_once()
+                    call_args = mock_run.call_args
+                    assert call_args[0][0] == [
+                        "uv",
+                        "pip",
+                        "install",
+                        "--python",
+                        "python",
+                        "-e",
+                        ".",
+                    ]
 
 
 def test_install_with_extras(tmp_path):
@@ -132,29 +134,31 @@ def test_install_with_extras(tmp_path):
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
-            with patch("subprocess.run") as mock_run:
-                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+            with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
+                with patch("subprocess.run") as mock_run:
+                    mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                    mock_venv.return_value = ("python", "system")
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(
-                    app, ["install", "mongo-python-driver", "-e", "test"]
-                )
-                assert result.exit_code == 0
-                assert "Package installed successfully" in result.stdout
+                    result = runner.invoke(
+                        app, ["install", "mongo-python-driver", "-e", "test"]
+                    )
+                    assert result.exit_code == 0
+                    assert "Package installed successfully" in result.stdout
 
-                # Verify uv pip install was called with extras
-                call_args = mock_run.call_args
-                assert call_args[0][0] == [
-                    "uv",
-                    "pip",
-                    "install",
-                    "--python",
-                    "python",
-                    "-e",
-                    ".[test]",
-                ]
+                    # Verify uv pip install was called with extras
+                    call_args = mock_run.call_args
+                    assert call_args[0][0] == [
+                        "uv",
+                        "pip",
+                        "install",
+                        "--python",
+                        "python",
+                        "-e",
+                        ".[test]",
+                    ]
 
 
 def test_install_with_multiple_extras(tmp_path):
@@ -191,41 +195,48 @@ def test_install_with_groups(tmp_path):
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
-            with patch("subprocess.run") as mock_run:
-                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+            with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
+                with patch("subprocess.run") as mock_run:
+                    mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                    mock_venv.return_value = ("python", "system")
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(
-                    app,
-                    ["install", "mongo-python-driver", "--dependency-groups", "dev"],
-                )
-                assert result.exit_code == 0
-                assert "Package installed successfully" in result.stdout
+                    result = runner.invoke(
+                        app,
+                        [
+                            "install",
+                            "mongo-python-driver",
+                            "--dependency-groups",
+                            "dev",
+                        ],
+                    )
+                    assert result.exit_code == 0
+                    assert "Package installed successfully" in result.stdout
 
-                # Verify both install calls were made (package + dependency group)
-                assert mock_run.call_count == 2
-                # First call: install package
-                assert mock_run.call_args_list[0][0][0] == [
-                    "uv",
-                    "pip",
-                    "install",
-                    "--python",
-                    "python",
-                    "-e",
-                    ".",
-                ]
-                # Second call: install dependency group
-                assert mock_run.call_args_list[1][0][0] == [
-                    "uv",
-                    "pip",
-                    "install",
-                    "--python",
-                    "python",
-                    "--group",
-                    "dev",
-                ]
+                    # Verify both install calls were made (package + dependency group)
+                    assert mock_run.call_count == 2
+                    # First call: install package
+                    assert mock_run.call_args_list[0][0][0] == [
+                        "uv",
+                        "pip",
+                        "install",
+                        "--python",
+                        "python",
+                        "-e",
+                        ".",
+                    ]
+                    # Second call: install dependency group
+                    assert mock_run.call_args_list[1][0][0] == [
+                        "uv",
+                        "pip",
+                        "install",
+                        "--python",
+                        "python",
+                        "--group",
+                        "dev",
+                    ]
 
 
 def test_install_with_extras_and_groups(tmp_path):
@@ -239,27 +250,29 @@ def test_install_with_extras_and_groups(tmp_path):
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
-            with patch("subprocess.run") as mock_run:
-                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+            with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
+                with patch("subprocess.run") as mock_run:
+                    mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                    mock_venv.return_value = ("python", "system")
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(
-                    app,
-                    [
-                        "install",
-                        "mongo-python-driver",
-                        "-e",
-                        "test,aws",
-                        "--dependency-groups",
-                        "dev,test",
-                    ],
-                )
-                assert result.exit_code == 0
+                    result = runner.invoke(
+                        app,
+                        [
+                            "install",
+                            "mongo-python-driver",
+                            "-e",
+                            "test,aws",
+                            "--dependency-groups",
+                            "dev,test",
+                        ],
+                    )
+                    assert result.exit_code == 0
 
-                # Verify install calls
-                assert mock_run.call_count == 3  # 1 for package + 2 for groups
+                    # Verify install calls
+                    assert mock_run.call_count == 3  # 1 for package + 2 for groups
                 # First call: install package with extras
                 assert mock_run.call_args_list[0][0][0] == [
                     "uv",
@@ -331,22 +344,27 @@ def test_install_group_all_repos(tmp_path):
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
-            with patch("subprocess.run") as mock_run:
-                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+            with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
+                with patch("subprocess.run") as mock_run:
+                    mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                    mock_venv.return_value = ("python", "system")
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["install", "-g", "pymongo"])
-                assert result.exit_code == 0
-                assert "Installing all repositories in group 'pymongo'" in result.stdout
-                assert "mongo-python-driver" in result.stdout
-                assert "drivers-evergreen-tools" in result.stdout
-                assert "Installation Summary" in result.stdout
-                assert "Total packages: 2" in result.stdout
+                    result = runner.invoke(app, ["install", "-g", "pymongo"])
+                    assert result.exit_code == 0
+                    assert (
+                        "Installing all repositories in group 'pymongo'"
+                        in result.stdout
+                    )
+                    assert "mongo-python-driver" in result.stdout
+                    assert "drivers-evergreen-tools" in result.stdout
+                    assert "Installation Summary" in result.stdout
+                    assert "Total packages: 2" in result.stdout
 
-                # Verify install was called for both repos
-                assert mock_run.call_count == 2
+                    # Verify install was called for both repos
+                    assert mock_run.call_count == 2
 
 
 def test_install_group_all_repos_with_extras(tmp_path):
@@ -365,20 +383,27 @@ def test_install_group_all_repos_with_extras(tmp_path):
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
-            with patch("subprocess.run") as mock_run:
-                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+            with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
+                with patch("subprocess.run") as mock_run:
+                    mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                    mock_venv.return_value = ("python", "system")
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["install", "-g", "pymongo", "-e", "test"])
-                assert result.exit_code == 0
-                assert "Installing all repositories in group 'pymongo'" in result.stdout
+                    result = runner.invoke(
+                        app, ["install", "-g", "pymongo", "-e", "test"]
+                    )
+                    assert result.exit_code == 0
+                    assert (
+                        "Installing all repositories in group 'pymongo'"
+                        in result.stdout
+                    )
 
-                # Verify install was called with extras for both repos
-                assert mock_run.call_count == 2
-                for call_args in mock_run.call_args_list:
-                    assert ".[test]" in call_args[0][0]
+                    # Verify install was called with extras for both repos
+                    assert mock_run.call_count == 2
+                    for call_args in mock_run.call_args_list:
+                        assert ".[test]" in call_args[0][0]
 
 
 def test_install_group_nonexistent(tmp_path):
