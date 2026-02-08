@@ -33,18 +33,17 @@ def repo_callback(
         formatted_output = format_repos(base_dir, config=config)
 
         if not formatted_output:
+            typer.echo(f"Base directory: {base_dir}\n")
             typer.echo("No repositories found.")
-            typer.echo(f"\nBase directory: {base_dir}")
             typer.echo("\nClone repositories using: dbx repo clone -g <group>")
             raise typer.Exit(0)
 
+        typer.echo(f"Base directory: {base_dir}\n")
         typer.echo("Repository status:\n")
         typer.echo(formatted_output)
         typer.echo(
             "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
         )
-
-        typer.echo(f"\nBase directory: {base_dir}")
         raise typer.Exit(0)
 
 

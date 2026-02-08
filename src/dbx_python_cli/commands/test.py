@@ -69,13 +69,14 @@ def test_callback(
 
             output = list_repos_func(base_dir, config=config)
             if output:
+                typer.echo(f"Base directory: {base_dir}\n")
                 typer.echo(output)
                 typer.echo(
                     "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
                 )
-                typer.echo(f"\nBase directory: {base_dir}")
             else:
-                typer.echo(f"No repositories found in {base_dir}")
+                typer.echo(f"Base directory: {base_dir}\n")
+                typer.echo("No repositories found.")
                 typer.echo(
                     "Run 'dbx repo clone -g <group>' to clone repositories first."
                 )
