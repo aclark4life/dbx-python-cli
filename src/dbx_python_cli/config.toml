@@ -30,6 +30,6 @@ langchain-mongodb = [
 
 [repo.groups.django]
 repos = [
-    "git@github.com:django/django.git",
+    "git@github.com:mongodb-forks/django.git",
     "git@github.com:mongodb-labs/django-mongodb-backend.git",
 ]
