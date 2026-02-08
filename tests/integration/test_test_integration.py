@@ -1,13 +1,25 @@
 """Integration tests for test commands."""
 
+import shutil
 import subprocess
 from unittest.mock import patch
 
+import pytest
 from typer.testing import CliRunner
 
 from dbx_python_cli.cli import app
 
 runner = CliRunner()
+
+
+# Check if uv is available
+def is_uv_available():
+    """Check if uv is installed and available."""
+    return shutil.which("uv") is not None
+
+
+# Skip all tests in this module if uv is not available
+pytestmark = pytest.mark.skipif(not is_uv_available(), reason="uv is not installed")
 
 
 def test_test_runs_real_pytest(tmp_path, test_git_repo):
