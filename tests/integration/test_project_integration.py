@@ -1,7 +1,5 @@
 """Integration tests for project commands."""
 
-import shutil
-from pathlib import Path
 from unittest.mock import patch
 
 from typer.testing import CliRunner
