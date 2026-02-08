@@ -456,10 +456,10 @@ def run_project(
         help="Port to bind the Django server to",
     ),
     settings: str = typer.Option(
-        "base",
+        None,
         "--settings",
         "-s",
-        help="Settings configuration name to use (e.g., 'base', 'qe')",
+        help="Settings configuration name to use (defaults to project name, e.g., 'base', 'qe')",
     ),
 ):
     """
@@ -469,7 +469,7 @@ def run_project(
 
     Examples:
         dbx project run myproject
-        dbx project run myproject --settings qe
+        dbx project run myproject --settings base
         dbx project run myproject -s qe --port 8080
     """
     import os
@@ -497,8 +497,9 @@ def run_project(
 
     # Set up environment
     env = os.environ.copy()
-    settings_path = f"settings.{settings}"
-    env["DJANGO_SETTINGS_MODULE"] = f"{name}.{settings_path}"
+    # Default to project_name.py settings if not specified
+    settings_module = settings if settings else name
+    env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
     env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
     typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
 

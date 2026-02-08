@@ -341,6 +341,49 @@ base_dir = "{base_dir_str}"
         assert "testproject" in result.stdout
 
 
+def test_project_run_settings_module(tmp_path):
+    """Test that run command uses correct settings module."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+
+    base_dir = tmp_path / "repos"
+    projects_dir = base_dir / "projects"
+    projects_dir.mkdir(parents=True)
+    base_dir_str = str(base_dir).replace("\\", "/")
+
+    config_content = f"""[repo]
+base_dir = "{base_dir_str}"
+"""
+    config_path.write_text(config_content)
+
+    # Create a minimal project structure
+    project_path = projects_dir / "testproject"
+    project_path.mkdir()
+    (project_path / "manage.py").write_text("# manage.py")
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("subprocess.Popen") as mock_popen:
+            # Mock the subprocess to prevent actual server start
+            mock_popen.return_value.poll.return_value = None
+
+            mock_get_path.return_value = config_path
+
+            # Test default settings (should use project name)
+            result = runner.invoke(app, ["project", "run", "testproject"])
+            # The command will fail because manage.py doesn't work, but we can check the output
+            assert (
+                "DJANGO_SETTINGS_MODULE=testproject.settings.testproject"
+                in result.stdout
+            )
+
+            # Test with explicit settings
+            result = runner.invoke(
+                app, ["project", "run", "testproject", "--settings", "base"]
+            )
+            assert "DJANGO_SETTINGS_MODULE=testproject.settings.base" in result.stdout
+
+
 def test_project_run_nonexistent(tmp_path):
     """Test running a nonexistent project."""
     config_dir = tmp_path / ".config" / "dbx-python-cli"
