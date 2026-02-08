@@ -502,4 +502,3 @@ def _install_npm(
             "❌ npm not found. Please ensure Node.js and npm are installed.", err=True
         )
         raise typer.Exit(code=1)
-

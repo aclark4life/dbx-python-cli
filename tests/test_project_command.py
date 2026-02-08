@@ -57,4 +57,3 @@ def test_project_add_no_name_no_random():
     # Error messages go to stderr in typer
     output = strip_ansi(result.stdout + result.stderr)
     assert "Project name is required" in output
-
