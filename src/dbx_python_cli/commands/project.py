@@ -437,7 +437,7 @@ def remove_project(
 
 @app.command("run")
 def run_project(
-    name: str,
+    name: str = typer.Argument(None, help="Project name (defaults to newest project)"),
     directory: Path = typer.Option(
         None,
         "--directory",
@@ -465,9 +465,11 @@ def run_project(
     """
     Run a Django project with manage.py runserver.
 
+    If no project name is provided, runs the most recently created project.
     If a frontend directory exists, it will be run automatically alongside the Django server.
 
     Examples:
+        dbx project run                      # Run newest project
         dbx project run myproject
         dbx project run myproject --settings base
         dbx project run myproject -s qe --port 8080
@@ -481,8 +483,38 @@ def run_project(
         config = get_config()
         base_dir = get_base_dir(config)
         projects_dir = base_dir / "projects"
-        project_path = projects_dir / name
+
+        # If no name provided, find the newest project
+        if name is None:
+            if not projects_dir.exists():
+                typer.echo(
+                    f"❌ Projects directory not found at {projects_dir}", err=True
+                )
+                typer.echo("\nCreate a project using: dbx project add <name>")
+                raise typer.Exit(code=1)
+
+            # Find all projects (directories with pyproject.toml)
+            projects = []
+            for item in projects_dir.iterdir():
+                if item.is_dir() and (item / "pyproject.toml").exists():
+                    projects.append(item)
+
+            if not projects:
+                typer.echo(f"❌ No projects found in {projects_dir}", err=True)
+                typer.echo("\nCreate a project using: dbx project add <name>")
+                raise typer.Exit(code=1)
+
+            # Sort by modification time (newest first)
+            projects.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+            project_path = projects[0]
+            name = project_path.name
+            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
+        else:
+            project_path = projects_dir / name
     else:
+        if name is None:
+            typer.echo("❌ Project name is required when using --directory", err=True)
+            raise typer.Exit(code=1)
         project_path = directory / name
 
     if not project_path.exists():
