@@ -6,9 +6,15 @@ This section documents key design decisions made in the development of dbx-pytho
 .. toctree::
    :hidden:
 
+   command-structure
    standalone-installation
    git-operations
    venv-strategy
+
+Command Structure
+-----------------
+
+We prefer top-level commands (``dbx clone``, ``dbx sync``) over nested command groups (``dbx repo clone``, ``dbx repo sync``). See :doc:`command-structure` for details.
 
 Standalone Installation
 -----------------------
