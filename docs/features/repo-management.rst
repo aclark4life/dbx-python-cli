@@ -107,6 +107,9 @@ After cloning with the fork workflow, you can easily sync your local repository 
    # Sync all repositories in a group
    dbx repo sync -g pymongo
 
+   # Force push after rebasing (use if previous sync failed to push)
+   dbx repo sync mongo-python-driver --force
+
    # List available repositories
    dbx repo sync -l
 
@@ -114,7 +117,8 @@ This command will:
 
 1. Fetch the latest changes from the ``upstream`` remote
 2. Rebase your current branch on top of ``upstream/<current-branch>``
-3. Keep your local changes on top of the latest upstream code
+3. Push the rebased branch to ``origin`` (your fork)
+4. If ``--force`` is used, force push with ``--force-with-lease`` for safety
 
 **Example workflow:**
 
@@ -129,19 +133,21 @@ This command will:
    # ... make changes ...
    git commit -am "Add new feature"
 
-   # Sync with upstream to get latest changes
+   # Sync with upstream to get latest changes and push
    dbx repo sync mongo-python-driver
-   # Fetches from upstream and rebases your branch
+   # Fetches from upstream, rebases your branch, and pushes to origin
 
-   # Push to your fork
-   git push origin my-feature
+   # Your changes are now in your fork, ready for a pull request!
 
 **Notes:**
 
 - The ``sync`` command requires an ``upstream`` remote to be configured
 - If you cloned with ``--fork``, the upstream remote is automatically set up
 - The command will rebase your current branch on ``upstream/<current-branch>``
-- If there are conflicts, you'll need to resolve them manually
+- After rebasing, it automatically pushes to ``origin/<current-branch>``
+- If the push fails (e.g., you've already pushed and rebased), use ``--force`` flag
+- The ``--force`` flag uses ``--force-with-lease`` for safety (won't overwrite others' changes)
+- If there are rebase conflicts, you'll need to resolve them manually
 - Works with any repository that has an ``upstream`` remote, not just forks
 
 **Available Groups (Default):**

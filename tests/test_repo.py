@@ -431,7 +431,7 @@ repos = [
                     )
                     return result
                 else:
-                    # Other commands (fetch, rebase)
+                    # Other commands (fetch, rebase, push)
                     result = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
                     return result
 
@@ -440,12 +440,18 @@ repos = [
             result = runner.invoke(app, ["repo", "sync", "mongo-python-driver"])
             assert result.exit_code == 0
             assert "Syncing mongo-python-driver" in result.stdout
-            assert "synced successfully" in result.stdout
+            assert "synced and pushed successfully" in result.stdout
 
             # Verify git commands were called
             calls = mock_run.call_args_list
-            # Should have: remote, branch --show-current, fetch, rebase
-            assert len(calls) >= 4
+            # Should have: remote, branch --show-current, fetch, rebase, push
+            assert len(calls) >= 5
+
+            # Verify push was called
+            push_calls = [call for call in calls if "push" in call[0][0]]
+            assert len(push_calls) == 1
+            assert "origin" in push_calls[0][0][0]
+            assert "main" in push_calls[0][0][0]
 
 
 def test_repo_sync_group(tmp_path, temp_repos_dir):
@@ -500,6 +506,12 @@ repos = [
             assert "Syncing 2 repository(ies)" in result.stdout
             assert "mongo-python-driver" in result.stdout
             assert "specifications" in result.stdout
+            assert "synced and pushed successfully" in result.stdout
+
+            # Verify push was called for both repos
+            calls = mock_run.call_args_list
+            push_calls = [call for call in calls if "push" in call[0][0]]
+            assert len(push_calls) == 2  # One for each repo
 
 
 def test_repo_sync_no_upstream_remote(tmp_path, temp_repos_dir):

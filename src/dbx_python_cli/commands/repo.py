@@ -272,8 +272,14 @@ def sync(
         "-l",
         help="List all available repositories",
     ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Force push after rebasing (use if previous sync failed)",
+    ),
 ):
-    """Sync repository with upstream by fetching and rebasing."""
+    """Sync repository with upstream by fetching, rebasing, and pushing."""
     from dbx_python_cli.commands.repo_utils import find_all_repos, find_repo_by_name
 
     # Get verbose flag from parent context
@@ -326,7 +332,7 @@ def sync(
             )
 
             for repo in group_repos:
-                _sync_repository(repo["path"], repo["name"], verbose)
+                _sync_repository(repo["path"], repo["name"], verbose, force)
 
             typer.echo(f"\n✨ Done! Synced {len(group_repos)} repository(ies)")
             return
@@ -346,19 +352,23 @@ def sync(
             typer.echo("\nUse 'dbx repo sync --list' to see available repositories")
             raise typer.Exit(1)
 
-        _sync_repository(repo["path"], repo["name"], verbose)
+        _sync_repository(repo["path"], repo["name"], verbose, force)
 
     except Exception as e:
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
 
 
-def _sync_repository(repo_path: Path, repo_name: str, verbose: bool = False):
+def _sync_repository(
+    repo_path: Path, repo_name: str, verbose: bool = False, force: bool = False
+):
     """Sync a single repository with upstream."""
     typer.echo(f"  🔄 Syncing {repo_name}...")
 
     if verbose:
         typer.echo(f"  [verbose] Repository path: {repo_path}")
+        if force:
+            typer.echo("  [verbose] Force push enabled")
 
     # Check if upstream remote exists
     try:
@@ -442,8 +452,6 @@ def _sync_repository(repo_path: Path, repo_name: str, verbose: bool = False):
             text=True,
         )
 
-        typer.echo(f"  ✅ {repo_name} synced successfully")
-
     except subprocess.CalledProcessError as e:
         typer.echo(
             f"  ❌ {repo_name}: Failed to rebase on upstream/{current_branch}",
@@ -453,5 +461,40 @@ def _sync_repository(repo_path: Path, repo_name: str, verbose: bool = False):
             typer.echo(f"     {e.stderr.strip()}", err=True)
         typer.echo(
             f"     You may need to resolve conflicts manually in {repo_path}",
+            err=True,
+        )
+        return
+
+    # Push to origin
+    try:
+        if verbose:
+            push_type = "force pushing" if force else "pushing"
+            typer.echo(
+                f"  [verbose] {push_type.capitalize()} to origin/{current_branch}..."
+            )
+
+        push_cmd = ["git", "-C", str(repo_path), "push"]
+        if force:
+            push_cmd.append("--force-with-lease")
+        push_cmd.extend(["origin", current_branch])
+
+        subprocess.run(
+            push_cmd,
+            check=True,
+            capture_output=not verbose,
+            text=True,
+        )
+
+        typer.echo(f"  ✅ {repo_name} synced and pushed successfully")
+
+    except subprocess.CalledProcessError as e:
+        typer.echo(
+            f"  ⚠️  {repo_name}: Synced but failed to push to origin/{current_branch}",
+            err=True,
+        )
+        if not verbose and e.stderr:
+            typer.echo(f"     {e.stderr.strip()}", err=True)
+        typer.echo(
+            f"     Try running: dbx repo sync {repo_name} --force",
             err=True,
         )
