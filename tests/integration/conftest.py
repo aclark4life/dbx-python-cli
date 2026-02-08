@@ -100,7 +100,9 @@ def bare_git_repo(tmp_path):
     temp_repo = tmp_path / "temp_repo"
     temp_repo.mkdir()
 
-    subprocess.run(["git", "init"], cwd=temp_repo, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "init", "-b", "main"], cwd=temp_repo, check=True, capture_output=True
+    )
     subprocess.run(
         ["git", "config", "user.email", "test@example.com"],
         cwd=temp_repo,
