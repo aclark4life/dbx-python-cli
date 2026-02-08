@@ -8,6 +8,7 @@ This section provides detailed documentation for all dbx-python-cli features.
 
    global-options
    repo-management
+   project-management
    installation
    testing
    just-commands
@@ -21,6 +22,11 @@ Repository Management
 ---------------------
 
 The ``dbx repo`` command provides repository management functionality for cloning and managing groups of related repositories. See :doc:`repo-management` for details.
+
+Project Management
+------------------
+
+The ``dbx project`` command provides tools for creating and managing Django projects with MongoDB backend support. See :doc:`project-management` for details.
 
 Installation
 ------------

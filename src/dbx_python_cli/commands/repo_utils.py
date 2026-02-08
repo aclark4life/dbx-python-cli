@@ -37,14 +37,29 @@ def find_all_repos(base_dir):
     for group_dir in base_dir.iterdir():
         if group_dir.is_dir():
             for repo_dir in group_dir.iterdir():
-                if repo_dir.is_dir() and (repo_dir / ".git").exists():
-                    repos.append(
-                        {
-                            "name": repo_dir.name,
-                            "path": repo_dir,
-                            "group": group_dir.name,
-                        }
-                    )
+                if repo_dir.is_dir():
+                    # Check if it's a git repo
+                    if (repo_dir / ".git").exists():
+                        repos.append(
+                            {
+                                "name": repo_dir.name,
+                                "path": repo_dir,
+                                "group": group_dir.name,
+                            }
+                        )
+                    # Also check if it's a project (has pyproject.toml but no .git)
+                    # This allows projects to be found by install command
+                    elif (
+                        group_dir.name == "projects"
+                        and (repo_dir / "pyproject.toml").exists()
+                    ):
+                        repos.append(
+                            {
+                                "name": repo_dir.name,
+                                "path": repo_dir,
+                                "group": "projects",
+                            }
+                        )
     return repos
 
 

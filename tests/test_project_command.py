@@ -42,14 +42,6 @@ def test_project_remove_help():
     assert "Delete a Django project by name" in output
 
 
-def test_project_install_help():
-    """Test that the project install help command works."""
-    result = runner.invoke(app, ["project", "install", "--help"])
-    assert result.exit_code == 0
-    output = strip_ansi(result.stdout)
-    assert "Install a generated Django project" in output
-
-
 def test_project_add_no_name_no_random():
     """Test that project add fails when no name and no random flag."""
     result = runner.invoke(app, ["project", "add"])
