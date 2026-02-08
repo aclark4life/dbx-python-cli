@@ -557,6 +557,32 @@ def run_project(
             typer.echo("\n✅ Server stopped")
 
 
+@app.command("open")
+def open_browser(
+    host: str = typer.Option("localhost", "--host", "-h", help="Host to open"),
+    port: int = typer.Option(8000, "--port", "-p", help="Port to open"),
+):
+    """
+    Open localhost in the browser.
+
+    Examples:
+        dbx project open                    # Opens http://localhost:8000
+        dbx project open --port 3000        # Opens http://localhost:3000
+        dbx project open --host 127.0.0.1   # Opens http://127.0.0.1:8000
+    """
+    import webbrowser
+
+    url = f"http://{host}:{port}"
+    typer.echo(f"🌐 Opening {url} in browser...")
+
+    try:
+        webbrowser.open(url)
+        typer.echo(f"✅ Opened {url}")
+    except Exception as e:
+        typer.echo(f"❌ Failed to open browser: {e}", err=True)
+        raise typer.Exit(code=1)
+
+
 @app.command("manage")
 def manage(
     name: str = typer.Argument(..., help="Project name"),
