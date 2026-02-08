@@ -557,6 +557,207 @@ def run_project(
             typer.echo("\n✅ Server stopped")
 
 
+@app.command("manage")
+def manage(
+    name: str = typer.Argument(..., help="Project name"),
+    command: str = typer.Argument(None, help="Django management command to run"),
+    args: list[str] = typer.Argument(None, help="Additional arguments for the command"),
+    directory: Path = typer.Option(
+        None,
+        "--directory",
+        "-d",
+        help="Custom directory where the project is located (defaults to base_dir/projects/)",
+    ),
+    mongodb_uri: str = typer.Option(
+        None, "--mongodb-uri", help="MongoDB connection URI"
+    ),
+    database: str = typer.Option(
+        None,
+        "--database",
+        help="Specify the database to use",
+    ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (defaults to project name)",
+    ),
+):
+    """
+    Run any Django management command for a project.
+
+    Examples:
+        dbx project manage myproject shell
+        dbx project manage myproject createsuperuser
+        dbx project manage myproject --mongodb-uri mongodb+srv://user:pwd@cluster
+        dbx project manage myproject --settings base shell
+        dbx project manage myproject migrate --database default
+    """
+    import os
+
+    if args is None:
+        args = []
+
+    # Determine project directory
+    if directory is None:
+        config = get_config()
+        base_dir = get_base_dir(config)
+        projects_dir = base_dir / "projects"
+        project_path = projects_dir / name
+    else:
+        project_path = directory / name
+
+    if not project_path.exists():
+        typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
+        raise typer.Exit(code=1)
+
+    # Set up environment
+    env = os.environ.copy()
+
+    if mongodb_uri:
+        typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
+        env["MONGODB_URI"] = mongodb_uri
+
+    # Default to project_name.py settings if not specified
+    settings_module = settings if settings else name
+    env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
+    env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
+    typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
+
+    # Build command
+    cmd_args = []
+    if command:
+        cmd_args.append(command)
+        if database:
+            cmd_args.append(f"--database={database}")
+        cmd_args.extend(args)
+        typer.echo(f"⚙️  Running django-admin {' '.join(cmd_args)} for '{name}'")
+    else:
+        typer.echo(f"ℹ️  Running django-admin with no arguments for '{name}'")
+
+    try:
+        subprocess.run(
+            ["django-admin", *cmd_args],
+            cwd=project_path.parent,
+            env=env,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"❌ Command failed with exit code {e.returncode}", err=True)
+        raise typer.Exit(code=e.returncode)
+    except FileNotFoundError:
+        typer.echo(
+            "❌ 'django-admin' command not found. Make sure Django is installed.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+
+@app.command("su")
+def create_superuser(
+    name: str = typer.Argument(..., help="Project name"),
+    directory: Path = typer.Option(
+        None,
+        "--directory",
+        "-d",
+        help="Custom directory where the project is located (defaults to base_dir/projects/)",
+    ),
+    username: str = typer.Option(
+        "admin", "--username", "-u", help="Superuser username"
+    ),
+    password: str = typer.Option(
+        "admin", "--password", "-p", help="Superuser password"
+    ),
+    email: str = typer.Option(
+        None,
+        "--email",
+        "-e",
+        help="Superuser email (defaults to $PROJECT_EMAIL if set)",
+    ),
+    mongodb_uri: str = typer.Option(
+        None,
+        "--mongodb-uri",
+        help="Optional MongoDB connection URI. Falls back to $MONGODB_URI if not provided.",
+    ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (defaults to project name)",
+    ),
+):
+    """
+    Create a Django superuser with no interaction required.
+
+    Examples:
+        dbx project su myproject
+        dbx project su myproject --settings base
+        dbx project su myproject -u myuser -p mypass
+        dbx project su myproject -e admin@example.com
+    """
+    import os
+
+    if not email:
+        email = os.getenv("PROJECT_EMAIL", "admin@example.com")
+
+    typer.echo(f"👑 Creating Django superuser '{username}' for project '{name}'")
+
+    # Determine project directory
+    if directory is None:
+        config = get_config()
+        base_dir = get_base_dir(config)
+        projects_dir = base_dir / "projects"
+        project_path = projects_dir / name
+    else:
+        project_path = directory / name
+
+    if not project_path.exists():
+        typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
+        raise typer.Exit(code=1)
+
+    # Set up environment
+    env = os.environ.copy()
+
+    if mongodb_uri:
+        typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
+        env["MONGODB_URI"] = mongodb_uri
+    elif "MONGODB_URI" not in env:
+        # Check if MONGODB_URI is in environment
+        pass
+
+    env["DJANGO_SUPERUSER_PASSWORD"] = password
+
+    # Default to project_name.py settings if not specified
+    settings_module = settings if settings else name
+    env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
+    env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
+    typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
+
+    try:
+        subprocess.run(
+            [
+                "django-admin",
+                "createsuperuser",
+                "--noinput",
+                f"--username={username}",
+                f"--email={email}",
+            ],
+            cwd=project_path.parent,
+            env=env,
+            check=True,
+        )
+        typer.echo(f"✅ Superuser '{username}' created successfully")
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"❌ Command failed with exit code {e.returncode}", err=True)
+        raise typer.Exit(code=e.returncode)
+    except FileNotFoundError:
+        typer.echo(
+            "❌ 'django-admin' command not found. Make sure Django is installed.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+
 def _install_npm(
     project_name: str,
     frontend_dir: str = "frontend",
