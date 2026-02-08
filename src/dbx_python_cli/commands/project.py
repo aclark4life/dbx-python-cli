@@ -181,6 +181,7 @@ def add_project(
                 check=False,
                 capture_output=True,
                 text=True,
+                cwd=str(project_path.parent),
             )
         except FileNotFoundError:
             typer.echo(
