@@ -145,4 +145,12 @@ version = "0.1.0"
         capture_output=True,
     )
 
+    # Set the default branch in the bare repo to main
+    subprocess.run(
+        ["git", "symbolic-ref", "HEAD", "refs/heads/main"],
+        cwd=bare_repo,
+        check=True,
+        capture_output=True,
+    )
+
     return bare_repo
