@@ -1,5 +1,7 @@
 """Tests for the venv_utils module."""
 
+import platform
+
 import pytest
 
 from dbx_python_cli.commands.venv_utils import get_venv_info, get_venv_python
@@ -11,14 +13,23 @@ def temp_group_with_venv(tmp_path):
     group_dir = tmp_path / "group_with_venv"
     group_dir.mkdir()
 
-    # Create a mock venv structure
+    # Create a mock venv structure (platform-specific)
     venv_dir = group_dir / ".venv"
     venv_dir.mkdir()
-    bin_dir = venv_dir / "bin"
-    bin_dir.mkdir()
-    python_path = bin_dir / "python"
+
+    # Windows uses Scripts/python.exe, Unix uses bin/python
+    if platform.system() == "Windows":
+        bin_dir = venv_dir / "Scripts"
+        bin_dir.mkdir()
+        python_path = bin_dir / "python.exe"
+    else:
+        bin_dir = venv_dir / "bin"
+        bin_dir.mkdir()
+        python_path = bin_dir / "python"
+
     python_path.write_text("#!/usr/bin/env python3\n")
-    python_path.chmod(0o755)
+    if platform.system() != "Windows":
+        python_path.chmod(0o755)
 
     return group_dir
 
@@ -35,7 +46,13 @@ def test_get_venv_python_with_group_venv(temp_repo_dir, temp_group_with_venv):
     """Test get_venv_python when group venv exists."""
     python_path = get_venv_python(temp_repo_dir, temp_group_with_venv)
 
-    assert python_path == str(temp_group_with_venv / ".venv" / "bin" / "python")
+    # Expected path is platform-specific
+    if platform.system() == "Windows":
+        expected = str(temp_group_with_venv / ".venv" / "Scripts" / "python.exe")
+    else:
+        expected = str(temp_group_with_venv / ".venv" / "bin" / "python")
+
+    assert python_path == expected
 
 
 def test_get_venv_python_no_group_path(temp_repo_dir):
@@ -67,7 +84,13 @@ def test_get_venv_info_with_group_venv(temp_repo_dir, temp_group_with_venv):
     """Test get_venv_info when group venv exists."""
     python_path, venv_type = get_venv_info(temp_repo_dir, temp_group_with_venv)
 
-    assert python_path == str(temp_group_with_venv / ".venv" / "bin" / "python")
+    # Expected path is platform-specific
+    if platform.system() == "Windows":
+        expected = str(temp_group_with_venv / ".venv" / "Scripts" / "python.exe")
+    else:
+        expected = str(temp_group_with_venv / ".venv" / "bin" / "python")
+
+    assert python_path == expected
     assert venv_type == "group"
 
 
@@ -105,9 +128,17 @@ def test_get_venv_python_with_pathlib_path(tmp_path):
     """Test get_venv_python works with pathlib Path objects."""
     group_dir = tmp_path / "test_group"
     group_dir.mkdir()
-    venv_dir = group_dir / ".venv" / "bin"
-    venv_dir.mkdir(parents=True)
-    python_path = venv_dir / "python"
+
+    # Create platform-specific venv structure
+    if platform.system() == "Windows":
+        venv_dir = group_dir / ".venv" / "Scripts"
+        venv_dir.mkdir(parents=True)
+        python_path = venv_dir / "python.exe"
+    else:
+        venv_dir = group_dir / ".venv" / "bin"
+        venv_dir.mkdir(parents=True)
+        python_path = venv_dir / "python"
+
     python_path.write_text("#!/usr/bin/env python3\n")
 
     repo_dir = group_dir / "test_repo"
@@ -123,9 +154,17 @@ def test_get_venv_info_with_pathlib_path(tmp_path):
     """Test get_venv_info works with pathlib Path objects."""
     group_dir = tmp_path / "test_group"
     group_dir.mkdir()
-    venv_dir = group_dir / ".venv" / "bin"
-    venv_dir.mkdir(parents=True)
-    python_path = venv_dir / "python"
+
+    # Create platform-specific venv structure
+    if platform.system() == "Windows":
+        venv_dir = group_dir / ".venv" / "Scripts"
+        venv_dir.mkdir(parents=True)
+        python_path = venv_dir / "python.exe"
+    else:
+        venv_dir = group_dir / ".venv" / "bin"
+        venv_dir.mkdir(parents=True)
+        python_path = venv_dir / "python"
+
     python_path.write_text("#!/usr/bin/env python3\n")
 
     repo_dir = group_dir / "test_repo"
