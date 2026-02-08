@@ -435,8 +435,10 @@ def install_callback(
             # Show venv info
             if venv_type == "group":
                 typer.echo(f"Using group venv: {group_path}/.venv\n")
+            elif venv_type == "venv":
+                typer.echo(f"Using venv: {python_path}\n")
             else:
-                typer.echo("⚠️  No venv found, using system Python\n")
+                typer.echo(f"⚠️  No venv found, using system Python: {python_path}\n")
 
             # Check if this repo has install_dirs (monorepo)
             install_dirs = get_install_dirs(config, group, repo["name"])
@@ -568,8 +570,10 @@ def install_callback(
     # Show venv info
     if venv_type == "group":
         typer.echo(f"Using group venv: {group_path}/.venv\n")
+    elif venv_type == "venv":
+        typer.echo(f"Using venv: {python_path}\n")
     else:
-        typer.echo("⚠️  No venv found, using system Python\n")
+        typer.echo(f"⚠️  No venv found, using system Python: {python_path}\n")
 
     # Check if this repo has install_dirs (monorepo)
     install_dirs = get_install_dirs(config, repo["group"], repo["name"])

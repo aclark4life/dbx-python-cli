@@ -125,8 +125,10 @@ def test_callback(
 
         if venv_type == "group":
             typer.echo(f"Using group venv: {group_path}/.venv\n")
+        elif venv_type == "venv":
+            typer.echo(f"Using venv: {python_path}\n")
         else:
-            typer.echo("⚠️  No venv found, using system Python\n")
+            typer.echo(f"⚠️  No venv found, using system Python: {python_path}\n")
 
         if verbose:
             typer.echo(f"[verbose] Running command: {' '.join(pytest_cmd)}")
