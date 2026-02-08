@@ -25,23 +25,21 @@ def repo_callback(
 ):
     """Repository management commands."""
     if list_repos:
-        from dbx_python_cli.commands.repo_utils import find_all_repos
+        from dbx_python_cli.commands.repo_utils import list_repos as format_repos
 
         config = get_config()
         base_dir = get_base_dir(config)
 
-        repos = find_all_repos(base_dir)
+        formatted_output = format_repos(base_dir)
 
-        if not repos:
+        if not formatted_output:
             typer.echo("No repositories found.")
             typer.echo(f"\nBase directory: {base_dir}")
             typer.echo("\nClone repositories using: dbx repo clone -g <group>")
             raise typer.Exit(0)
 
         typer.echo("Cloned repositories:\n")
-        # Sort by group then name
-        for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
-            typer.echo(f"  [{repo['group']}] {repo['name']}")
+        typer.echo(formatted_output)
 
         typer.echo(f"\nBase directory: {base_dir}")
         raise typer.Exit(0)
@@ -331,15 +329,16 @@ def sync(
 
         # Handle --list flag
         if list_repos:
-            repos = find_all_repos(base_dir)
-            if not repos:
+            from dbx_python_cli.commands.repo_utils import list_repos as format_repos
+
+            formatted_output = format_repos(base_dir)
+            if not formatted_output:
                 typer.echo("No repositories found.")
                 typer.echo("\nClone repositories using: dbx repo clone -g <group>")
                 return
 
             typer.echo(f"Available repositories in {base_dir}:\n")
-            for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
-                typer.echo(f"  [{repo['group']}] {repo['name']}")
+            typer.echo(formatted_output)
             return
 
         # Handle group sync

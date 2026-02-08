@@ -126,13 +126,19 @@ def test_list_repos_empty(tmp_path):
 
 
 def test_list_repos_default_format(temp_repos_dir):
-    """Test list_repos with default format."""
+    """Test list_repos with default format (tree structure)."""
     result = list_repos(temp_repos_dir, format_style="default")
 
     assert result is not None
-    assert "[django] django" in result
-    assert "[django] django-mongodb-backend" in result
-    assert "[pymongo] mongo-python-driver" in result
+    # Tree format should show groups as directories
+    assert "django/" in result
+    assert "pymongo/" in result
+    # And repos under their groups
+    assert "django" in result
+    assert "django-mongodb-backend" in result
+    assert "mongo-python-driver" in result
+    # Should have tree characters
+    assert "├──" in result or "└──" in result
 
 
 def test_list_repos_grouped_format(temp_repos_dir):

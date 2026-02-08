@@ -98,8 +98,12 @@ def test_list_flag_with_repos():
             result = runner.invoke(app, ["-l"])
             assert result.exit_code == 0
             assert "Cloned repositories:" in result.stdout
-            assert "[django] django" in result.stdout
-            assert "[pymongo] mongo-python-driver" in result.stdout
+            # Check for tree format
+            assert "django/" in result.stdout
+            assert "pymongo/" in result.stdout
+            assert "django" in result.stdout
+            assert "mongo-python-driver" in result.stdout
+            assert "├──" in result.stdout or "└──" in result.stdout
 
 
 def test_list_flag_short_form():

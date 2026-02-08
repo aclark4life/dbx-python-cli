@@ -54,7 +54,7 @@ def list_repos(base_dir, format_style="default"):
 
     Args:
         base_dir: Path to the base directory containing group subdirectories
-        format_style: Output format style ('default', 'grouped', or 'simple')
+        format_style: Output format style ('default', 'tree', 'grouped', or 'simple')
 
     Returns:
         str: Formatted list of repositories
@@ -64,7 +64,30 @@ def list_repos(base_dir, format_style="default"):
     if not repos:
         return None
 
-    if format_style == "grouped":
+    if format_style == "tree":
+        # Tree format with group as parent
+        from collections import defaultdict
+
+        grouped = defaultdict(list)
+        for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
+            grouped[repo["group"]].append(repo["name"])
+
+        lines = []
+        sorted_groups = sorted(grouped.keys())
+        for i, group in enumerate(sorted_groups):
+            is_last_group = i == len(sorted_groups) - 1
+            group_prefix = "└──" if is_last_group else "├──"
+            lines.append(f"{group_prefix} {group}/")
+
+            repo_names = grouped[group]
+            for j, repo_name in enumerate(repo_names):
+                is_last_repo = j == len(repo_names) - 1
+                continuation = "    " if is_last_group else "│   "
+                repo_prefix = "└──" if is_last_repo else "├──"
+                lines.append(f"{continuation}{repo_prefix} {repo_name}")
+        return "\n".join(lines)
+
+    elif format_style == "grouped":
         # Group repos by group name
         from collections import defaultdict
 
@@ -86,9 +109,25 @@ def list_repos(base_dir, format_style="default"):
             lines.append(f"  • {repo['name']} ({repo['group']})")
         return "\n".join(lines)
 
-    else:  # default
-        # Default format: [group] repo_name
-        lines = []
+    else:  # default - use tree format
+        # Default format: tree structure
+        from collections import defaultdict
+
+        grouped = defaultdict(list)
         for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
-            lines.append(f"  [{repo['group']}] {repo['name']}")
+            grouped[repo["group"]].append(repo["name"])
+
+        lines = []
+        sorted_groups = sorted(grouped.keys())
+        for i, group in enumerate(sorted_groups):
+            is_last_group = i == len(sorted_groups) - 1
+            group_prefix = "└──" if is_last_group else "├──"
+            lines.append(f"{group_prefix} {group}/")
+
+            repo_names = grouped[group]
+            for j, repo_name in enumerate(repo_names):
+                is_last_repo = j == len(repo_names) - 1
+                continuation = "    " if is_last_group else "│   "
+                repo_prefix = "└──" if is_last_repo else "├──"
+                lines.append(f"{continuation}{repo_prefix} {repo_name}")
         return "\n".join(lines)

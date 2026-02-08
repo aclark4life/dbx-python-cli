@@ -78,8 +78,12 @@ def test_repo_list_with_repos():
             result = runner.invoke(app, ["repo", "-l"])
             assert result.exit_code == 0
             assert "Cloned repositories:" in result.stdout
-            assert "[django] django" in result.stdout
-            assert "[pymongo] mongo-python-driver" in result.stdout
+            # Check for tree format
+            assert "django/" in result.stdout
+            assert "pymongo/" in result.stdout
+            assert "django" in result.stdout
+            assert "mongo-python-driver" in result.stdout
+            assert "├──" in result.stdout or "└──" in result.stdout
 
 
 def test_repo_list_long_form():
