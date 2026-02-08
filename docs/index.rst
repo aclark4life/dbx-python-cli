@@ -38,16 +38,15 @@ See :doc:`features/index` for detailed feature documentation.
 Installation
 ------------
 
-Via pip (Coming Soon)
-~~~~~~~~~~~~~~~~~~~~~
+Via uv tool (Recommended)
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
-   # Once released, you'll be able to install with:
-   pip install dbx-python-cli
+   # Install directly from GitHub
+   uv tool install git+https://github.com/aclark4life/dbx-python-cli.git
 
-.. note::
-   The package is not yet released to PyPI. For now, please see the Development section below.
+This will install ``dbx-python-cli`` globally and make the ``dbx`` command available in your terminal.
 
 Quick Start
 -----------

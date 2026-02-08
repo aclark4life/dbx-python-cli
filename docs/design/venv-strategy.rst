@@ -10,7 +10,7 @@ dbx-python-cli Installation
 
 .. code-block:: bash
 
-   uv tool install dbx-python-cli
+   uv tool install git+https://github.com/aclark4life/dbx-python-cli.git
 
 This keeps the ``dbx`` command available globally, isolated from project dependencies.
 
