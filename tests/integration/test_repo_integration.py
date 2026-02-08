@@ -132,6 +132,19 @@ repos = [
         check=True,
         capture_output=True,
     )
+    # Configure git user for this repo
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=temp_repo,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=temp_repo,
+        check=True,
+        capture_output=True,
+    )
     (temp_repo / "new_file.txt").write_text("new content")
     subprocess.run(["git", "add", "."], cwd=temp_repo, check=True, capture_output=True)
     subprocess.run(
