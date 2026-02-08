@@ -6,8 +6,14 @@ This section documents key design decisions made in the development of dbx-pytho
 .. toctree::
    :hidden:
 
+   standalone-installation
    git-operations
    venv-strategy
+
+Standalone Installation
+-----------------------
+
+We install dbx-python-cli as a standalone tool, not requiring a clone of the CLI repository. See :doc:`standalone-installation` for details.
 
 Git Operations
 --------------
