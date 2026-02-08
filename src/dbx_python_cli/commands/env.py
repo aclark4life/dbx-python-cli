@@ -186,3 +186,106 @@ def list(ctx: typer.Context):
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
+
+
+@app.command()
+def remove(
+    ctx: typer.Context,
+    group: str = typer.Option(
+        None,
+        "--group",
+        "-g",
+        help="Repository group to remove venv for (e.g., pymongo, langchain, django)",
+    ),
+    list_groups: bool = typer.Option(
+        False,
+        "--list",
+        "-l",
+        help="List all available groups",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Skip confirmation prompt",
+    ),
+):
+    """Remove a virtual environment for a repository group."""
+    # Get verbose flag from parent context
+    verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+
+    try:
+        config = get_config()
+        base_dir = get_base_dir(config)
+        groups = get_repo_groups(config)
+
+        if verbose:
+            typer.echo(f"[verbose] Using base directory: {base_dir}")
+            typer.echo(f"[verbose] Available groups: {list(groups.keys())}\n")
+
+        # Handle --list flag
+        if list_groups:
+            if not groups:
+                typer.echo("No groups found in configuration.")
+                return
+
+            typer.echo("Available groups:\n")
+            for group_name in sorted(groups.keys()):
+                group_dir = base_dir / group_name
+                venv_path = group_dir / ".venv"
+                if venv_path.exists():
+                    typer.echo(f"  • {group_name} (venv exists)")
+                else:
+                    typer.echo(f"  • {group_name} (no venv)")
+            return
+
+        # Require group if not listing
+        if not group:
+            typer.echo("❌ Error: Group name required", err=True)
+            typer.echo("\nUsage: dbx env remove -g <group>")
+            typer.echo("   or: dbx env remove --list")
+            raise typer.Exit(1)
+
+        if group not in groups:
+            typer.echo(f"Error: Group '{group}' not found in configuration.", err=True)
+            typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
+            raise typer.Exit(1)
+
+        # Group directory
+        group_dir = base_dir / group
+        if not group_dir.exists():
+            typer.echo(
+                f"Error: Group directory '{group_dir}' does not exist.", err=True
+            )
+            raise typer.Exit(1)
+
+        # Venv path
+        venv_path = group_dir / ".venv"
+        if not venv_path.exists():
+            typer.echo(f"No virtual environment found at {venv_path}")
+            typer.echo(f"Nothing to remove for group '{group}'.")
+            raise typer.Exit(0)
+
+        # Confirm removal unless --force is used
+        if not force:
+            typer.echo(f"About to remove virtual environment at: {venv_path}")
+            confirm = typer.confirm("Are you sure you want to remove this venv?")
+            if not confirm:
+                typer.echo("Aborted.")
+                raise typer.Exit(0)
+
+        # Remove venv
+        import shutil
+
+        if verbose:
+            typer.echo(f"[verbose] Removing directory: {venv_path}\n")
+
+        shutil.rmtree(venv_path)
+        typer.echo(f"✅ Virtual environment removed: {venv_path}")
+        typer.echo(f"\nTo recreate: dbx env init -g {group}")
+
+    except typer.Exit:
+        raise
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)

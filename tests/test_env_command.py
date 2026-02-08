@@ -299,3 +299,120 @@ def test_env_list_invalid_venv(mock_config, temp_repos_dir):
         assert result.exit_code == 0
         assert "pymongo" in result.stdout
         assert "invalid" in result.stdout
+
+
+def test_env_remove_list_groups(mock_config, temp_repos_dir):
+    """Test env remove --list shows available groups."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        # Create group directories
+        (temp_repos_dir / "pymongo").mkdir(parents=True)
+        (temp_repos_dir / "langchain").mkdir(parents=True)
+
+        result = runner.invoke(app, ["env", "remove", "--list"])
+        assert result.exit_code == 0
+        assert "Available groups:" in result.stdout
+        assert "pymongo" in result.stdout
+        assert "langchain" in result.stdout
+
+
+def test_env_remove_no_group_shows_error(mock_config):
+    """Test env remove without group shows error."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        result = runner.invoke(app, ["env", "remove"])
+        assert result.exit_code == 1
+        output = result.stdout + result.stderr
+        assert "Group name required" in output
+
+
+def test_env_remove_invalid_group(mock_config):
+    """Test env remove with invalid group shows error."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        result = runner.invoke(app, ["env", "remove", "-g", "invalid"])
+        assert result.exit_code == 1
+        output = result.stdout + result.stderr
+        assert "not found in configuration" in output
+
+
+def test_env_remove_group_dir_not_exists(mock_config, temp_repos_dir):
+    """Test env remove when group directory doesn't exist."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        result = runner.invoke(app, ["env", "remove", "-g", "pymongo"])
+        assert result.exit_code == 1
+        output = result.stdout + result.stderr
+        assert "does not exist" in output
+
+
+def test_env_remove_no_venv_exists(mock_config, temp_repos_dir):
+    """Test env remove when no venv exists."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        # Create group directory without venv
+        pymongo_dir = temp_repos_dir / "pymongo"
+        pymongo_dir.mkdir(parents=True)
+
+        result = runner.invoke(app, ["env", "remove", "-g", "pymongo"])
+        assert result.exit_code == 0
+        assert "No virtual environment found" in result.stdout
+        assert "Nothing to remove" in result.stdout
+
+
+def test_env_remove_with_confirmation_yes(mock_config, temp_repos_dir):
+    """Test env remove with user confirming yes."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        # Create group directory with venv
+        pymongo_dir = temp_repos_dir / "pymongo"
+        pymongo_dir.mkdir(parents=True)
+        venv_dir = pymongo_dir / ".venv"
+        venv_dir.mkdir()
+
+        # Simulate user saying "yes" to remove
+        result = runner.invoke(app, ["env", "remove", "-g", "pymongo"], input="y\n")
+        assert result.exit_code == 0
+        assert "Virtual environment removed" in result.stdout
+        assert not venv_dir.exists()
+
+
+def test_env_remove_with_confirmation_no(mock_config, temp_repos_dir):
+    """Test env remove with user declining."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        # Create group directory with venv
+        pymongo_dir = temp_repos_dir / "pymongo"
+        pymongo_dir.mkdir(parents=True)
+        venv_dir = pymongo_dir / ".venv"
+        venv_dir.mkdir()
+
+        # Simulate user saying "no" to remove
+        result = runner.invoke(app, ["env", "remove", "-g", "pymongo"], input="n\n")
+        assert result.exit_code == 0
+        assert "Aborted" in result.stdout
+        assert venv_dir.exists()
+
+
+def test_env_remove_with_force_flag(mock_config, temp_repos_dir):
+    """Test env remove with --force flag skips confirmation."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = mock_config
+
+        # Create group directory with venv
+        pymongo_dir = temp_repos_dir / "pymongo"
+        pymongo_dir.mkdir(parents=True)
+        venv_dir = pymongo_dir / ".venv"
+        venv_dir.mkdir()
+
+        result = runner.invoke(app, ["env", "remove", "-g", "pymongo", "--force"])
+        assert result.exit_code == 0
+        assert "Virtual environment removed" in result.stdout
+        assert not venv_dir.exists()
