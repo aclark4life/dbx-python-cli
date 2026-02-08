@@ -28,6 +28,7 @@ docs = [
 test = [
     "pytest",
     "pytest-cov",
+    "django",  # Required for project integration tests
 ]
 dev = [
     "dbx-python-cli[docs,test]",
