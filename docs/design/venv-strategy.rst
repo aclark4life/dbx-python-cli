@@ -94,7 +94,18 @@ Venv Detection
 Commands detect and use venvs in this order:
 
 1. **Group-level venv** - ``<group_path>/.venv``
-2. **System Python** - Fallback if no venv found
+2. **Active venv** - Detects if the current Python (from ``which python``) is in a virtual environment
+3. **System Python** - Fallback if no venv found
+
+The tool intelligently detects whether the Python executable is in a virtual environment by checking ``sys.base_prefix`` and ``sys.prefix``. This means:
+
+- If you run ``dbx`` commands while a venv is activated, it will detect and use that venv
+- The actual Python path is always displayed (e.g., ``/path/to/.venv/bin/python`` or ``/usr/bin/python3``)
+- You'll see clear messages indicating which Python is being used:
+
+  - ``Using group venv: <group_path>/.venv`` - Group-level venv found
+  - ``Using venv: /path/to/venv/bin/python`` - Another venv detected
+  - ``⚠️  No venv found, using system Python: /usr/bin/python3`` - System Python
 
 Technical Implementation
 ------------------------
@@ -123,12 +134,23 @@ Venv Detection Example
 
 .. code-block:: python
 
-   def get_venv_python(repo_path, group_path):
-       """Get Python executable from group venv."""
-       # Check group-level venv
-       group_venv = group_path / ".venv" / "bin" / "python"
-       if group_venv.exists():
-           return str(group_venv)
+   def get_venv_info(repo_path, group_path=None):
+       """
+       Get information about which venv will be used.
+
+       Returns:
+           tuple: (python_path, venv_type) where venv_type is "group", "venv", or "system"
+       """
+       # Check group-level venv if group_path provided
+       if group_path:
+           group_venv_python = group_path / ".venv" / "bin" / "python"
+           if group_venv_python.exists():
+               return str(group_venv_python), "group"
+
+       # Check if the default Python is in a venv
+       python_path = _get_python_path()  # Uses 'which python'
+       if _is_venv(python_path):  # Checks sys.base_prefix != sys.prefix
+           return python_path, "venv"
 
        # Fallback to system Python
-       return "python"
+       return python_path, "system"
