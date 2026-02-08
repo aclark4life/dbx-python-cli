@@ -94,7 +94,8 @@ def test_just_list_shows_repos(tmp_path, temp_repos_dir, mock_config):
             assert result.exit_code == 0
             assert "mongo-python-driver" in result.stdout
             assert "specifications" in result.stdout
-            assert "[pymongo]" in result.stdout
+            assert "pymongo/" in result.stdout
+            assert "Legend:" in result.stdout
 
 
 def test_just_no_repo_name(tmp_path, temp_repos_dir, mock_config):

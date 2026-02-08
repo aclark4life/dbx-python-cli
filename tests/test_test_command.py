@@ -94,10 +94,12 @@ def test_test_list_shows_repos(mock_config, temp_repos_dir):
 
         result = runner.invoke(app, ["test", "--list"])
         # Exit code can be 0 or 1 depending on how typer.Exit is handled
-        assert "Available repositories" in result.stdout
-        assert "[pymongo] mongo-python-driver" in result.stdout
-        assert "[pymongo] specifications" in result.stdout
-        assert "[django] django" in result.stdout
+        assert "mongo-python-driver" in result.stdout
+        assert "specifications" in result.stdout
+        assert "django" in result.stdout
+        assert "pymongo/" in result.stdout
+        assert "django/" in result.stdout
+        assert "Legend:" in result.stdout
 
 
 def test_test_list_short_form(mock_config, temp_repos_dir):
@@ -107,7 +109,8 @@ def test_test_list_short_form(mock_config, temp_repos_dir):
 
         result = runner.invoke(app, ["test", "-l"])
         # Exit code can be 0 or 1 depending on how typer.Exit is handled
-        assert "Available repositories" in result.stdout
+        assert "mongo-python-driver" in result.stdout
+        assert "Legend:" in result.stdout
 
 
 def test_test_no_args_shows_error():

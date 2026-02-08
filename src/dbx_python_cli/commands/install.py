@@ -8,7 +8,10 @@ from typing import Optional
 import typer
 
 from dbx_python_cli.commands.repo import get_base_dir, get_config, get_install_dirs
-from dbx_python_cli.commands.repo_utils import find_all_repos, find_repo_by_name
+from dbx_python_cli.commands.repo_utils import (
+    find_all_repos,
+    find_repo_by_name,
+)
 from dbx_python_cli.commands.venv_utils import get_venv_info
 
 app = typer.Typer(
@@ -204,7 +207,7 @@ def install_callback(
         False,
         "--list",
         "-l",
-        help="List all available repositories",
+        help="Show repository status (cloned vs available)",
     ),
     show_options: bool = typer.Option(
         False,
@@ -237,15 +240,18 @@ def install_callback(
 
     # Handle --list flag
     if list_repos:
-        repos = find_all_repos(base_dir)
-        if not repos:
+        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
+
+        output = list_repos_func(base_dir, config=config)
+        if output:
+            typer.echo(output)
+            typer.echo(
+                "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
+            )
+            typer.echo(f"\nBase directory: {base_dir}")
+        else:
             typer.echo("No repositories found.")
             typer.echo("\nClone repositories using: dbx repo clone -g <group>")
-            return
-
-        typer.echo(f"Available repositories in {base_dir}:\n")
-        for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
-            typer.echo(f"  [{repo['group']}] {repo['name']}")
         return
 
     # Handle --show-options flag

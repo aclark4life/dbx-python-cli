@@ -6,7 +6,9 @@ from pathlib import Path
 import typer
 
 from dbx_python_cli.commands.repo import get_base_dir, get_config
-from dbx_python_cli.commands.repo_utils import find_all_repos, find_repo_by_name
+from dbx_python_cli.commands.repo_utils import (
+    find_repo_by_name,
+)
 
 # Create a Typer app that will act as a single command
 app = typer.Typer(
@@ -29,7 +31,7 @@ def just_callback(
         False,
         "--list",
         "-l",
-        help="List all available repositories",
+        help="Show repository status (cloned vs available)",
     ),
 ):
     """Run just commands in a cloned repository.
@@ -64,15 +66,18 @@ def just_callback(
 
     # Handle --list flag
     if list_repos:
-        repos = find_all_repos(base_dir)
-        if not repos:
+        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
+
+        output = list_repos_func(base_dir, config=config)
+        if output:
+            typer.echo(output)
+            typer.echo(
+                "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
+            )
+            typer.echo(f"\nBase directory: {base_dir}")
+        else:
             typer.echo("No repositories found.")
             typer.echo("\nClone repositories using: dbx repo clone -g <group>")
-            return
-
-        typer.echo(f"Available repositories in {base_dir}:\n")
-        for repo in repos:
-            typer.echo(f"  [{repo['group']}] {repo['name']}")
         return
 
     # Require repo_name if not listing
