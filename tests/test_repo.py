@@ -145,9 +145,7 @@ def test_repo_clone_help():
     """Test that the repo clone help command works."""
     result = runner.invoke(app, ["clone", "--help"])
     assert result.exit_code == 0
-    assert (
-        "Clone a repository by name or all repositories from a group" in result.stdout
-    )
+    assert "Clone repositories" in result.stdout
 
 
 def test_repo_clone_invalid_group(tmp_path, mock_config):
@@ -164,7 +162,7 @@ def test_repo_clone_invalid_group(tmp_path, mock_config):
 def test_repo_clone_success(tmp_path, mock_config, temp_repos_dir):
     """Test successful repo clone."""
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("subprocess.run") as mock_run:
+        with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = mock_config
             mock_run.return_value = None
 
@@ -177,7 +175,7 @@ def test_repo_clone_success(tmp_path, mock_config, temp_repos_dir):
 def test_repo_clone_creates_group_directory(tmp_path, mock_config, temp_repos_dir):
     """Test that repo clone creates group subdirectory."""
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("subprocess.run") as mock_run:
+        with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = mock_config
             mock_run.return_value = None
 
@@ -201,7 +199,7 @@ def test_repo_clone_skips_existing(tmp_path, mock_config, temp_repos_dir):
         existing_repo = group_dir / "repo1"
         existing_repo.mkdir()
 
-        with patch("subprocess.run"):
+        with patch("dbx_python_cli.commands.clone.subprocess.run"):
             result = runner.invoke(app, ["clone", "-g", "test"])
             assert result.exit_code == 0
             assert "already exists" in result.stdout
@@ -215,7 +213,7 @@ def test_repo_clone_git_failure(mock_config, temp_repos_dir):
         mock_get_path.return_value = mock_config
 
         # Mock subprocess.run to raise CalledProcessError
-        with patch("subprocess.run") as mock_run:
+        with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_run.side_effect = subprocess.CalledProcessError(
                 1, "git clone", stderr="fatal: repository not found"
             )
@@ -288,14 +286,15 @@ def test_repo_clone_list_groups_short_form(mock_config):
 
 
 def test_repo_clone_no_group_shows_error(mock_config):
-    """Test that repo clone without -g or -l shows error."""
+    """Test that repo clone without -g or -l shows help."""
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         result = runner.invoke(app, ["clone"])
-        assert result.exit_code == 1
+        # With no_args_is_help=True, shows help with exit code 2
+        assert result.exit_code == 2
         output = result.stdout + result.stderr
-        assert "Repository name or group required" in output
+        assert "Clone repositories" in output
 
 
 def test_repo_clone_single_repo_by_name(tmp_path, temp_repos_dir):
@@ -321,7 +320,7 @@ repos = [
     config_path.write_text(config_content)
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
+        with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
 
@@ -379,12 +378,13 @@ repos = [
     config_path.write_text(config_content)
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
+        with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
 
+            # Options must come before positional arguments with allow_interspersed_args=False
             result = runner.invoke(
-                app, ["clone", "django-mongodb-backend", "--fork", "aclark4life"]
+                app, ["clone", "--fork", "aclark4life", "django-mongodb-backend"]
             )
             assert result.exit_code == 0
             assert "aclark4life's fork" in result.stdout
@@ -420,7 +420,7 @@ repos = [
     config_path.write_text(config_content)
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
+        with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
 
@@ -466,7 +466,7 @@ repos = [
     config_path.write_text(config_content)
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("subprocess.run") as mock_run:
+        with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
 
@@ -518,7 +518,7 @@ repos = [
     config_path.write_text(config_content)
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
+        with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
 
@@ -539,7 +539,7 @@ def test_repo_sync_help():
     """Test that the repo sync help command works."""
     result = runner.invoke(app, ["sync", "--help"])
     assert result.exit_code == 0
-    assert "Sync repository with upstream" in result.stdout
+    assert "Sync repositories with upstream" in result.stdout
 
 
 def test_repo_sync_single_repo(tmp_path, temp_repos_dir):
@@ -565,7 +565,7 @@ repos = [
     (repo_dir / ".git").mkdir()
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
+        with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
             # Mock git commands
@@ -632,7 +632,7 @@ repos = [
         (repo_dir / ".git").mkdir()
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
+        with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
             # Mock git commands
@@ -690,7 +690,7 @@ repos = [
     (repo_dir / ".git").mkdir()
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.cli.subprocess.run") as mock_run:
+        with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
             # Mock git remote to return only origin (no upstream)
@@ -762,6 +762,7 @@ repos = []
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["sync"])
-        assert result.exit_code == 1
+        # With no_args_is_help=True, shows help with exit code 2
+        assert result.exit_code == 2
         output = result.stdout + result.stderr
-        assert "Repository name or group required" in output
+        assert "Sync repositories with upstream" in output

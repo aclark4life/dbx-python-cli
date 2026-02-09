@@ -9,11 +9,15 @@ from dbx_python_cli.commands import repo
 app = typer.Typer(
     help="Remove repository groups",
     no_args_is_help=True,
-    context_settings={"help_option_names": ["-h", "--help"]},
+    invoke_without_command=True,
+    context_settings={
+        "allow_interspersed_args": False,
+        "help_option_names": ["-h", "--help"],
+    },
 )
 
 
-@app.command()
+@app.callback()
 def remove_callback(
     ctx: typer.Context,
     group_name: str = typer.Argument(
