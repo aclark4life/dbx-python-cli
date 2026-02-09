@@ -167,8 +167,8 @@ def _run_git_branch(
         typer.echo(f"⚠️  {name}: Not a git repository (skipping)", err=True)
         return
 
-    # Build git branch command
-    git_cmd = ["git", "branch"]
+    # Build git branch command with --no-pager to avoid pager issues
+    git_cmd = ["git", "--no-pager", "branch"]
     if git_args:
         git_cmd.extend(git_args)
         typer.echo(f"🌿 {name}: git branch {' '.join(git_args)}")
