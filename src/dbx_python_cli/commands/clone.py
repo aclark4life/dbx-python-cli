@@ -36,15 +36,10 @@ def clone_callback(
         "-l",
         help="List available groups",
     ),
-    fork: bool = typer.Option(
-        False,
-        "--fork",
-        help="Clone from your fork instead of upstream (uses fork_user from config)",
-    ),
-    fork_user: str = typer.Option(
+    fork: str = typer.Option(
         None,
-        "--fork-user",
-        help="GitHub username for fork (overrides config fork_user)",
+        "--fork",
+        help="Clone from your fork instead of upstream. Specify GitHub username (e.g., --fork username), or leave empty to use fork_user from config (e.g., --fork '')",
     ),
 ):
     """Clone a repository by name or all repositories from a group."""
@@ -130,22 +125,22 @@ def clone_callback(
             typer.echo("   or: dbx clone --list")
             raise typer.Exit(1)
 
-        # Handle fork flag
+        # Handle fork option
         effective_fork_user = None
-        if fork or fork_user:
-            # If --fork-user is provided, use it (overrides config)
-            if fork_user:
-                effective_fork_user = fork_user
-            # If --fork is provided, try to get from config
-            elif fork:
+        if fork is not None:
+            # If --fork has a value (username provided), use it
+            if fork:
+                effective_fork_user = fork
+            # If --fork is used without a value (empty string), get from config
+            else:
                 effective_fork_user = config.get("repo", {}).get("fork_user")
                 if not effective_fork_user:
                     typer.echo(
-                        "❌ Error: --fork flag requires 'fork_user' to be set in config",
+                        "❌ Error: --fork requires 'fork_user' to be set in config when no username is provided",
                         err=True,
                     )
                     typer.echo(
-                        "\nSet it in your config file or use --fork-user <username>"
+                        "\nSet it in your config file or use --fork <username>"
                     )
                     raise typer.Exit(1)
 

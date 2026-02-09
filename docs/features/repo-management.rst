@@ -89,9 +89,9 @@ With this configuration, you can simply run:
 .. code-block:: bash
 
    # Uses fork_user from config
-   dbx clone -g pymongo --fork
+   dbx clone -g pymongo --fork ''
 
-   # Or override the config
+   # Or specify a different username
    dbx clone -g pymongo --fork different-user
 
 Sync Fork with Upstream

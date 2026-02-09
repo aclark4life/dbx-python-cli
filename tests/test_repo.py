@@ -362,7 +362,7 @@ repos = [
 
 
 def test_repo_clone_single_repo_with_fork(tmp_path, temp_repos_dir):
-    """Test cloning a single repository with --fork-user flag."""
+    """Test cloning a single repository with --fork <username> flag."""
     config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     repos_dir_str = str(temp_repos_dir).replace("\\", "/")
@@ -384,7 +384,7 @@ repos = [
 
             # Options must come before positional arguments with allow_interspersed_args=False
             result = runner.invoke(
-                app, ["clone", "--fork-user", "aclark4life", "django-mongodb-backend"]
+                app, ["clone", "--fork", "aclark4life", "django-mongodb-backend"]
             )
             assert result.exit_code == 0
             assert "aclark4life's fork" in result.stdout
@@ -404,7 +404,7 @@ repos = [
 
 
 def test_repo_clone_with_fork_user(tmp_path, temp_repos_dir):
-    """Test cloning with --fork-user flag and explicit username."""
+    """Test cloning with --fork <username> flag and explicit username."""
     config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     repos_dir_str = str(temp_repos_dir).replace("\\", "/")
@@ -425,7 +425,7 @@ repos = [
             mock_run.return_value = None
 
             result = runner.invoke(
-                app, ["clone", "-g", "test", "--fork-user", "aclark4life"]
+                app, ["clone", "-g", "test", "--fork", "aclark4life"]
             )
             assert result.exit_code == 0
             assert "aclark4life's fork" in result.stdout
@@ -449,7 +449,7 @@ repos = [
 
 
 def test_repo_clone_with_fork_from_config(tmp_path, temp_repos_dir):
-    """Test cloning with --fork flag using fork_user from config."""
+    """Test cloning with --fork '' flag using fork_user from config."""
     config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     repos_dir_str = str(temp_repos_dir).replace("\\", "/")
@@ -470,14 +470,14 @@ repos = [
             mock_get_path.return_value = config_path
             mock_run.return_value = None
 
-            # Use --fork to use config default
-            result = runner.invoke(app, ["clone", "-g", "test", "--fork"])
+            # Use --fork '' to use config default
+            result = runner.invoke(app, ["clone", "-g", "test", "--fork", ""])
             assert result.exit_code == 0
             assert "aclark4life's fork" in result.stdout
 
 
 def test_repo_clone_fork_without_config_shows_error(tmp_path, temp_repos_dir):
-    """Test that --fork without config fork_user shows error."""
+    """Test that --fork '' without config fork_user shows error."""
     config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     repos_dir_str = str(temp_repos_dir).replace("\\", "/")
@@ -495,14 +495,14 @@ repos = [
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["clone", "-g", "test", "--fork"])
+        result = runner.invoke(app, ["clone", "-g", "test", "--fork", ""])
         assert result.exit_code == 1
         output = result.stdout + result.stderr
         assert "fork_user" in output
 
 
 def test_repo_clone_fork_https_url(tmp_path, temp_repos_dir):
-    """Test cloning with --fork-user flag using HTTPS URL."""
+    """Test cloning with --fork <username> flag using HTTPS URL."""
     config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     repos_dir_str = str(temp_repos_dir).replace("\\", "/")
@@ -523,7 +523,7 @@ repos = [
             mock_run.return_value = None
 
             result = runner.invoke(
-                app, ["clone", "-g", "test", "--fork-user", "aclark4life"]
+                app, ["clone", "-g", "test", "--fork", "aclark4life"]
             )
             assert result.exit_code == 0
 
