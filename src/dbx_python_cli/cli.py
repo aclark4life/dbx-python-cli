@@ -26,17 +26,17 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-# Add subcommands
+# Add subcommands (alphabetically sorted)
+app.add_typer(branch.app, name="branch")
 app.add_typer(config.app, name="config")
 app.add_typer(env.app, name="env")
-app.add_typer(test.app, name="test")
 app.add_typer(install.app, name="install")
 app.add_typer(just.app, name="just")
-app.add_typer(branch.app, name="branch")
-app.add_typer(switch.app, name="switch")
 app.add_typer(log.app, name="log")
 app.add_typer(open.app, name="open")
 app.add_typer(project.app, name="project")
+app.add_typer(switch.app, name="switch")
+app.add_typer(test.app, name="test")
 
 
 def version_callback(value: bool):
