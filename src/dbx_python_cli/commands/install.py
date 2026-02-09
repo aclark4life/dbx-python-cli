@@ -98,6 +98,19 @@ def get_package_options(work_dir):
         if "project" in data and "optional-dependencies" in data["project"]:
             extras = list(data["project"]["optional-dependencies"].keys())
 
+        # Also check for hatch metadata hooks (used when optional-dependencies is dynamic)
+        if (
+            not extras
+            and "tool" in data
+            and "hatch" in data["tool"]
+            and "metadata" in data["tool"]["hatch"]
+            and "hooks" in data["tool"]["hatch"]["metadata"]
+            and "requirements_txt" in data["tool"]["hatch"]["metadata"]["hooks"]
+        ):
+            hatch_hooks = data["tool"]["hatch"]["metadata"]["hooks"]["requirements_txt"]
+            if "optional-dependencies" in hatch_hooks:
+                extras = list(hatch_hooks["optional-dependencies"].keys())
+
         # Extract dependency groups from [dependency-groups] (PEP 735)
         dependency_groups = []
         if "dependency-groups" in data:
