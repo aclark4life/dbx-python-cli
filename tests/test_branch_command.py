@@ -142,7 +142,7 @@ def test_branch_without_args(tmp_path, temp_repos_dir, mock_config):
                 assert "mongo-python-driver:" in result.stdout
                 mock_run.assert_called_once()
                 args = mock_run.call_args[0][0]
-                assert args == ["git", "branch"]
+                assert args == ["git", "--no-pager", "branch"]
 
 
 def test_branch_with_args(tmp_path, temp_repos_dir, mock_config):
@@ -158,7 +158,7 @@ def test_branch_with_args(tmp_path, temp_repos_dir, mock_config):
                 assert "git branch -a" in result.stdout
                 mock_run.assert_called_once()
                 args = mock_run.call_args[0][0]
-                assert args == ["git", "branch", "-a"]
+                assert args == ["git", "--no-pager", "branch", "-a"]
 
 
 def test_branch_with_group(tmp_path, temp_repos_dir, mock_config):
