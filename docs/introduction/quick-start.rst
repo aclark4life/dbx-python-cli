@@ -90,6 +90,36 @@ Run tests for a repository:
    # Run tests matching a keyword
    dbx test mongo-python-driver -k "test_connection"
 
+Working with Django Projects
+-----------------------------
+
+Create and manage Django projects with MongoDB backend:
+
+.. code-block:: bash
+
+   # Create a new project
+   dbx project add myproject
+
+   # Create a virtual environment for projects
+   dbx env init -g projects
+
+   # Install the project
+   dbx install myproject
+
+   # Run the project (defaults to newest project)
+   dbx project run
+
+   # Create a superuser (defaults to newest project)
+   dbx project su
+
+   # Run Django management commands (defaults to newest project)
+   dbx project manage shell
+   dbx project manage migrate
+
+.. note::
+
+   **Convenience Feature**: Most project commands default to the newest project when no name is specified. This makes it faster to work with your current project without typing the name repeatedly.
+
 Common Workflows
 ----------------
 

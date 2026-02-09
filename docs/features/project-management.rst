@@ -16,6 +16,26 @@ Projects are Django applications created from bundled templates that include:
 
 Projects are created in ``base_dir/projects/`` by default, where ``base_dir`` is configured in your ``~/.config/dbx-python-cli/config.toml`` file.
 
+Newest Project Default
+~~~~~~~~~~~~~~~~~~~~~~
+
+**Most project commands default to the newest project when no project name is specified.** This makes it easier to work with your most recent project without having to type the project name repeatedly.
+
+The "newest" project is determined by the most recently modified project directory (based on filesystem modification time). When a command defaults to the newest project, you'll see an informative message:
+
+.. code-block:: text
+
+   ℹ️  No project specified, using newest: 'myproject'
+
+Commands that support this behavior:
+
+- ``dbx project run`` - Run the Django development server
+- ``dbx project remove`` - Remove a project
+- ``dbx project manage`` - Run Django management commands
+- ``dbx project su`` - Create a superuser
+
+This feature is particularly useful during active development when you're frequently working with the same project.
+
 Creating Projects
 -----------------
 
@@ -83,6 +103,74 @@ This will:
 
 The ``dbx install`` command now supports frontend installation for both projects and regular repositories. If a ``frontend/`` directory is detected with a ``package.json`` file, npm dependencies will be installed automatically after the Python package installation completes.
 
+Running Projects
+----------------
+
+Run a Django project's development server with the ``run`` command:
+
+.. code-block:: bash
+
+   # Run the newest project (no name required)
+   dbx project run
+
+   # Run a specific project
+   dbx project run myproject
+
+   # Run with custom host and port
+   dbx project run myproject --host 0.0.0.0 --port 8080
+
+   # Run with specific settings configuration
+   dbx project run myproject --settings qe
+
+This will:
+
+1. Start the Django development server using ``manage.py runserver``
+2. Automatically start the frontend development server if a ``frontend/`` directory exists
+3. Handle graceful shutdown of both servers on CTRL-C
+
+Managing Projects
+-----------------
+
+Run Django management commands with the ``manage`` command:
+
+.. code-block:: bash
+
+   # Run shell on the newest project (no name required)
+   dbx project manage shell
+
+   # Run migrations on a specific project
+   dbx project manage myproject migrate
+
+   # Create migrations
+   dbx project manage myproject makemigrations
+
+   # Run with specific settings
+   dbx project manage myproject --settings qe shell
+
+   # Run with MongoDB URI
+   dbx project manage myproject --mongodb-uri mongodb://localhost:27017
+
+Creating Superusers
+-------------------
+
+Create a Django superuser with the ``su`` command:
+
+.. code-block:: bash
+
+   # Create superuser on the newest project (no name required)
+   dbx project su
+
+   # Create superuser on a specific project
+   dbx project su myproject
+
+   # Create with custom credentials
+   dbx project su myproject -u admin -p secretpass -e admin@example.com
+
+   # Create with specific settings
+   dbx project su myproject --settings qe
+
+The default username and password are both ``admin``. The email defaults to the ``PROJECT_EMAIL`` environment variable or ``admin@example.com`` if not set.
+
 Removing Projects
 -----------------
 
@@ -90,7 +178,10 @@ Remove a project with the ``remove`` command:
 
 .. code-block:: bash
 
-   # Remove a project
+   # Remove the newest project (no name required)
+   dbx project remove
+
+   # Remove a specific project
    dbx project remove myproject
 
    # Remove from custom directory
@@ -100,6 +191,10 @@ This will:
 
 1. Attempt to uninstall the project package from the current Python environment
 2. Remove the project directory from the filesystem
+
+.. note::
+
+   When using the ``--directory`` flag, you must specify the project name explicitly.
 
 Virtual Environments
 --------------------

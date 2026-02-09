@@ -101,6 +101,34 @@ This decision was implemented in a refactoring that moved ``clone`` and ``sync``
 
 The ``repo.py`` module was converted from a command module to a helper functions module, containing only utility functions like ``get_config()``, ``get_base_dir()``, and ``get_repo_groups()``.
 
+Smart Defaults for Convenience
+-------------------------------
+
+To further improve usability, commands should provide smart defaults when possible. This reduces typing and makes common workflows faster.
+
+Project Commands Default to Newest
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Most ``dbx project`` commands default to the newest project when no project name is specified:
+
+.. code-block:: bash
+
+   # These commands work without specifying a project name
+   dbx project run              # Run newest project
+   dbx project manage shell     # Open shell on newest project
+   dbx project su               # Create superuser on newest project
+   dbx project remove           # Remove newest project
+
+The "newest" project is determined by filesystem modification time. This is particularly useful during active development when you're frequently working with the same project.
+
+When a command defaults to the newest project, it displays an informative message:
+
+.. code-block:: text
+
+   ℹ️  No project specified, using newest: 'myproject'
+
+This design decision follows the principle of **optimizing for the common case**: developers typically work on one project at a time, so requiring the project name for every command adds unnecessary friction.
+
 Future Considerations
 ---------------------
 
@@ -108,6 +136,12 @@ As the CLI grows, we should continue to evaluate whether commands belong at the 
 
 - **Top level**: Frequently used, standalone operations
 - **Command groups**: Related operations that share context or configuration
+
+We should also look for opportunities to add smart defaults that reduce typing while maintaining clarity:
+
+- **Sensible defaults**: Commands should work with minimal arguments for common use cases
+- **Clear feedback**: When defaults are applied, inform the user what was chosen
+- **Easy override**: Defaults should be easy to override when needed
 
 The goal is to keep the CLI intuitive and easy to use while maintaining good organization.
 
