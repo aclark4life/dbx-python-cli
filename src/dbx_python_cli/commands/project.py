@@ -22,6 +22,40 @@ app = typer.Typer(
 )
 
 
+def get_newest_project(projects_dir: Path) -> tuple[str, Path]:
+    """
+    Get the newest project from the projects directory.
+
+    Returns:
+        tuple: (project_name, project_path)
+
+    Raises:
+        typer.Exit: If no projects are found
+    """
+    if not projects_dir.exists():
+        typer.echo(f"❌ Projects directory not found at {projects_dir}", err=True)
+        typer.echo("\nCreate a project using: dbx project add <name>")
+        raise typer.Exit(code=1)
+
+    # Find all projects (directories with pyproject.toml)
+    projects = []
+    for item in projects_dir.iterdir():
+        if item.is_dir() and (item / "pyproject.toml").exists():
+            projects.append(item)
+
+    if not projects:
+        typer.echo(f"❌ No projects found in {projects_dir}", err=True)
+        typer.echo("\nCreate a project using: dbx project add <name>")
+        raise typer.Exit(code=1)
+
+    # Sort by modification time (newest first)
+    projects.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    project_path = projects[0]
+    project_name = project_path.name
+
+    return project_name, project_path
+
+
 @app.callback(invoke_without_command=True)
 def project_callback(
     ctx: typer.Context,
@@ -384,7 +418,7 @@ def _add_frontend(
 
 @app.command("remove")
 def remove_project(
-    name: str,
+    name: str = typer.Argument(None, help="Project name (defaults to newest project)"),
     directory: Path = typer.Option(
         None,
         "--directory",
@@ -394,8 +428,13 @@ def remove_project(
 ):
     """Delete a Django project by name.
 
+    If no project name is provided, removes the most recently created project.
     This will first attempt to uninstall the project package using pip in the
     current Python environment, then remove the project directory.
+
+    Examples:
+        dbx project remove                # Remove newest project
+        dbx project remove myproject      # Remove specific project
     """
     # Determine project directory
     if directory is None:
@@ -403,8 +442,17 @@ def remove_project(
         config = get_config()
         base_dir = get_base_dir(config)
         projects_dir = base_dir / "projects"
-        target = projects_dir / name
+
+        # If no name provided, find the newest project
+        if name is None:
+            name, target = get_newest_project(projects_dir)
+            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
+        else:
+            target = projects_dir / name
     else:
+        if name is None:
+            typer.echo("❌ Project name is required when using --directory", err=True)
+            raise typer.Exit(code=1)
         target = directory / name
 
     if not target.exists() or not target.is_dir():
@@ -486,28 +534,7 @@ def run_project(
 
         # If no name provided, find the newest project
         if name is None:
-            if not projects_dir.exists():
-                typer.echo(
-                    f"❌ Projects directory not found at {projects_dir}", err=True
-                )
-                typer.echo("\nCreate a project using: dbx project add <name>")
-                raise typer.Exit(code=1)
-
-            # Find all projects (directories with pyproject.toml)
-            projects = []
-            for item in projects_dir.iterdir():
-                if item.is_dir() and (item / "pyproject.toml").exists():
-                    projects.append(item)
-
-            if not projects:
-                typer.echo(f"❌ No projects found in {projects_dir}", err=True)
-                typer.echo("\nCreate a project using: dbx project add <name>")
-                raise typer.Exit(code=1)
-
-            # Sort by modification time (newest first)
-            projects.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-            project_path = projects[0]
-            name = project_path.name
+            name, project_path = get_newest_project(projects_dir)
             typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
         else:
             project_path = projects_dir / name
@@ -617,7 +644,7 @@ def open_browser(
 
 @app.command("manage")
 def manage(
-    name: str = typer.Argument(..., help="Project name"),
+    name: str = typer.Argument(None, help="Project name (defaults to newest project)"),
     command: str = typer.Argument(None, help="Django management command to run"),
     args: list[str] = typer.Argument(None, help="Additional arguments for the command"),
     directory: Path = typer.Option(
@@ -644,7 +671,10 @@ def manage(
     """
     Run any Django management command for a project.
 
+    If no project name is provided, uses the most recently created project.
+
     Examples:
+        dbx project manage shell                # Run shell on newest project
         dbx project manage myproject shell
         dbx project manage myproject createsuperuser
         dbx project manage myproject --mongodb-uri mongodb+srv://user:pwd@cluster
@@ -661,8 +691,17 @@ def manage(
         config = get_config()
         base_dir = get_base_dir(config)
         projects_dir = base_dir / "projects"
-        project_path = projects_dir / name
+
+        # If no name provided, find the newest project
+        if name is None:
+            name, project_path = get_newest_project(projects_dir)
+            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
+        else:
+            project_path = projects_dir / name
     else:
+        if name is None:
+            typer.echo("❌ Project name is required when using --directory", err=True)
+            raise typer.Exit(code=1)
         project_path = directory / name
 
     if not project_path.exists():
@@ -713,7 +752,7 @@ def manage(
 
 @app.command("su")
 def create_superuser(
-    name: str = typer.Argument(..., help="Project name"),
+    name: str = typer.Argument(None, help="Project name (defaults to newest project)"),
     directory: Path = typer.Option(
         None,
         "--directory",
@@ -747,7 +786,10 @@ def create_superuser(
     """
     Create a Django superuser with no interaction required.
 
+    If no project name is provided, uses the most recently created project.
+
     Examples:
+        dbx project su                          # Create superuser on newest project
         dbx project su myproject
         dbx project su myproject --settings base
         dbx project su myproject -u myuser -p mypass
@@ -758,16 +800,25 @@ def create_superuser(
     if not email:
         email = os.getenv("PROJECT_EMAIL", "admin@example.com")
 
-    typer.echo(f"👑 Creating Django superuser '{username}' for project '{name}'")
-
     # Determine project directory
     if directory is None:
         config = get_config()
         base_dir = get_base_dir(config)
         projects_dir = base_dir / "projects"
-        project_path = projects_dir / name
+
+        # If no name provided, find the newest project
+        if name is None:
+            name, project_path = get_newest_project(projects_dir)
+            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
+        else:
+            project_path = projects_dir / name
     else:
+        if name is None:
+            typer.echo("❌ Project name is required when using --directory", err=True)
+            raise typer.Exit(code=1)
         project_path = directory / name
+
+    typer.echo(f"👑 Creating Django superuser '{username}' for project '{name}'")
 
     if not project_path.exists():
         typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)

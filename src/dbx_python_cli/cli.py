@@ -5,7 +5,16 @@ from pathlib import Path
 
 import typer
 
-from dbx_python_cli.commands import branch, config, env, install, just, project, repo, test
+from dbx_python_cli.commands import (
+    branch,
+    config,
+    env,
+    install,
+    just,
+    project,
+    repo,
+    test,
+)
 
 app = typer.Typer(
     help="A command line tool for DBX Python development tasks. AI first. De-siloing happens here.",

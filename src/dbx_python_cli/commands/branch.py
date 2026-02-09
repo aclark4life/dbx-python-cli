@@ -95,7 +95,9 @@ def branch_callback(
     if group:
         groups = get_repo_groups(config)
         if group not in groups:
-            typer.echo(f"❌ Error: Group '{group}' not found in configuration.", err=True)
+            typer.echo(
+                f"❌ Error: Group '{group}' not found in configuration.", err=True
+            )
             typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
             raise typer.Exit(1)
 
@@ -104,11 +106,15 @@ def branch_callback(
         group_repos = [r for r in all_repos if r["group"] == group]
 
         if not group_repos:
-            typer.echo(f"❌ Error: No repositories found for group '{group}'.", err=True)
+            typer.echo(
+                f"❌ Error: No repositories found for group '{group}'.", err=True
+            )
             typer.echo(f"\nClone repositories using: dbx clone -g {group}")
             raise typer.Exit(1)
 
-        typer.echo(f"Running git branch in {len(group_repos)} repository(ies) in group '{group}':\n")
+        typer.echo(
+            f"Running git branch in {len(group_repos)} repository(ies) in group '{group}':\n"
+        )
 
         for repo_info in group_repos:
             _run_git_branch(repo_info["path"], repo_info["name"], git_args, verbose)
@@ -121,7 +127,9 @@ def branch_callback(
         project_path = projects_dir / project
 
         if not project_path.exists():
-            typer.echo(f"❌ Error: Project '{project}' not found at {project_path}", err=True)
+            typer.echo(
+                f"❌ Error: Project '{project}' not found at {project_path}", err=True
+            )
             raise typer.Exit(1)
 
         _run_git_branch(project_path, project, git_args, verbose)
@@ -147,7 +155,9 @@ def branch_callback(
     _run_git_branch(repo_path, repo_name, git_args, verbose)
 
 
-def _run_git_branch(repo_path: Path, name: str, git_args: list[str], verbose: bool = False):
+def _run_git_branch(
+    repo_path: Path, name: str, git_args: list[str], verbose: bool = False
+):
     """Run git branch in a repository or project."""
     # Check if it's a git repository
     if not (repo_path / ".git").exists():
@@ -174,5 +184,6 @@ def _run_git_branch(repo_path: Path, name: str, git_args: list[str], verbose: bo
     )
 
     if result.returncode != 0:
-        typer.echo(f"❌ {name}: git branch failed with exit code {result.returncode}", err=True)
-
+        typer.echo(
+            f"❌ {name}: git branch failed with exit code {result.returncode}", err=True
+        )

@@ -47,4 +47,3 @@ def init(
             err=True,
         )
         raise typer.Exit(1)
-

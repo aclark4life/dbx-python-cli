@@ -112,7 +112,10 @@ def test_branch_no_repo_name(tmp_path, temp_repos_dir, mock_config):
             assert result.exit_code == 1
             # Error messages can be in stdout or stderr
             output = result.stdout + result.stderr
-            assert "Repository name, group, or project is required" in output or "Usage:" in output
+            assert (
+                "Repository name, group, or project is required" in output
+                or "Usage:" in output
+            )
 
 
 def test_branch_repo_not_found(tmp_path, temp_repos_dir, mock_config):
@@ -179,7 +182,10 @@ def test_branch_with_group(tmp_path, temp_repos_dir, mock_config):
         "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
     ):
         with patch("dbx_python_cli.commands.branch.get_config", return_value=config):
-            with patch("dbx_python_cli.commands.branch.get_repo_groups", return_value=config["repo"]["groups"]):
+            with patch(
+                "dbx_python_cli.commands.branch.get_repo_groups",
+                return_value=config["repo"]["groups"],
+            ):
                 with patch("subprocess.run") as mock_run:
                     mock_run.return_value = MagicMock(returncode=0)
                     result = runner.invoke(app, ["branch", "-g", "pymongo"])
@@ -206,18 +212,17 @@ def test_branch_with_nonexistent_group(tmp_path, temp_repos_dir, mock_config):
     config = {
         "repo": {
             "base_dir": str(temp_repos_dir),
-            "groups": {
-                "pymongo": {
-                    "repos": []
-                }
-            },
+            "groups": {"pymongo": {"repos": []}},
         }
     }
     with patch(
         "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
     ):
         with patch("dbx_python_cli.commands.branch.get_config", return_value=config):
-            with patch("dbx_python_cli.commands.branch.get_repo_groups", return_value=config["repo"]["groups"]):
+            with patch(
+                "dbx_python_cli.commands.branch.get_repo_groups",
+                return_value=config["repo"]["groups"],
+            ):
                 result = runner.invoke(app, ["branch", "-g", "nonexistent"])
                 assert result.exit_code == 1
                 output = result.stdout + result.stderr
@@ -232,11 +237,8 @@ def test_verbose_flag_with_branch_command(tmp_path, temp_repos_dir, mock_config)
         with patch("dbx_python_cli.commands.branch.get_config", return_value={}):
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0)
-                result = runner.invoke(
-                    app, ["-v", "branch", "mongo-python-driver"]
-                )
+                result = runner.invoke(app, ["-v", "branch", "mongo-python-driver"])
                 assert result.exit_code == 0
                 output = strip_ansi(result.stdout)
                 assert "[verbose]" in output
                 assert "Running command:" in output
-
