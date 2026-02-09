@@ -101,40 +101,40 @@ def test_repo_list_long_form():
 
 
 def test_repo_init_creates_config(tmp_path):
-    """Test that init creates a config file."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    """Test that config init creates a config file."""
+    with patch("dbx_python_cli.commands.config.get_config_path") as mock_get_path:
         config_path = tmp_path / "config.toml"
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["init"])
+        result = runner.invoke(app, ["config", "init"])
         assert result.exit_code == 0
         assert config_path.exists()
         assert "Configuration file created" in result.stdout
 
 
 def test_repo_init_existing_config_no_overwrite(tmp_path):
-    """Test that init doesn't overwrite existing config without confirmation."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    """Test that config init doesn't overwrite existing config without confirmation."""
+    with patch("dbx_python_cli.commands.config.get_config_path") as mock_get_path:
         config_path = tmp_path / "config.toml"
         config_path.write_text("existing content")
         mock_get_path.return_value = config_path
 
         # Simulate user saying "no" to overwrite
-        result = runner.invoke(app, ["init"], input="n\n")
+        result = runner.invoke(app, ["config", "init"], input="n\n")
         assert result.exit_code == 0
         assert "already exists" in result.stdout
         assert "Aborted" in result.stdout
 
 
 def test_repo_init_existing_config_with_yes_flag(tmp_path):
-    """Test that init --yes overwrites existing config without prompting."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    """Test that config init --yes overwrites existing config without prompting."""
+    with patch("dbx_python_cli.commands.config.get_config_path") as mock_get_path:
         config_path = tmp_path / "config.toml"
         config_path.write_text("existing content")
         mock_get_path.return_value = config_path
 
         # Use --yes flag to skip confirmation
-        result = runner.invoke(app, ["init", "--yes"])
+        result = runner.invoke(app, ["config", "init", "--yes"])
         assert result.exit_code == 0
         assert "Configuration file created" in result.stdout
         # Should not contain "Aborted" since we skipped the prompt

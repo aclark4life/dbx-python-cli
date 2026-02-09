@@ -116,11 +116,11 @@ This can be any directory on the user's system.
 
 **Initialization**
 
-The ``dbx init`` command creates the initial configuration:
+The ``dbx config init`` command creates the initial configuration:
 
 .. code-block:: bash
 
-   $ dbx init
+   $ dbx config init
    Configuration file created at: ~/.config/dbx-python-cli/config.toml
 
    Default base directory: ~/Developer/mongodb/
@@ -161,7 +161,7 @@ Users migrating from ``django-mongodb-cli`` should:
 
    .. code-block:: bash
 
-      dbx init
+      dbx config init
 
 3. Update ``base_dir`` in ``~/.config/dbx-python-cli/config.toml`` to point to their existing repositories (or a new location)
 

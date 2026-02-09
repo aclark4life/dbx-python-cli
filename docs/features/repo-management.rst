@@ -11,7 +11,7 @@ Before using the repo commands, initialize your configuration file:
 .. code-block:: bash
 
    # Create user configuration file at ~/.config/dbx-python-cli/config.toml
-   dbx init
+   dbx config init
 
 This creates a configuration file with default repository groups that you can customize.
 

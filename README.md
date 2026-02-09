@@ -39,7 +39,7 @@ This will install `dbx-python-cli` globally and make the `dbx` command available
 
 ```bash
 # Initialize configuration
-dbx init
+dbx config init
 
 # Clone repositories by group
 dbx repo clone -g pymongo

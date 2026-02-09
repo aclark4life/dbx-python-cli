@@ -37,7 +37,7 @@ Install dbx-python-cli and get started in minutes:
    uv tool install git+https://github.com/aclark4life/dbx-python-cli.git
 
    # Initialize configuration
-   dbx init
+   dbx config init
 
    # Clone repositories by group
    dbx clone -g pymongo

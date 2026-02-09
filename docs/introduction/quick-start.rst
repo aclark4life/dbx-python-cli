@@ -10,7 +10,7 @@ First, initialize the configuration file:
 
 .. code-block:: bash
 
-   dbx init
+   dbx config init
 
 This creates a configuration file at ``~/.config/dbx-python-cli/config.toml`` with default settings.
 
