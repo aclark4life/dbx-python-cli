@@ -36,10 +36,15 @@ def clone_callback(
         "-l",
         help="List available groups",
     ),
-    fork: str = typer.Option(
-        None,
+    fork: bool = typer.Option(
+        False,
         "--fork",
-        help="Clone from your fork instead of upstream (provide GitHub username, or use config default if no value given)",
+        help="Clone from your fork instead of upstream (uses fork_user from config)",
+    ),
+    fork_user: str = typer.Option(
+        None,
+        "--fork-user",
+        help="GitHub username for fork (overrides config fork_user)",
     ),
 ):
     """Clone a repository by name or all repositories from a group."""
@@ -126,22 +131,28 @@ def clone_callback(
             raise typer.Exit(1)
 
         # Handle fork flag
-        fork_user = None
-        if fork is not None:
-            # If --fork is provided without a value, try to get from config
-            if fork == "":
-                fork_user = config.get("repo", {}).get("fork_user")
-                if not fork_user:
+        effective_fork_user = None
+        if fork or fork_user:
+            # If --fork-user is provided, use it (overrides config)
+            if fork_user:
+                effective_fork_user = fork_user
+            # If --fork is provided, try to get from config
+            elif fork:
+                effective_fork_user = config.get("repo", {}).get("fork_user")
+                if not effective_fork_user:
                     typer.echo(
-                        "❌ Error: --fork flag requires a GitHub username or set 'fork_user' in config",
+                        "❌ Error: --fork flag requires 'fork_user' to be set in config",
                         err=True,
                     )
+                    typer.echo(
+                        "\nSet it in your config file or use --fork-user <username>"
+                    )
                     raise typer.Exit(1)
-            else:
-                fork_user = fork
 
             if verbose:
-                typer.echo(f"[verbose] Using fork workflow with user: {fork_user}\n")
+                typer.echo(
+                    f"[verbose] Using fork workflow with user: {effective_fork_user}\n"
+                )
 
         # Create group directory under base directory
         group_dir = base_dir / group
@@ -150,16 +161,16 @@ def clone_callback(
         # Display appropriate message
         if len(repos) == 1:
             single_repo_name = repos[0].split("/")[-1].replace(".git", "")
-            if fork_user:
+            if effective_fork_user:
                 typer.echo(
-                    f"Cloning {single_repo_name} from {fork_user}'s fork to {group_dir}"
+                    f"Cloning {single_repo_name} from {effective_fork_user}'s fork to {group_dir}"
                 )
             else:
                 typer.echo(f"Cloning {single_repo_name} to {group_dir}")
         else:
-            if fork_user:
+            if effective_fork_user:
                 typer.echo(
-                    f"Cloning {len(repos)} repository(ies) from {fork_user}'s forks to {group_dir}"
+                    f"Cloning {len(repos)} repository(ies) from {effective_fork_user}'s forks to {group_dir}"
                 )
             else:
                 typer.echo(
@@ -176,7 +187,7 @@ def clone_callback(
                 continue
 
             # Determine clone URL and upstream URL
-            if fork_user:
+            if effective_fork_user:
                 # Replace the org/user in the URL with the fork user
                 # Handle both SSH and HTTPS URLs
                 clone_url = repo_url
@@ -188,16 +199,16 @@ def clone_callback(
                     if len(parts) == 2:
                         repo_part = parts[1].split("/", 1)
                         if len(repo_part) == 2:
-                            clone_url = f"git@github.com:{fork_user}/{repo_part[1]}"
+                            clone_url = (
+                                f"git@github.com:{effective_fork_user}/{repo_part[1]}"
+                            )
                 elif "github.com/" in repo_url:
                     # HTTPS format: https://github.com/org/repo.git
                     parts = repo_url.split("github.com/")
                     if len(parts) == 2:
                         repo_part = parts[1].split("/", 1)
                         if len(repo_part) == 2:
-                            clone_url = (
-                                f"{parts[0]}github.com/{fork_user}/{repo_part[1]}"
-                            )
+                            clone_url = f"{parts[0]}github.com/{effective_fork_user}/{repo_part[1]}"
             else:
                 clone_url = repo_url
                 upstream_url = None
@@ -205,7 +216,7 @@ def clone_callback(
             typer.echo(f"  📦 Cloning {repo_name}...")
             if verbose:
                 typer.echo(f"  [verbose] Clone URL: {clone_url}")
-                if fork_user:
+                if effective_fork_user:
                     typer.echo(f"  [verbose] Upstream URL: {upstream_url}")
                 typer.echo(f"  [verbose] Destination: {repo_path}")
 
@@ -219,7 +230,7 @@ def clone_callback(
                 )
 
                 # If using fork workflow, add upstream remote
-                if fork_user:
+                if effective_fork_user:
                     subprocess.run(
                         [
                             "git",

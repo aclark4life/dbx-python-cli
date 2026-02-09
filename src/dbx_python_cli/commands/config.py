@@ -4,7 +4,11 @@ import os
 import subprocess
 import typer
 
-from dbx_python_cli.commands.repo import get_config_path, get_default_config_path
+from dbx_python_cli.commands.repo import (
+    get_config_path,
+    get_default_config_path,
+    get_config,
+)
 
 app = typer.Typer(
     help="Configuration management commands",
@@ -128,3 +132,78 @@ def edit():
     except KeyboardInterrupt:
         typer.echo("\n⚠️  Editing cancelled")
         raise typer.Exit(130)
+
+
+@app.command()
+def show():
+    """Display the current configuration.
+
+    Shows the active configuration being used by dbx, including the config file
+    location and all settings.
+
+    Examples:
+        dbx config show                    # Display current configuration
+    """
+    config_path = get_config_path()
+    default_config_path = get_default_config_path()
+
+    # Determine which config is being used
+    if config_path.exists():
+        active_config_path = config_path
+        config_source = "user config"
+    elif default_config_path.exists():
+        active_config_path = default_config_path
+        config_source = "default config"
+    else:
+        typer.echo("❌ No configuration file found", err=True)
+        typer.echo("\nCreate one using: dbx config init")
+        raise typer.Exit(1)
+
+    typer.echo(f"📋 Configuration ({config_source})")
+    typer.echo(f"Location: {active_config_path}\n")
+
+    # Load and display the config
+    try:
+        config = get_config()
+
+        # Display repo settings
+        repo_config = config.get("repo", {})
+        if repo_config:
+            typer.echo("Repository Settings:")
+            typer.echo(f"  base_dir: {repo_config.get('base_dir', 'Not set')}")
+            fork_user = repo_config.get("fork_user")
+            if fork_user:
+                typer.echo(f"  fork_user: {fork_user}")
+            else:
+                typer.echo("  fork_user: Not set")
+            typer.echo()
+
+        # Display groups
+        groups = repo_config.get("groups", {})
+        if groups:
+            typer.echo(f"Repository Groups ({len(groups)}):")
+            for group_name, group_config in sorted(groups.items()):
+                repos = group_config.get("repos", [])
+                typer.echo(f"  • {group_name} ({len(repos)} repositories)")
+                for repo_url in repos:
+                    repo_name = repo_url.split("/")[-1].replace(".git", "")
+                    typer.echo(f"    - {repo_name}")
+
+                # Show install_dirs if present
+                install_dirs = group_config.get("install_dirs", {})
+                if install_dirs:
+                    typer.echo(f"    Install directories:")
+                    for repo_name, dirs in install_dirs.items():
+                        typer.echo(f"      {repo_name}:")
+                        for dir_path in dirs:
+                            typer.echo(f"        - {dir_path}")
+            typer.echo()
+        else:
+            typer.echo("No repository groups configured\n")
+
+        typer.echo(f"To edit: dbx config edit")
+        typer.echo(f"To initialize user config: dbx config init")
+
+    except Exception as e:
+        typer.echo(f"❌ Error reading configuration: {e}", err=True)
+        raise typer.Exit(1)
