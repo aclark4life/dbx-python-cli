@@ -136,4 +136,3 @@ def remove_callback(
     except Exception as e:
         typer.echo(f"\n❌ Failed to remove directory: {e}", err=True)
         raise typer.Exit(1)
-

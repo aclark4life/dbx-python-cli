@@ -267,4 +267,3 @@ def _sync_repository(
             f"     Try running: dbx sync {repo_name} --force",
             err=True,
         )
-

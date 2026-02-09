@@ -77,7 +77,9 @@ def mock_config(tmp_path, temp_repos_dir):
 
 def test_remove_list_groups(mock_config):
     """Test listing available groups."""
-    with patch("dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config):
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
         result = runner.invoke(app, ["remove", "--list"])
         assert result.exit_code == 0
         output = strip_ansi(result.stdout)
@@ -89,7 +91,9 @@ def test_remove_list_groups(mock_config):
 
 def test_remove_group_with_confirmation_no(mock_config, temp_repos_dir):
     """Test removing a group with confirmation declined."""
-    with patch("dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config):
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
         # Simulate user saying "no" to confirmation
         result = runner.invoke(app, ["remove", "pymongo"], input="n\n")
         assert result.exit_code == 0
@@ -101,7 +105,9 @@ def test_remove_group_with_confirmation_no(mock_config, temp_repos_dir):
 
 def test_remove_group_with_force(mock_config, temp_repos_dir):
     """Test removing a group with --force flag."""
-    with patch("dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config):
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
         # Options must come before positional arguments with allow_interspersed_args=False
         result = runner.invoke(app, ["remove", "--force", "pymongo"])
         assert result.exit_code == 0
@@ -114,7 +120,9 @@ def test_remove_group_with_force(mock_config, temp_repos_dir):
 
 def test_remove_group_with_confirmation_yes(mock_config, temp_repos_dir):
     """Test removing a group with confirmation accepted."""
-    with patch("dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config):
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
         # Simulate user saying "yes" to confirmation
         result = runner.invoke(app, ["remove", "django"], input="y\n")
         assert result.exit_code == 0
@@ -126,7 +134,9 @@ def test_remove_group_with_confirmation_yes(mock_config, temp_repos_dir):
 
 def test_remove_nonexistent_group(mock_config):
     """Test removing a non-existent group."""
-    with patch("dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config):
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
         result = runner.invoke(app, ["remove", "nonexistent"])
         assert result.exit_code == 1
         # Error messages go to stdout when using typer.echo(..., err=True)
@@ -137,7 +147,9 @@ def test_remove_nonexistent_group(mock_config):
 
 def test_remove_no_group_name(mock_config):
     """Test remove command without group name shows help."""
-    with patch("dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config):
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
         result = runner.invoke(app, ["remove"])
         # With no_args_is_help=True, shows help with exit code 2
         assert result.exit_code == 2
