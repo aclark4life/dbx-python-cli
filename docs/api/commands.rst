@@ -3,6 +3,14 @@ Commands
 
 The command modules implement the CLI commands for repository management, installation, testing, and more.
 
+dbx_python_cli.commands.branch module
+-------------------------------------
+
+.. automodule:: dbx_python_cli.commands.branch
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 dbx_python_cli.commands.env module
 ----------------------------------
 

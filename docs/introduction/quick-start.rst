@@ -141,6 +141,22 @@ Keep your repositories up to date:
    # Sync all repositories in a group
    dbx sync -g pymongo
 
+View Git Branches
+~~~~~~~~~~~~~~~~~
+
+View branches across repositories:
+
+.. code-block:: bash
+
+   # View branches in a single repository
+   dbx branch mongo-python-driver
+
+   # View all branches (including remote)
+   dbx branch mongo-python-driver -a
+
+   # View branches in all repositories in a group
+   dbx branch -g pymongo
+
 Working with Multiple Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

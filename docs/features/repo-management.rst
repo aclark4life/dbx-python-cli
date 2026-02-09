@@ -1,7 +1,7 @@
 Repository Management
 =====================
 
-The ``dbx clone`` and ``dbx sync`` commands provide repository management functionality for cloning and managing groups of related repositories.
+The ``dbx clone``, ``dbx sync``, and ``dbx branch`` commands provide repository management functionality for cloning and managing groups of related repositories.
 
 Initialize Configuration
 ------------------------
@@ -196,3 +196,73 @@ You can add your own custom groups by editing the configuration file.
 - Provides clear progress feedback with emoji indicators
 - Handles errors gracefully and continues with remaining repositories
 - Easy to add custom repository groups
+
+View Git Branches
+-----------------
+
+The ``dbx branch`` command allows you to run ``git branch`` in one or more repositories:
+
+.. code-block:: bash
+
+   # Show branches in a single repository
+   dbx branch mongo-python-driver
+
+   # Show all branches (including remote branches)
+   dbx branch mongo-python-driver -a
+
+   # Show branches with verbose information
+   dbx branch mongo-python-driver -v
+
+   # Show branches in all repositories in a group
+   dbx branch -g pymongo
+
+   # Show branches in all repositories in a group with arguments
+   dbx branch -g pymongo -a
+
+   # Show branches in a project
+   dbx branch -p myproject
+
+   # List available repositories
+   dbx branch --list
+
+This command will:
+
+1. Find the repository, group, or project by name
+2. Run ``git branch`` with any provided arguments
+3. Display the output for each repository
+
+**Examples:**
+
+.. code-block:: bash
+
+   # View local branches in a single repo
+   $ dbx branch mongo-python-driver
+   🌿 mongo-python-driver:
+   * main
+     feature-branch
+
+   # View all branches (local and remote)
+   $ dbx branch mongo-python-driver -a
+   🌿 mongo-python-driver: git branch -a
+   * main
+     feature-branch
+     remotes/origin/HEAD -> origin/main
+     remotes/origin/main
+     remotes/origin/feature-branch
+
+   # View branches across all repos in a group
+   $ dbx branch -g pymongo
+   Running git branch in 2 repository(ies) in group 'pymongo':
+
+   🌿 mongo-python-driver:
+   * main
+   🌿 specifications:
+   * master
+
+**Notes:**
+
+- The command works with any repository that has been cloned using ``dbx clone``
+- You can pass any valid ``git branch`` arguments (e.g., ``-a``, ``-r``, ``-v``, ``--merged``)
+- When using with a group, the command runs in all repositories in that group
+- Projects without a ``.git`` directory will be skipped with a warning
+- Use the ``--list`` flag to see all available repositories and projects

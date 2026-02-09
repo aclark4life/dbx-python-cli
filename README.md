@@ -76,11 +76,18 @@ dbx just mongo-python-driver          # Show available just commands
 dbx just mongo-python-driver lint     # Run 'just lint'
 dbx just mongo-python-driver test -v  # Run 'just test -v'
 
+# View git branches in repositories
+dbx branch mongo-python-driver        # Show branches in a repo
+dbx branch mongo-python-driver -a     # Show all branches (including remote)
+dbx branch -g pymongo                 # Show branches in all repos in a group
+dbx branch -p myproject               # Show branches in a project
+
 # Use verbose mode for more detailed output
 dbx -v install mongo-python-driver -e test
 dbx -v test mongo-python-driver
 dbx -v repo clone -g pymongo
 dbx -v just mongo-python-driver lint
+dbx -v branch -g pymongo
 ```
 
 ## Development

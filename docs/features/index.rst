@@ -21,7 +21,7 @@ The CLI supports global options that can be used with any command. See :doc:`glo
 Repository Management
 ---------------------
 
-The ``dbx clone`` and ``dbx sync`` commands provide repository management functionality for cloning and managing groups of related repositories. See :doc:`repo-management` for details.
+The ``dbx clone``, ``dbx sync``, and ``dbx branch`` commands provide repository management functionality for cloning, syncing, and viewing branches in groups of related repositories. See :doc:`repo-management` for details.
 
 Project Management
 ------------------
