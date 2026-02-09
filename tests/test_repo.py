@@ -477,7 +477,7 @@ repos = [
 
 
 def test_repo_clone_fork_without_config_shows_error(tmp_path, temp_repos_dir):
-    """Test that --fork without config fork_user shows error."""
+    """Test that --fork without config fork_user falls back to upstream clone."""
     config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     repos_dir_str = str(temp_repos_dir).replace("\\", "/")
@@ -493,12 +493,20 @@ repos = [
     config_path.write_text(config_content)
 
     with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
-        mock_get_path.return_value = config_path
+        with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+            mock_run.return_value = None
 
-        result = runner.invoke(app, ["clone", "-g", "test", "--fork"])
-        assert result.exit_code == 1
-        output = result.stdout + result.stderr
-        assert "fork_user" in output
+            result = runner.invoke(app, ["clone", "-g", "test", "--fork"])
+            assert result.exit_code == 0
+
+            # Verify git clone was called with upstream URL (not a fork)
+            clone_calls = [
+                call for call in mock_run.call_args_list if call[0][0][1] == "clone"
+            ]
+            assert len(clone_calls) == 1
+            # Should clone from upstream (mongodb/mongo-python-driver), not a fork
+            assert "mongodb/mongo-python-driver.git" in clone_calls[0][0][0][2]
 
 
 def test_repo_clone_fork_https_url(tmp_path, temp_repos_dir):

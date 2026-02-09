@@ -136,15 +136,12 @@ def clone_callback(
             # --fork-user takes precedence
             effective_fork_user = fork_user
         elif fork:
-            # --fork flag uses config
+            # --fork flag uses config, falls back to upstream if not set
             effective_fork_user = config.get("repo", {}).get("fork_user")
-            if not effective_fork_user:
+            if not effective_fork_user and verbose:
                 typer.echo(
-                    "❌ Error: --fork requires 'fork_user' to be set in config",
-                    err=True,
+                    "[verbose] --fork specified but fork_user not in config, cloning from upstream\n"
                 )
-                typer.echo("\nSet it in your config file or use --fork-user <username>")
-                raise typer.Exit(1)
 
         if effective_fork_user and verbose:
             typer.echo(
