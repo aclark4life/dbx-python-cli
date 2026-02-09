@@ -99,16 +99,17 @@ def test_just_list_shows_repos(tmp_path, temp_repos_dir, mock_config):
 
 
 def test_just_no_repo_name(tmp_path, temp_repos_dir, mock_config):
-    """Test that just without repo name shows error."""
+    """Test that just without repo name shows help."""
     with patch(
         "dbx_python_cli.commands.just.get_base_dir", return_value=temp_repos_dir
     ):
         with patch("dbx_python_cli.commands.just.get_config", return_value={}):
             result = runner.invoke(app, ["just"])
-            assert result.exit_code == 1
-            # Error messages can be in stdout or stderr
+            # Typer exits with code 2 when showing help due to no_args_is_help=True
+            assert result.exit_code == 2
+            # Should show help/usage
             output = result.stdout + result.stderr
-            assert "Repository name is required" in output or "Usage:" in output
+            assert "Usage:" in output
 
 
 def test_just_repo_not_found(tmp_path, temp_repos_dir, mock_config):

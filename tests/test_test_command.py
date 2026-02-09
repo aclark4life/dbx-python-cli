@@ -114,13 +114,13 @@ def test_test_list_short_form(mock_config, temp_repos_dir):
 
 
 def test_test_no_args_shows_error():
-    """Test that test without args shows error."""
+    """Test that test without args shows help."""
     result = runner.invoke(app, ["test"])
-    assert result.exit_code == 1
-    # Error messages go to stderr in Typer
+    # Typer exits with code 2 when showing help due to no_args_is_help=True
+    assert result.exit_code == 2
+    # Should show help/usage
     output = result.stdout + result.stderr
-    assert "Repository name is required" in output
-    assert "Usage: dbx test <repo_name>" in output
+    assert "Usage:" in output
 
 
 def test_test_nonexistent_repo(mock_config, temp_repos_dir):

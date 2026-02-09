@@ -70,7 +70,7 @@ app = typer.Typer(
         "help_option_names": ["-h", "--help"],
         "ignore_unknown_options": False,
     },
-    no_args_is_help=False,
+    no_args_is_help=True,
 )
 
 

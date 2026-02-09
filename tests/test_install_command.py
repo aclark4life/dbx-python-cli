@@ -63,16 +63,14 @@ def test_install_list_short_form(tmp_path):
 
 
 def test_install_no_args_shows_error():
-    """Test install with no arguments shows error."""
+    """Test install with no arguments shows help."""
     with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             result = runner.invoke(app, ["install"])
-            assert result.exit_code == 1
-            assert (
-                "Usage:" in result.stdout
-                or "Repository name is required" in result.stdout
-            )
+            # Typer exits with code 2 when showing help due to no_args_is_help=True
+            assert result.exit_code == 2
+            assert "Usage:" in result.stdout
 
 
 def test_install_nonexistent_repo(tmp_path):
