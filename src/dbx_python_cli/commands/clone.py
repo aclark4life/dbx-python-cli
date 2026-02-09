@@ -1,7 +1,6 @@
 """Clone command for cloning repositories."""
 
 import subprocess
-from pathlib import Path
 
 import typer
 
