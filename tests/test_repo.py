@@ -543,6 +543,62 @@ repos = [
             assert "aclark4life/mongo-python-driver.git" in clone_calls[0][0][0][2]
 
 
+def test_repo_clone_fork_fallback_when_fork_not_found(tmp_path, temp_repos_dir):
+    """Test that clone falls back to upstream when fork doesn't exist."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+
+            # Simulate fork clone failing, upstream clone succeeding
+            def run_side_effect(*args, **kwargs):
+                cmd = args[0]
+                if cmd[1] == "clone":
+                    clone_url = cmd[2]
+                    # Fork clone fails
+                    if "aclark4life" in clone_url:
+                        raise subprocess.CalledProcessError(
+                            128, cmd, stderr="Repository not found"
+                        )
+                    # Upstream clone succeeds
+                    return None
+                # Remote add succeeds
+                return None
+
+            mock_run.side_effect = run_side_effect
+
+            result = runner.invoke(
+                app, ["clone", "-g", "test", "--fork-user", "aclark4life"]
+            )
+            assert result.exit_code == 0
+
+            # Verify both fork and upstream clone were attempted
+            clone_calls = [
+                call for call in mock_run.call_args_list if call[0][0][1] == "clone"
+            ]
+            assert len(clone_calls) == 2
+            # First attempt should be fork
+            assert "aclark4life/mongo-python-driver.git" in clone_calls[0][0][0][2]
+            # Second attempt should be upstream
+            assert "mongodb/mongo-python-driver.git" in clone_calls[1][0][0][2]
+
+            # Verify success message mentions fork not found
+            assert "fork not found" in result.stdout
+
+
 def test_repo_sync_help():
     """Test that the repo sync help command works."""
     result = runner.invoke(app, ["sync", "--help"])

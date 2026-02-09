@@ -246,10 +246,32 @@ def clone_callback(
                     typer.echo(f"  ✅ {repo_name} cloned successfully")
 
             except subprocess.CalledProcessError as e:
-                typer.echo(
-                    f"  ❌ Failed to clone {repo_name}: {e.stderr if not verbose else ''}",
-                    err=True,
-                )
+                # If fork clone failed, try falling back to upstream
+                if effective_fork_user and upstream_url:
+                    if verbose:
+                        typer.echo(
+                            "  [verbose] Fork clone failed, falling back to upstream"
+                        )
+                    try:
+                        subprocess.run(
+                            ["git", "clone", upstream_url, str(repo_path)],
+                            check=True,
+                            capture_output=not verbose,
+                            text=True,
+                        )
+                        typer.echo(
+                            f"  ✅ {repo_name} cloned from upstream (fork not found)"
+                        )
+                    except subprocess.CalledProcessError as upstream_error:
+                        typer.echo(
+                            f"  ❌ Failed to clone {repo_name}: {upstream_error.stderr if not verbose else ''}",
+                            err=True,
+                        )
+                else:
+                    typer.echo(
+                        f"  ❌ Failed to clone {repo_name}: {e.stderr if not verbose else ''}",
+                        err=True,
+                    )
 
         typer.echo(f"\n✨ Done! Repositories cloned to {group_dir}")
 
