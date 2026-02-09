@@ -1,7 +1,7 @@
 Repository Management
 =====================
 
-The ``dbx clone``, ``dbx sync``, and ``dbx branch`` commands provide repository management functionality for cloning and managing groups of related repositories.
+The ``dbx clone``, ``dbx sync``, ``dbx branch``, ``dbx switch``, ``dbx log``, and ``dbx open`` commands provide repository management functionality for cloning and managing groups of related repositories.
 
 Initialize Configuration
 ------------------------
@@ -266,3 +266,178 @@ This command will:
 - When using with a group, the command runs in all repositories in that group
 - Projects without a ``.git`` directory will be skipped with a warning
 - Use the ``--list`` flag to see all available repositories and projects
+
+Switch Git Branches
+-------------------
+
+The ``dbx switch`` command allows you to switch git branches in one or more repositories:
+
+.. code-block:: bash
+
+   # Switch to a branch in a single repository
+   dbx switch mongo-python-driver PYTHON-5683
+
+   # Switch branches in all repositories in a group
+   dbx switch -g pymongo main
+
+   # Switch branches in a project
+   dbx switch -p myproject feature-branch
+
+   # Create and switch to a new branch
+   dbx switch mongo-python-driver new-feature --create
+
+   # List available repositories
+   dbx switch --list
+
+This command will:
+
+1. Find the repository, group, or project by name
+2. Run ``git switch <branch>`` to switch to the specified branch
+3. Optionally create the branch if ``--create`` flag is used
+4. Display the output for each repository
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Switch to an existing branch
+   $ dbx switch mongo-python-driver PYTHON-5683
+   🔀 mongo-python-driver: Switched to branch 'PYTHON-5683'
+
+   # Create and switch to a new branch
+   $ dbx switch mongo-python-driver new-feature --create
+   🔀 mongo-python-driver: Switched to a new branch 'new-feature'
+
+   # Switch all repos in a group to main branch
+   $ dbx switch -g pymongo main
+   Switching to branch 'main' in 2 repository(ies) in group 'pymongo':
+
+   🔀 mongo-python-driver: Switched to branch 'main'
+   🔀 specifications: Switched to branch 'main'
+
+**Notes:**
+
+- The command works with any repository that has been cloned using ``dbx clone``
+- When using with a group, the command runs in all repositories in that group
+- The ``--create`` flag creates a new branch if it doesn't exist
+- Projects without a ``.git`` directory will be skipped with a warning
+- Use the ``--list`` flag to see all available repositories and projects
+
+View Git Commit Logs
+---------------------
+
+The ``dbx log`` command allows you to view git commit logs from one or more repositories:
+
+.. code-block:: bash
+
+   # Show last 10 commits from a repository
+   dbx log mongo-python-driver
+
+   # Show last 20 commits
+   dbx log -n 20 mongo-python-driver
+
+   # Show logs in oneline format
+   dbx log --oneline mongo-python-driver
+
+   # Show logs from all repositories in a group
+   dbx log -g pymongo
+
+   # Show last 5 commits from all repos in a group
+   dbx log -n 5 -g pymongo
+
+   # Show logs from a project
+   dbx log -p myproject
+
+   # List available repositories
+   dbx log --list
+
+This command will:
+
+1. Find the repository, group, or project by name
+2. Run ``git log`` with the specified options
+3. Display the commit logs for each repository
+
+**Examples:**
+
+.. code-block:: bash
+
+   # View last 10 commits (default)
+   $ dbx log mongo-python-driver
+   📜 mongo-python-driver: Last 10 commits
+   commit abc123...
+   Author: John Doe <john@example.com>
+   Date:   Mon Jan 1 12:00:00 2024 -0500
+
+       Add new feature
+
+   # View last 5 commits in oneline format
+   $ dbx log -n 5 --oneline mongo-python-driver
+   📜 mongo-python-driver: Last 5 commits (oneline)
+   abc123 Add new feature
+   def456 Fix bug
+   ghi789 Update docs
+
+   # View logs from all repos in a group
+   $ dbx log -g pymongo
+   📜 mongo-python-driver: Last 10 commits
+   ...
+   📜 specifications: Last 10 commits
+   ...
+
+**Notes:**
+
+- The command works with any repository that has been cloned using ``dbx clone``
+- Default number of commits shown is 10
+- Use ``-n`` or ``--number`` to specify a custom number of commits
+- Use ``--oneline`` for a compact one-line-per-commit format
+- When using with a group, the command runs in all repositories in that group
+- Projects without a ``.git`` directory will be skipped with a warning
+- Use the ``--list`` flag to see all available repositories and projects
+
+Open Repositories in Browser
+-----------------------------
+
+The ``dbx open`` command allows you to open repositories in your web browser:
+
+.. code-block:: bash
+
+   # Open a single repository in browser
+   dbx open mongo-python-driver
+
+   # Open all repositories in a group
+   dbx open -g pymongo
+
+   # List available repositories
+   dbx open --list
+
+This command will:
+
+1. Find the repository or group by name
+2. Get the git remote URL from the repository
+3. Convert the git URL to a browser-friendly URL
+4. Open the URL in your default web browser
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Open a single repository
+   $ dbx open mongo-python-driver
+   🌐 Opening mongo-python-driver in browser...
+   # Opens https://github.com/mongodb/mongo-python-driver
+
+   # Open all repos in a group
+   $ dbx open -g pymongo
+   Opening 2 repository(ies) in group 'pymongo' in browser:
+
+   🌐 Opening mongo-python-driver in browser...
+   🌐 Opening specifications in browser...
+
+**Notes:**
+
+- The command works with any repository that has been cloned using ``dbx clone``
+- Automatically converts SSH URLs (``git@github.com:org/repo.git``) to HTTPS URLs (``https://github.com/org/repo``)
+- Also works with HTTPS git URLs
+- When using with a group, opens all repositories in that group
+- Requires the repository to have an ``origin`` remote configured
+- Use the ``--list`` flag to see all available repositories
