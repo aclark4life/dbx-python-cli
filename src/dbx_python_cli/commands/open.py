@@ -87,19 +87,23 @@ def open_callback(
             repo_urls = group_config.get("repos", [])
 
             if not repo_urls:
-                typer.echo(f"❌ Error: No repositories found in group '{group}'.", err=True)
+                typer.echo(
+                    f"❌ Error: No repositories found in group '{group}'.", err=True
+                )
                 raise typer.Exit(1)
 
-            typer.echo(f"Opening {len(repo_urls)} repository(ies) in group '{group}':\n")
+            typer.echo(
+                f"Opening {len(repo_urls)} repository(ies) in group '{group}':\n"
+            )
 
             for repo_url in repo_urls:
                 browser_url = _convert_git_url_to_browser_url(repo_url)
                 repo_name = _extract_repo_name_from_url(repo_url)
-                
+
                 if verbose:
                     typer.echo(f"[verbose] Git URL: {repo_url}")
                     typer.echo(f"[verbose] Browser URL: {browser_url}")
-                
+
                 typer.echo(f"  🌐 Opening {repo_name}...")
                 webbrowser.open(browser_url)
 
@@ -122,21 +126,21 @@ def open_callback(
             raise typer.Exit(1)
 
         repo_path = Path(repo["path"])
-        
+
         # Get the origin remote URL
         origin_url = _get_git_remote_url(repo_path, "origin", verbose)
-        
+
         if not origin_url:
             typer.echo(f"❌ Error: No 'origin' remote found for {repo_name}", err=True)
             raise typer.Exit(1)
 
         # Convert git URL to browser URL
         browser_url = _convert_git_url_to_browser_url(origin_url)
-        
+
         if verbose:
             typer.echo(f"[verbose] Git URL: {origin_url}")
             typer.echo(f"[verbose] Browser URL: {browser_url}")
-        
+
         typer.echo(f"🌐 Opening {repo_name} in your browser...")
         webbrowser.open(browser_url)
         typer.echo(f"✨ Opened {browser_url}")
@@ -146,7 +150,9 @@ def open_callback(
         raise typer.Exit(1)
 
 
-def _get_git_remote_url(repo_path: Path, remote_name: str = "origin", verbose: bool = False):
+def _get_git_remote_url(
+    repo_path: Path, remote_name: str = "origin", verbose: bool = False
+):
     """Get the URL of a git remote.
 
     Args:
@@ -208,4 +214,3 @@ def _extract_repo_name_from_url(url: str) -> str:
     if url.endswith(".git"):
         url = url[:-4]
     return url.split("/")[-1]
-

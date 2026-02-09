@@ -80,16 +80,23 @@ def test_open_list_no_repos(temp_repos_dir, mock_config):
 def test_open_list_shows_repos(temp_repos_dir, mock_config):
     """Test open --list shows available repositories."""
     with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
-        with patch("dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir):
+        with patch(
+            "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
+        ):
             result = runner.invoke(app, ["open", "--list"])
             assert result.exit_code == 0
-            assert "mongo-python-driver" in result.stdout or "specifications" in result.stdout
+            assert (
+                "mongo-python-driver" in result.stdout
+                or "specifications" in result.stdout
+            )
 
 
 def test_open_no_repo_name(temp_repos_dir, mock_config):
     """Test open without repo name shows error."""
     with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
-        with patch("dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir):
+        with patch(
+            "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
+        ):
             result = runner.invoke(app, ["open"])
             # Typer exits with code 2 for missing arguments
             assert result.exit_code == 2
@@ -98,7 +105,9 @@ def test_open_no_repo_name(temp_repos_dir, mock_config):
 def test_open_repo_not_found(temp_repos_dir, mock_config):
     """Test open with non-existent repository."""
     with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
-        with patch("dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir):
+        with patch(
+            "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
+        ):
             result = runner.invoke(app, ["open", "nonexistent"])
             assert result.exit_code == 1
             # Check that helpful message is shown
@@ -107,51 +116,69 @@ def test_open_repo_not_found(temp_repos_dir, mock_config):
 
 def test_open_basic(tmp_path, temp_repos_dir, mock_config):
     """Test basic open of a repository."""
-    with patch("dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir):
+    with patch(
+        "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
+    ):
         with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.open.subprocess.run") as mock_run:
                 # Mock git remote get-url to return a URL
                 mock_run.return_value = MagicMock(
                     returncode=0,
-                    stdout="git@github.com:mongodb/mongo-python-driver.git\n"
+                    stdout="git@github.com:mongodb/mongo-python-driver.git\n",
                 )
-                with patch("dbx_python_cli.commands.open.webbrowser.open") as mock_browser:
+                with patch(
+                    "dbx_python_cli.commands.open.webbrowser.open"
+                ) as mock_browser:
                     result = runner.invoke(app, ["open", "mongo-python-driver"])
                     assert result.exit_code == 0
                     assert "mongo-python-driver" in result.stdout
                     # Verify browser was opened with correct URL
-                    mock_browser.assert_called_once_with("https://github.com/mongodb/mongo-python-driver")
+                    mock_browser.assert_called_once_with(
+                        "https://github.com/mongodb/mongo-python-driver"
+                    )
 
 
 def test_open_with_https_url(tmp_path, temp_repos_dir, mock_config):
     """Test open with HTTPS git URL."""
-    with patch("dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir):
+    with patch(
+        "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
+    ):
         with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.open.subprocess.run") as mock_run:
                 # Mock git remote get-url to return an HTTPS URL
                 mock_run.return_value = MagicMock(
                     returncode=0,
-                    stdout="https://github.com/mongodb/mongo-python-driver.git\n"
+                    stdout="https://github.com/mongodb/mongo-python-driver.git\n",
                 )
-                with patch("dbx_python_cli.commands.open.webbrowser.open") as mock_browser:
+                with patch(
+                    "dbx_python_cli.commands.open.webbrowser.open"
+                ) as mock_browser:
                     result = runner.invoke(app, ["open", "mongo-python-driver"])
                     assert result.exit_code == 0
                     # Verify browser was opened with correct URL (without .git)
-                    mock_browser.assert_called_once_with("https://github.com/mongodb/mongo-python-driver")
+                    mock_browser.assert_called_once_with(
+                        "https://github.com/mongodb/mongo-python-driver"
+                    )
 
 
 def test_open_no_origin_remote(tmp_path, temp_repos_dir, mock_config):
     """Test open when repository has no origin remote."""
-    with patch("dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir):
+    with patch(
+        "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
+    ):
         with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
-            with patch("dbx_python_cli.commands.open._get_git_remote_url", return_value=None):
+            with patch(
+                "dbx_python_cli.commands.open._get_git_remote_url", return_value=None
+            ):
                 result = runner.invoke(app, ["open", "mongo-python-driver"])
                 assert result.exit_code == 1
 
 
 def test_open_with_group(tmp_path, temp_repos_dir, mock_config):
     """Test open with group option."""
-    with patch("dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir):
+    with patch(
+        "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
+    ):
         with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.open.webbrowser.open") as mock_browser:
                 result = runner.invoke(app, ["open", "-g", "pymongo"])
@@ -167,7 +194,9 @@ def test_open_with_group(tmp_path, temp_repos_dir, mock_config):
 
 def test_open_with_nonexistent_group(tmp_path, temp_repos_dir, mock_config):
     """Test open with non-existent group."""
-    with patch("dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir):
+    with patch(
+        "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
+    ):
         with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
             result = runner.invoke(app, ["open", "-g", "nonexistent"])
             assert result.exit_code == 1
@@ -175,15 +204,19 @@ def test_open_with_nonexistent_group(tmp_path, temp_repos_dir, mock_config):
 
 def test_verbose_flag_with_open_command(tmp_path, temp_repos_dir, mock_config):
     """Test verbose flag with open command."""
-    with patch("dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir):
+    with patch(
+        "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
+    ):
         with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.open.subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(
                     returncode=0,
-                    stdout="git@github.com:mongodb/mongo-python-driver.git\n"
+                    stdout="git@github.com:mongodb/mongo-python-driver.git\n",
                 )
                 with patch("dbx_python_cli.commands.open.webbrowser.open"):
-                    result = runner.invoke(app, ["--verbose", "open", "mongo-python-driver"])
+                    result = runner.invoke(
+                        app, ["--verbose", "open", "mongo-python-driver"]
+                    )
                     assert result.exit_code == 0
                     assert "[verbose]" in result.stdout
 
@@ -193,32 +226,51 @@ def test_convert_git_url_to_browser_url():
     from dbx_python_cli.commands.open import _convert_git_url_to_browser_url
 
     # SSH format
-    assert _convert_git_url_to_browser_url("git@github.com:mongodb/mongo-python-driver.git") == \
-        "https://github.com/mongodb/mongo-python-driver"
+    assert (
+        _convert_git_url_to_browser_url(
+            "git@github.com:mongodb/mongo-python-driver.git"
+        )
+        == "https://github.com/mongodb/mongo-python-driver"
+    )
 
     # HTTPS format
-    assert _convert_git_url_to_browser_url("https://github.com/mongodb/mongo-python-driver.git") == \
-        "https://github.com/mongodb/mongo-python-driver"
+    assert (
+        _convert_git_url_to_browser_url(
+            "https://github.com/mongodb/mongo-python-driver.git"
+        )
+        == "https://github.com/mongodb/mongo-python-driver"
+    )
 
     # Without .git suffix
-    assert _convert_git_url_to_browser_url("git@github.com:mongodb/mongo-python-driver") == \
-        "https://github.com/mongodb/mongo-python-driver"
+    assert (
+        _convert_git_url_to_browser_url("git@github.com:mongodb/mongo-python-driver")
+        == "https://github.com/mongodb/mongo-python-driver"
+    )
 
     # GitLab SSH format
-    assert _convert_git_url_to_browser_url("git@gitlab.com:group/project.git") == \
-        "https://gitlab.com/group/project"
+    assert (
+        _convert_git_url_to_browser_url("git@gitlab.com:group/project.git")
+        == "https://gitlab.com/group/project"
+    )
 
 
 def test_extract_repo_name_from_url():
     """Test repo name extraction helper function."""
     from dbx_python_cli.commands.open import _extract_repo_name_from_url
 
-    assert _extract_repo_name_from_url("git@github.com:mongodb/mongo-python-driver.git") == \
-        "mongo-python-driver"
+    assert (
+        _extract_repo_name_from_url("git@github.com:mongodb/mongo-python-driver.git")
+        == "mongo-python-driver"
+    )
 
-    assert _extract_repo_name_from_url("https://github.com/mongodb/mongo-python-driver.git") == \
-        "mongo-python-driver"
+    assert (
+        _extract_repo_name_from_url(
+            "https://github.com/mongodb/mongo-python-driver.git"
+        )
+        == "mongo-python-driver"
+    )
 
-    assert _extract_repo_name_from_url("git@github.com:mongodb/mongo-python-driver") == \
-        "mongo-python-driver"
-
+    assert (
+        _extract_repo_name_from_url("git@github.com:mongodb/mongo-python-driver")
+        == "mongo-python-driver"
+    )

@@ -127,7 +127,13 @@ def switch_callback(
         )
 
         for repo_info in group_repos:
-            _run_git_switch(repo_info["path"], repo_info["name"], actual_branch_name, create, verbose)
+            _run_git_switch(
+                repo_info["path"],
+                repo_info["name"],
+                actual_branch_name,
+                create,
+                verbose,
+            )
 
         return
 
@@ -152,7 +158,6 @@ def switch_callback(
         _run_git_switch(project_path, project, actual_branch_name, create, verbose)
         return
 
-
     # Require repo_name and branch_name if not listing, not using group, and not using project
     if not repo_name or not branch_name:
         typer.echo("❌ Error: Repository name and branch name are required", err=True)
@@ -174,7 +179,11 @@ def switch_callback(
 
 
 def _run_git_switch(
-    repo_path: Path, name: str, branch_name: str, create: bool = False, verbose: bool = False
+    repo_path: Path,
+    name: str,
+    branch_name: str,
+    create: bool = False,
+    verbose: bool = False,
 ):
     """Switch to a branch in a repository or project."""
     # Check if it's a git repository
@@ -211,4 +220,3 @@ def _run_git_switch(
             # Show the error message from git
             error_msg = result.stderr.strip()
             typer.echo(f"   {error_msg}", err=True)
-

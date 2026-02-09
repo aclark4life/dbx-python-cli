@@ -143,4 +143,3 @@ def test_remove_no_group_name(mock_config):
         # but the usage message goes to stdout
         output = strip_ansi(result.stdout)
         assert "dbx remove <group_name>" in output or "dbx remove --list" in output
-
