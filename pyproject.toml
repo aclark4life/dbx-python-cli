@@ -55,21 +55,3 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=html",
 ]
-
-[tool.dbx.repo]
-base_dir = "~/repos"
-
-[tool.dbx.repo.groups.pymongo]
-repos = [
-    "https://github.com/mongodb/mongo-python-driver.git",
-]
-
-[tool.dbx.repo.groups.langchain]
-repos = [
-    "https://github.com/langchain-ai/langchain.git",
-]
-
-[tool.dbx.repo.groups.django]
-repos = [
-    "https://github.com/django/django.git",
-]
