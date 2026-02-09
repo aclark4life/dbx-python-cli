@@ -110,9 +110,7 @@ def remove_callback(
         group_repos = [r for r in all_repos if r["group"] == group]
 
         if not group_repos:
-            typer.echo(
-                f"❌ Error: No repositories found in group '{group}'", err=True
-            )
+            typer.echo(f"❌ Error: No repositories found in group '{group}'", err=True)
             typer.echo("\nRun 'dbx remove --list' to see available repositories")
             raise typer.Exit(1)
 
@@ -133,7 +131,9 @@ def remove_callback(
                         f"❌ Error: Repository '{repo_name}' not found in group '{repo_group}'",
                         err=True,
                     )
-                    typer.echo("\nRun 'dbx remove --list' to see available repositories")
+                    typer.echo(
+                        "\nRun 'dbx remove --list' to see available repositories"
+                    )
                     raise typer.Exit(1)
                 repos_to_remove.append(matching_repos[0])
             else:
@@ -144,7 +144,9 @@ def remove_callback(
                     typer.echo(
                         f"❌ Error: Repository '{repo_name}' not found", err=True
                     )
-                    typer.echo("\nRun 'dbx remove --list' to see available repositories")
+                    typer.echo(
+                        "\nRun 'dbx remove --list' to see available repositories"
+                    )
                     raise typer.Exit(1)
 
                 # If repo exists in multiple groups, warn and use first match
@@ -201,9 +203,7 @@ def remove_callback(
             typer.echo(f"✅ Removed {repo_info['name']} ({repo_info['group']})")
             removed_count += 1
         except Exception as e:
-            typer.echo(
-                f"❌ Failed to remove {repo_info['name']}: {e}", err=True
-            )
+            typer.echo(f"❌ Failed to remove {repo_info['name']}: {e}", err=True)
             failed_count += 1
 
     # Summary
