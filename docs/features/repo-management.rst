@@ -42,7 +42,7 @@ For contributing to upstream repositories, you can clone from your personal fork
 .. code-block:: bash
 
    # Clone from your GitHub fork instead of the upstream org
-   dbx clone -g pymongo --fork aclark4life
+   dbx clone -g pymongo --fork-user aclark4life
 
 This will:
 
@@ -55,7 +55,7 @@ This will:
 .. code-block:: bash
 
    # Clone your forks with upstream remotes configured
-   dbx clone -g pymongo --fork aclark4life
+   dbx clone -g pymongo --fork-user aclark4life
 
    # Now you can work with the standard fork workflow
    cd ~/Developer/mongodb/pymongo/mongo-python-driver
@@ -89,10 +89,10 @@ With this configuration, you can simply run:
 .. code-block:: bash
 
    # Uses fork_user from config
-   dbx clone -g pymongo --fork ''
+   dbx clone -g pymongo --fork
 
    # Or specify a different username
-   dbx clone -g pymongo --fork different-user
+   dbx clone -g pymongo --fork-user different-user
 
 Sync Fork with Upstream
 ~~~~~~~~~~~~~~~~~~~~~~~~

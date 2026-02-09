@@ -36,10 +36,15 @@ def clone_callback(
         "-l",
         help="List available groups",
     ),
-    fork: str = typer.Option(
-        None,
+    fork: bool = typer.Option(
+        False,
         "--fork",
-        help="Clone from your fork instead of upstream. Specify GitHub username (e.g., --fork username), or leave empty to use fork_user from config (e.g., --fork '')",
+        help="Clone from your fork instead of upstream (uses fork_user from config)",
+    ),
+    fork_user: str = typer.Option(
+        None,
+        "--fork-user",
+        help="GitHub username for fork (overrides --fork and config fork_user)",
     ),
 ):
     """Clone a repository by name or all repositories from a group."""
@@ -125,27 +130,26 @@ def clone_callback(
             typer.echo("   or: dbx clone --list")
             raise typer.Exit(1)
 
-        # Handle fork option
+        # Handle fork options
         effective_fork_user = None
-        if fork is not None:
-            # If --fork has a value (username provided), use it
-            if fork:
-                effective_fork_user = fork
-            # If --fork is used without a value (empty string), get from config
-            else:
-                effective_fork_user = config.get("repo", {}).get("fork_user")
-                if not effective_fork_user:
-                    typer.echo(
-                        "❌ Error: --fork requires 'fork_user' to be set in config when no username is provided",
-                        err=True,
-                    )
-                    typer.echo("\nSet it in your config file or use --fork <username>")
-                    raise typer.Exit(1)
-
-            if verbose:
+        if fork_user:
+            # --fork-user takes precedence
+            effective_fork_user = fork_user
+        elif fork:
+            # --fork flag uses config
+            effective_fork_user = config.get("repo", {}).get("fork_user")
+            if not effective_fork_user:
                 typer.echo(
-                    f"[verbose] Using fork workflow with user: {effective_fork_user}\n"
+                    "❌ Error: --fork requires 'fork_user' to be set in config",
+                    err=True,
                 )
+                typer.echo("\nSet it in your config file or use --fork-user <username>")
+                raise typer.Exit(1)
+
+        if effective_fork_user and verbose:
+            typer.echo(
+                f"[verbose] Using fork workflow with user: {effective_fork_user}\n"
+            )
 
         # Create group directory under base directory
         group_dir = base_dir / group
