@@ -119,7 +119,8 @@ def test_test_no_args_shows_error():
     assert result.exit_code == 1
     # Error messages go to stderr in Typer
     output = result.stdout + result.stderr
-    assert "Please specify a repository name" in output
+    assert "Repository name is required" in output
+    assert "Usage: dbx test <repo_name>" in output
 
 
 def test_test_nonexistent_repo(mock_config, temp_repos_dir):

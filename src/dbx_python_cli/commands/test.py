@@ -82,10 +82,9 @@ def test_callback(
 
         # Require repo_name if not listing
         if not repo_name:
-            typer.echo(
-                "Error: Please specify a repository name or use --list to see available repos.",
-                err=True,
-            )
+            typer.echo("❌ Error: Repository name is required", err=True)
+            typer.echo("\nUsage: dbx test <repo_name> [OPTIONS]")
+            typer.echo("   or: dbx test --list")
             raise typer.Exit(1)
 
         # Find the repository

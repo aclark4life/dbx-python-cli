@@ -214,10 +214,9 @@ def add_project(
             name = generate_random_project_name()
             typer.echo(f"🎲 Generated random project name: {name}")
     elif name is None:
-        typer.echo(
-            "❌ Project name is required. Provide a name or use --random flag.",
-            err=True,
-        )
+        typer.echo("❌ Error: Project name is required", err=True)
+        typer.echo("\nUsage: dbx project add <name> [OPTIONS]")
+        typer.echo("   or: dbx project add --random [OPTIONS]")
         raise typer.Exit(code=1)
 
     # Determine settings path
