@@ -139,9 +139,7 @@ def clone_callback(
                         "❌ Error: --fork requires 'fork_user' to be set in config when no username is provided",
                         err=True,
                     )
-                    typer.echo(
-                        "\nSet it in your config file or use --fork <username>"
-                    )
+                    typer.echo("\nSet it in your config file or use --fork <username>")
                     raise typer.Exit(1)
 
             if verbose:
