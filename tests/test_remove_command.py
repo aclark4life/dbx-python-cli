@@ -75,78 +75,124 @@ def mock_config(tmp_path, temp_repos_dir):
     }
 
 
-def test_remove_list_groups(mock_config):
-    """Test listing available groups."""
+def test_remove_list_repos(mock_config):
+    """Test listing available repositories."""
     with patch(
         "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
     ):
         result = runner.invoke(app, ["remove", "--list"])
         assert result.exit_code == 0
         output = strip_ansi(result.stdout)
-        assert "Available groups:" in output
-        assert "pymongo (cloned)" in output
-        assert "django (cloned)" in output
-        assert "langchain (not cloned)" in output
+        # Should show repos in tree format
+        assert "pymongo" in output
+        assert "django" in output
+        assert "mongo-python-driver" in output
+        assert "specifications" in output
+        assert "django-mongodb-backend" in output
 
 
-def test_remove_group_with_confirmation_no(mock_config, temp_repos_dir):
-    """Test removing a group with confirmation declined."""
+def test_remove_single_repo_with_confirmation_no(mock_config, temp_repos_dir):
+    """Test removing a single repo with confirmation declined."""
     with patch(
         "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
     ):
         # Simulate user saying "no" to confirmation
-        result = runner.invoke(app, ["remove", "pymongo"], input="n\n")
+        result = runner.invoke(app, ["remove", "mongo-python-driver"], input="n\n")
         assert result.exit_code == 0
         output = strip_ansi(result.stdout)
         assert "Removal cancelled" in output
-        # Verify directory still exists
-        assert (temp_repos_dir / "pymongo").exists()
+        # Verify repo still exists
+        assert (temp_repos_dir / "pymongo" / "mongo-python-driver").exists()
 
 
-def test_remove_group_with_force(mock_config, temp_repos_dir):
-    """Test removing a group with --force flag."""
+def test_remove_single_repo_with_force(mock_config, temp_repos_dir):
+    """Test removing a single repo with --force flag."""
     with patch(
         "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
     ):
         # Options must come before positional arguments with allow_interspersed_args=False
-        result = runner.invoke(app, ["remove", "--force", "pymongo"])
+        result = runner.invoke(app, ["remove", "--force", "mongo-python-driver"])
         assert result.exit_code == 0
         output = strip_ansi(result.stdout)
-        assert "Successfully removed 'pymongo' group directory" in output
-        assert "Removed 2 repository(ies)" in output
-        # Verify directory was removed
-        assert not (temp_repos_dir / "pymongo").exists()
+        assert "Successfully removed 1 repository(ies)" in output
+        assert "Removed mongo-python-driver (pymongo)" in output
+        # Verify repo was removed
+        assert not (temp_repos_dir / "pymongo" / "mongo-python-driver").exists()
+        # Verify group directory still exists
+        assert (temp_repos_dir / "pymongo").exists()
+
+
+def test_remove_multiple_repos_with_force(mock_config, temp_repos_dir):
+    """Test removing multiple repos with --force flag."""
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
+        result = runner.invoke(
+            app,
+            ["remove", "--force", "mongo-python-driver", "specifications"],
+        )
+        assert result.exit_code == 0
+        output = strip_ansi(result.stdout)
+        assert "Successfully removed 2 repository(ies)" in output
+        # Verify repos were removed
+        assert not (temp_repos_dir / "pymongo" / "mongo-python-driver").exists()
+        assert not (temp_repos_dir / "pymongo" / "specifications").exists()
 
 
 def test_remove_group_with_confirmation_yes(mock_config, temp_repos_dir):
-    """Test removing a group with confirmation accepted."""
+    """Test removing all repos in a group with confirmation accepted."""
     with patch(
         "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
     ):
         # Simulate user saying "yes" to confirmation
-        result = runner.invoke(app, ["remove", "django"], input="y\n")
+        result = runner.invoke(app, ["remove", "-g", "django"], input="y\n")
         assert result.exit_code == 0
         output = strip_ansi(result.stdout)
-        assert "Successfully removed 'django' group directory" in output
-        # Verify directory was removed
-        assert not (temp_repos_dir / "django").exists()
+        assert "Successfully removed 1 repository(ies)" in output
+        # Verify repo was removed
+        assert not (temp_repos_dir / "django" / "django-mongodb-backend").exists()
 
 
-def test_remove_nonexistent_group(mock_config):
-    """Test removing a non-existent group."""
+def test_remove_group_with_force(mock_config, temp_repos_dir):
+    """Test removing all repos in a group with --force flag."""
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
+        result = runner.invoke(app, ["remove", "-g", "pymongo", "--force"])
+        assert result.exit_code == 0
+        output = strip_ansi(result.stdout)
+        assert "Successfully removed 2 repository(ies)" in output
+        # Verify repos were removed
+        assert not (temp_repos_dir / "pymongo" / "mongo-python-driver").exists()
+        assert not (temp_repos_dir / "pymongo" / "specifications").exists()
+
+
+def test_remove_nonexistent_repo(mock_config):
+    """Test removing a non-existent repo."""
     with patch(
         "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
     ):
         result = runner.invoke(app, ["remove", "nonexistent"])
         assert result.exit_code == 1
-        # Error messages go to stdout when using typer.echo(..., err=True)
-        # but the helpful message goes to stdout
-        output = strip_ansi(result.stdout)
-        assert "dbx remove --list" in output
+        stderr = strip_ansi(result.stderr)
+        stdout = strip_ansi(result.stdout)
+        assert "Repository 'nonexistent' not found" in stderr
+        assert "dbx remove --list" in stdout
 
 
-def test_remove_no_group_name(mock_config):
-    """Test remove command without group name shows help."""
+def test_remove_nonexistent_group(mock_config):
+    """Test removing repos from a non-existent group."""
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
+        result = runner.invoke(app, ["remove", "-g", "nonexistent"])
+        assert result.exit_code == 1
+        stderr = strip_ansi(result.stderr)
+        assert "No repositories found in group 'nonexistent'" in stderr
+
+
+def test_remove_no_args(mock_config):
+    """Test remove command without arguments shows help."""
     with patch(
         "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
     ):
@@ -154,4 +200,61 @@ def test_remove_no_group_name(mock_config):
         # With no_args_is_help=True, shows help with exit code 2
         assert result.exit_code == 2
         output = strip_ansi(result.stdout)
-        assert "Remove repository groups" in output
+        assert "Remove repositories or repository groups" in output
+
+
+def test_remove_repo_with_group_flag(mock_config, temp_repos_dir):
+    """Test removing a repo with -G flag to specify group."""
+    # Create a duplicate repo in another group
+    langchain_dir = temp_repos_dir / "langchain"
+    langchain_dir.mkdir()
+    duplicate_repo = langchain_dir / "mongo-python-driver"
+    duplicate_repo.mkdir()
+    (duplicate_repo / ".git").mkdir()
+
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
+        # Remove from langchain group specifically
+        # Options must come before positional arguments with allow_interspersed_args=False
+        result = runner.invoke(
+            app, ["remove", "--force", "-G", "langchain", "mongo-python-driver"]
+        )
+        assert result.exit_code == 0
+        output = strip_ansi(result.stdout)
+        assert "Removed mongo-python-driver (langchain)" in output
+        # Verify only langchain version was removed
+        assert not (temp_repos_dir / "langchain" / "mongo-python-driver").exists()
+        assert (temp_repos_dir / "pymongo" / "mongo-python-driver").exists()
+
+
+def test_remove_repo_in_multiple_groups_warning(mock_config, temp_repos_dir):
+    """Test warning when removing a repo that exists in multiple groups."""
+    # Create a duplicate repo in another group
+    langchain_dir = temp_repos_dir / "langchain"
+    langchain_dir.mkdir()
+    duplicate_repo = langchain_dir / "mongo-python-driver"
+    duplicate_repo.mkdir()
+    (duplicate_repo / ".git").mkdir()
+
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
+        # Remove without -G flag should warn
+        result = runner.invoke(app, ["remove", "--force", "mongo-python-driver"])
+        assert result.exit_code == 0
+        stderr = strip_ansi(result.stderr)
+        assert "found in multiple groups" in stderr
+        assert "Use -G to specify a different group" in stderr
+
+
+def test_remove_both_repo_and_group_flag_error(mock_config):
+    """Test error when specifying both repo names and -g flag."""
+    with patch(
+        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
+    ):
+        # Options must come before positional arguments with allow_interspersed_args=False
+        result = runner.invoke(app, ["remove", "-g", "pymongo", "mongo-python-driver"])
+        assert result.exit_code == 1
+        stderr = strip_ansi(result.stderr)
+        assert "Cannot specify both repository names and -g flag" in stderr
