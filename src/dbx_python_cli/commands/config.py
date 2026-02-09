@@ -192,7 +192,7 @@ def show():
                 # Show install_dirs if present
                 install_dirs = group_config.get("install_dirs", {})
                 if install_dirs:
-                    typer.echo(f"    Install directories:")
+                    typer.echo("    Install directories:")
                     for repo_name, dirs in install_dirs.items():
                         typer.echo(f"      {repo_name}:")
                         for dir_path in dirs:
@@ -201,8 +201,8 @@ def show():
         else:
             typer.echo("No repository groups configured\n")
 
-        typer.echo(f"To edit: dbx config edit")
-        typer.echo(f"To initialize user config: dbx config init")
+        typer.echo("To edit: dbx config edit")
+        typer.echo("To initialize user config: dbx config init")
 
     except Exception as e:
         typer.echo(f"❌ Error reading configuration: {e}", err=True)
