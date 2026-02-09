@@ -14,6 +14,7 @@ from dbx_python_cli.commands import (
     just,
     project,
     repo,
+    switch,
     test,
 )
 
@@ -30,6 +31,7 @@ app.add_typer(test.app, name="test")
 app.add_typer(install.app, name="install")
 app.add_typer(just.app, name="just")
 app.add_typer(branch.app, name="branch")
+app.add_typer(switch.app, name="switch")
 app.add_typer(project.app, name="project")
 
 
