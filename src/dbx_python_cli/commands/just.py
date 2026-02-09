@@ -15,7 +15,10 @@ app = typer.Typer(
     help="Just commands",
     no_args_is_help=True,
     invoke_without_command=True,
-    context_settings={"allow_interspersed_args": False, "help_option_names": ["-h", "--help"]},
+    context_settings={
+        "allow_interspersed_args": False,
+        "help_option_names": ["-h", "--help"],
+    },
 )
 
 

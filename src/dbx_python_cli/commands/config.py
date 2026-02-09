@@ -94,6 +94,7 @@ def edit():
         # If no common editor found, try 'open' on macOS
         if not editor:
             import platform
+
             if platform.system() == "Darwin":
                 editor = "open"
             else:
