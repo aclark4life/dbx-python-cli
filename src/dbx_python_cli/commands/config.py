@@ -9,6 +9,7 @@ from dbx_python_cli.commands.repo import get_config_path, get_default_config_pat
 app = typer.Typer(
     help="Configuration management commands",
     context_settings={"help_option_names": ["-h", "--help"]},
+    no_args_is_help=True,
 )
 
 

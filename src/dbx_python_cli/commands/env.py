@@ -9,6 +9,7 @@ from dbx_python_cli.commands.repo import get_base_dir, get_config, get_repo_grou
 app = typer.Typer(
     help="Virtual environment management commands",
     context_settings={"help_option_names": ["-h", "--help"]},
+    no_args_is_help=True,
 )
 
 
