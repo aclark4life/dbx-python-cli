@@ -69,7 +69,7 @@ repos = [
         capture_output=True,
     )
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["test", "test_repo"])

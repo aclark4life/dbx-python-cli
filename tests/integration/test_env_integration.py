@@ -34,7 +34,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["env", "init", "-g", "test"])
@@ -73,7 +73,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["env", "init", "-g", "test", "-p", "3.11"])
@@ -112,7 +112,7 @@ repos = [
         ["python", "-m", "venv", str(venv_dir)], check=True, capture_output=True
     )
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["env", "list"])
@@ -151,7 +151,7 @@ repos = [
         ["python", "-m", "venv", str(venv_dir)], check=True, capture_output=True
     )
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # Try to create again without --recreate

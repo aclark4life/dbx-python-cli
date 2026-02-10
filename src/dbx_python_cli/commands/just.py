@@ -5,7 +5,11 @@ from pathlib import Path
 
 import typer
 
-from dbx_python_cli.commands.repo import find_repo_by_name, get_base_dir, get_config
+from dbx_python_cli.commands.repo_utils import (
+    find_repo_by_name,
+    get_base_dir,
+    get_config,
+)
 
 # Create a Typer app that will act as a single command
 app = typer.Typer(
@@ -66,7 +70,7 @@ def just_callback(
 
     # Handle --list flag
     if list_repos:
-        from dbx_python_cli.commands.repo import list_repos as list_repos_func
+        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
 
         output = list_repos_func(base_dir, config=config)
         if output:

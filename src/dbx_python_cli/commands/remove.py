@@ -6,7 +6,7 @@ from typing import List, Optional
 
 import typer
 
-from dbx_python_cli.commands import repo
+from dbx_python_cli.commands import repo_utils as repo
 
 app = typer.Typer(
     help="Remove repositories or repository groups",
@@ -74,11 +74,11 @@ def remove_callback(
         raise typer.Exit(1)
 
     # Import repo utilities
-    from dbx_python_cli.commands.repo import find_all_repos
+    from dbx_python_cli.commands.repo_utils import find_all_repos
 
     # Handle --list flag
     if list_repos:
-        from dbx_python_cli.commands.repo import list_repos as list_repos_func
+        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
 
         output = list_repos_func(base_dir, config=config)
         if output:

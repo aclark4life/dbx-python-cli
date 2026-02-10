@@ -4,7 +4,7 @@ import subprocess
 
 import typer
 
-from dbx_python_cli.commands import repo
+from dbx_python_cli.commands import repo_utils as repo
 
 app = typer.Typer(
     help="Clone repositories",

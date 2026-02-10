@@ -4,7 +4,7 @@ import os
 import subprocess
 import typer
 
-from dbx_python_cli.commands.repo import (
+from dbx_python_cli.commands.repo_utils import (
     get_config_path,
     get_default_config_path,
     get_config,

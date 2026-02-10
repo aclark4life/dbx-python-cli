@@ -50,7 +50,7 @@ def test_verbose_flag_with_test_command():
     """Test that verbose flag works with test command."""
     from unittest.mock import patch
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.test.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             result = runner.invoke(app, ["-v", "test", "--list"])
@@ -62,7 +62,7 @@ def test_verbose_flag_with_install_command():
     """Test that verbose flag works with install command."""
     from unittest.mock import patch
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             result = runner.invoke(app, ["-v", "install", "--list"])
@@ -74,8 +74,8 @@ def test_list_flag_no_repos():
     """Test that the -l flag shows message when no repos are cloned."""
     from unittest.mock import patch
 
-    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
+    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = []
             result = runner.invoke(app, ["-l"])
@@ -88,8 +88,8 @@ def test_list_flag_with_repos():
     """Test that the -l flag lists all cloned repositories."""
     from unittest.mock import patch
 
-    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
+    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = [
                 {"group": "django", "name": "django"},
@@ -112,8 +112,8 @@ def test_list_flag_short_form():
     """Test that the -l short form works."""
     from unittest.mock import patch
 
-    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
+    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = []
             result = runner.invoke(app, ["-l"])

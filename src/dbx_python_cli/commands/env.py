@@ -4,7 +4,7 @@ import subprocess
 
 import typer
 
-from dbx_python_cli.commands.repo import get_base_dir, get_config, get_repo_groups
+from dbx_python_cli.commands.repo_utils import get_base_dir, get_config, get_repo_groups
 
 app = typer.Typer(
     help="Virtual environment management commands",

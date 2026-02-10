@@ -13,7 +13,7 @@ try:
 except ImportError:
     import importlib_resources as resources
 
-from dbx_python_cli.commands.repo import get_base_dir, get_config
+from dbx_python_cli.commands.repo_utils import get_base_dir, get_config
 
 app = typer.Typer(
     help="Project management commands",

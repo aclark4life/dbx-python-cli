@@ -57,8 +57,8 @@ def test_repo_help():
 
 def test_repo_list_no_repos():
     """Test that 'dbx repo -l' shows message when no repos are cloned."""
-    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
+    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = []
             result = runner.invoke(app, ["-l"])
@@ -69,8 +69,8 @@ def test_repo_list_no_repos():
 
 def test_repo_list_with_repos():
     """Test that 'dbx repo -l' lists all cloned repositories."""
-    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
+    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = [
                 {"group": "django", "name": "django"},
@@ -91,8 +91,8 @@ def test_repo_list_with_repos():
 
 def test_repo_list_long_form():
     """Test that 'dbx repo --list' works."""
-    with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
+    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = []
             result = runner.invoke(app, ["--list"])
@@ -216,7 +216,7 @@ def test_repo_clone_help():
 
 def test_repo_clone_invalid_group(tmp_path, mock_config):
     """Test that repo clone fails with invalid group."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         result = runner.invoke(app, ["clone", "-g", "nonexistent"])
@@ -227,7 +227,7 @@ def test_repo_clone_invalid_group(tmp_path, mock_config):
 
 def test_repo_clone_success(tmp_path, mock_config, temp_repos_dir):
     """Test successful repo clone."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = mock_config
             mock_run.return_value = None
@@ -240,7 +240,7 @@ def test_repo_clone_success(tmp_path, mock_config, temp_repos_dir):
 
 def test_repo_clone_creates_group_directory(tmp_path, mock_config, temp_repos_dir):
     """Test that repo clone creates group subdirectory."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = mock_config
             mock_run.return_value = None
@@ -256,7 +256,7 @@ def test_repo_clone_creates_group_directory(tmp_path, mock_config, temp_repos_di
 
 def test_repo_clone_skips_existing(tmp_path, mock_config, temp_repos_dir):
     """Test that repo clone skips existing repositories."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         # Create existing repo
@@ -275,7 +275,7 @@ def test_repo_clone_git_failure(mock_config, temp_repos_dir):
     """Test that repo clone handles git clone failures gracefully."""
     import subprocess
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         # Mock subprocess.run to raise CalledProcessError
@@ -304,7 +304,7 @@ repos = []
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
         result = runner.invoke(app, ["clone", "-g", "empty"])
         assert result.exit_code == 1
@@ -315,10 +315,10 @@ repos = []
 
 def test_get_config_fallback_to_default(temp_config_dir):
     """Test that get_config falls back to default config when user config doesn't exist."""
-    from dbx_python_cli.commands.repo import get_config
+    from dbx_python_cli.commands.repo_utils import get_config
 
     # Don't create user config, should fall back to package default
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         # Point to non-existent user config
         mock_get_path.return_value = temp_config_dir / "nonexistent.toml"
         config = get_config()
@@ -330,7 +330,7 @@ def test_get_config_fallback_to_default(temp_config_dir):
 
 def test_repo_clone_list_groups(mock_config):
     """Test that repo clone --list shows available groups."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         result = runner.invoke(app, ["clone", "--list"])
@@ -342,7 +342,7 @@ def test_repo_clone_list_groups(mock_config):
 
 def test_repo_clone_list_groups_short_form(mock_config):
     """Test that repo clone -l works as shortcut for --list."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         result = runner.invoke(app, ["clone", "-l"])
@@ -353,7 +353,7 @@ def test_repo_clone_list_groups_short_form(mock_config):
 
 def test_repo_clone_no_group_shows_error(mock_config):
     """Test that repo clone without -g or -l shows help."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         result = runner.invoke(app, ["clone"])
@@ -385,7 +385,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
@@ -418,7 +418,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["clone", "nonexistent-repo"])
@@ -443,7 +443,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
@@ -485,7 +485,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
@@ -531,7 +531,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
@@ -558,7 +558,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
@@ -591,7 +591,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = None
@@ -625,7 +625,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
@@ -694,7 +694,7 @@ repos = [
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
@@ -761,7 +761,7 @@ repos = [
         repo_dir.mkdir(parents=True)
         (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
@@ -819,7 +819,7 @@ repos = [
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
@@ -864,7 +864,7 @@ repos = []
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["sync", "-l"])
@@ -888,7 +888,7 @@ repos = []
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["sync"])

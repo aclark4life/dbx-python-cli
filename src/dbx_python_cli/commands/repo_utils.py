@@ -1,4 +1,4 @@
-"""Repository management helper functions and utilities."""
+"""Repository utilities and helper functions."""
 
 import tomllib
 from pathlib import Path

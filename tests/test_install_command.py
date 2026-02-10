@@ -28,7 +28,7 @@ def test_install_help():
 
 def test_install_list_no_repos(tmp_path):
     """Test install --list with no repositories."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
             result = runner.invoke(app, ["install", "--list"])
@@ -44,7 +44,7 @@ def test_install_list_shows_repos(tmp_path):
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
             result = runner.invoke(app, ["install", "--list"])
@@ -55,7 +55,7 @@ def test_install_list_shows_repos(tmp_path):
 
 def test_install_list_short_form(tmp_path):
     """Test install -l short form."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
             result = runner.invoke(app, ["install", "-l"])
@@ -64,7 +64,7 @@ def test_install_list_short_form(tmp_path):
 
 def test_install_no_args_shows_error():
     """Test install with no arguments shows help."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             result = runner.invoke(app, ["install"])
@@ -75,7 +75,7 @@ def test_install_no_args_shows_error():
 
 def test_install_nonexistent_repo(tmp_path):
     """Test install with nonexistent repository."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
             result = runner.invoke(app, ["install", "nonexistent-repo"])
@@ -92,7 +92,7 @@ def test_install_basic_success(tmp_path):
     (repo_dir / ".git").mkdir()
     (repo_dir / "setup.py").write_text("# setup.py")
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
@@ -130,7 +130,7 @@ def test_install_with_extras(tmp_path):
     (repo_dir / ".git").mkdir()
     (repo_dir / "setup.py").write_text("# setup.py")
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
@@ -168,7 +168,7 @@ def test_install_with_multiple_extras(tmp_path):
     (repo_dir / ".git").mkdir()
     (repo_dir / "setup.py").write_text("# setup.py")
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             with patch("subprocess.run") as mock_run:
                 mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
@@ -191,7 +191,7 @@ def test_install_with_groups(tmp_path):
     (repo_dir / ".git").mkdir()
     (repo_dir / "setup.py").write_text("# setup.py")
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
@@ -246,7 +246,7 @@ def test_install_with_extras_and_groups(tmp_path):
     (repo_dir / ".git").mkdir()
     (repo_dir / "setup.py").write_text("# setup.py")
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
@@ -311,7 +311,7 @@ def test_install_failure(tmp_path):
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             with patch("subprocess.run") as mock_run:
                 mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
@@ -340,7 +340,7 @@ def test_install_group_all_repos(tmp_path):
     (repo1_dir / "setup.py").write_text("# setup.py")
     (repo2_dir / "setup.py").write_text("# setup.py")
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
@@ -379,7 +379,7 @@ def test_install_group_all_repos_with_extras(tmp_path):
     (repo1_dir / "setup.py").write_text("# setup.py")
     (repo2_dir / "setup.py").write_text("# setup.py")
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
@@ -406,7 +406,7 @@ def test_install_group_all_repos_with_extras(tmp_path):
 
 def test_install_group_nonexistent(tmp_path):
     """Test install -g with nonexistent group."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
             result = runner.invoke(app, ["install", "-g", "nonexistent"])
@@ -422,7 +422,7 @@ def test_install_group_no_repos(tmp_path):
     group_dir = tmp_path / "pymongo"
     group_dir.mkdir(parents=True)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
             result = runner.invoke(app, ["install", "-g", "pymongo"])
@@ -449,7 +449,7 @@ def test_install_duplicate_repo_warning(tmp_path):
     (pymongo_repo / "setup.py").write_text("# setup.py")
     (langchain_repo / "setup.py").write_text("# setup.py")
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             with patch("subprocess.run") as mock_run:
                 mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
@@ -491,7 +491,7 @@ docs = ["sphinx"]
 """
     (repo_dir / "pyproject.toml").write_text(pyproject_content)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
 
@@ -506,7 +506,7 @@ docs = ["sphinx"]
 
 def test_install_show_options_no_repo(tmp_path):
     """Test --show-options without repo name shows error."""
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
 
@@ -552,7 +552,7 @@ docs = ["sphinx"]
     (pkg1_dir / "pyproject.toml").write_text(pyproject1)
     (pkg2_dir / "pyproject.toml").write_text(pyproject2)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             with patch(
                 "dbx_python_cli.commands.install.get_install_dirs"
@@ -608,7 +608,7 @@ langchain = ["langchain"]
     (repo1_dir / "pyproject.toml").write_text(pyproject1)
     (repo2_dir / "pyproject.toml").write_text(pyproject2)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
 
@@ -668,7 +668,7 @@ docs = ["sphinx"]
     (repo1_dir / "pyproject.toml").write_text(pyproject1)
     (repo2_dir / "pyproject.toml").write_text(pyproject2)
 
-    with patch("dbx_python_cli.commands.repo.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
 

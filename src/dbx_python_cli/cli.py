@@ -71,14 +71,14 @@ def main(
     ),
 ):
     """A command line tool for DBX Python development tasks. AI first. De-siloing happens here."""
-    from dbx_python_cli.commands import repo
+    from dbx_python_cli.commands import repo_utils as repo
 
     # Store verbose flag in context for subcommands to access
     ctx.obj = {"verbose": verbose}
 
     # Handle list repos flag
     if list_repos:
-        from dbx_python_cli.commands.repo import list_repos as format_repos
+        from dbx_python_cli.commands.repo_utils import list_repos as format_repos
 
         config = repo.get_config()
         base_dir = repo.get_base_dir(config)
