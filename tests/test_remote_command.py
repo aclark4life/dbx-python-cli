@@ -21,7 +21,7 @@ def test_remote_list_no_repos(tmp_path):
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = tmp_path / "config.toml"
         config_content = f"""[repo]
-base_dir = "{str(tmp_path)}"
+base_dir = "{tmp_path.as_posix()}"
 
 [repo.groups.test]
 repos = []
@@ -46,7 +46,7 @@ def test_remote_list_shows_repos(tmp_path):
         (test_repo / ".git").mkdir()
 
         config_content = f"""[repo]
-base_dir = "{str(tmp_path)}"
+base_dir = "{tmp_path.as_posix()}"
 
 [repo.groups.test]
 repos = ["https://github.com/test/test-repo.git"]
@@ -63,7 +63,7 @@ def test_remote_no_repo_name(tmp_path):
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = tmp_path / "config.toml"
         config_content = f"""[repo]
-base_dir = "{str(tmp_path)}"
+base_dir = "{tmp_path.as_posix()}"
 
 [repo.groups.test]
 repos = []
@@ -80,7 +80,7 @@ def test_remote_repo_not_found(tmp_path):
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = tmp_path / "config.toml"
         config_content = f"""[repo]
-base_dir = "{str(tmp_path)}"
+base_dir = "{tmp_path.as_posix()}"
 
 [repo.groups.test]
 repos = []
@@ -106,7 +106,7 @@ def test_remote_basic(tmp_path):
         (test_repo / ".git").mkdir()
 
         config_content = f"""[repo]
-base_dir = "{str(tmp_path)}"
+base_dir = "{tmp_path.as_posix()}"
 
 [repo.groups.test]
 repos = ["https://github.com/test/test-repo.git"]
@@ -146,7 +146,7 @@ def test_remote_verbose(tmp_path):
         (test_repo / ".git").mkdir()
 
         config_content = f"""[repo]
-base_dir = "{str(tmp_path)}"
+base_dir = "{tmp_path.as_posix()}"
 
 [repo.groups.test]
 repos = ["https://github.com/test/test-repo.git"]
@@ -189,7 +189,7 @@ def test_remote_with_group(tmp_path):
         (test_repo2 / ".git").mkdir()
 
         config_content = f"""[repo]
-base_dir = "{str(tmp_path)}"
+base_dir = "{tmp_path.as_posix()}"
 
 [repo.groups.test]
 repos = [
@@ -220,7 +220,7 @@ def test_remote_with_nonexistent_group(tmp_path):
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = tmp_path / "config.toml"
         config_content = f"""[repo]
-base_dir = "{str(tmp_path)}"
+base_dir = "{tmp_path.as_posix()}"
 
 [repo.groups.test]
 repos = []
@@ -247,7 +247,7 @@ def test_remote_not_git_repo(tmp_path):
         # Don't create .git directory
 
         config_content = f"""[repo]
-base_dir = "{str(tmp_path)}"
+base_dir = "{tmp_path.as_posix()}"
 
 [repo.groups.test]
 repos = ["https://github.com/test/test-repo.git"]
@@ -283,7 +283,7 @@ def test_remote_no_remotes_configured(tmp_path):
         (test_repo / ".git").mkdir()
 
         config_content = f"""[repo]
-base_dir = "{str(tmp_path)}"
+base_dir = "{tmp_path.as_posix()}"
 
 [repo.groups.test]
 repos = ["https://github.com/test/test-repo.git"]
@@ -315,7 +315,7 @@ def test_remote_with_project(tmp_path):
         (test_project / ".git").mkdir()
 
         config_content = f"""[repo]
-base_dir = "{str(tmp_path)}"
+base_dir = "{tmp_path.as_posix()}"
 
 [repo.groups.test]
 repos = []
