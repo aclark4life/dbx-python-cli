@@ -141,6 +141,72 @@ def test_repo_init_existing_config_with_yes_flag(tmp_path):
         assert "Aborted" not in result.stdout
 
 
+def test_config_show_displays_test_runner(tmp_path):
+    """Test that config show displays custom test runner configuration."""
+    config_path = tmp_path / "config.toml"
+    repos_dir_str = str(tmp_path / "repos").replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.django]
+repos = [
+    "git@github.com:django/django.git",
+]
+
+[repo.groups.django.test_runner]
+django = "tests/runtests.py"
+
+[repo.groups.pymongo]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.config.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        result = runner.invoke(app, ["config", "show"])
+        assert result.exit_code == 0
+        assert "Custom test runners:" in result.stdout
+        assert "django: tests/runtests.py" in result.stdout
+        # pymongo group should not show test runners since it doesn't have any
+        assert "pymongo" in result.stdout
+
+
+def test_config_show_displays_install_dirs(tmp_path):
+    """Test that config show displays install_dirs configuration."""
+    config_path = tmp_path / "config.toml"
+    repos_dir_str = str(tmp_path / "repos").replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.langchain]
+repos = [
+    "git@github.com:langchain-ai/langchain-mongodb.git",
+]
+
+[repo.groups.langchain.install_dirs]
+langchain-mongodb = [
+    "libs/langchain-mongodb/",
+    "libs/langgraph-checkpoint-mongodb/",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.config.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        result = runner.invoke(app, ["config", "show"])
+        assert result.exit_code == 0
+        assert "Install directories:" in result.stdout
+        assert "langchain-mongodb:" in result.stdout
+        assert "libs/langchain-mongodb/" in result.stdout
+        assert "libs/langgraph-checkpoint-mongodb/" in result.stdout
+
+
 def test_repo_clone_help():
     """Test that the repo clone help command works."""
     result = runner.invoke(app, ["clone", "--help"])

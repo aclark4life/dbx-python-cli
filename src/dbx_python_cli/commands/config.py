@@ -197,6 +197,13 @@ def show():
                         typer.echo(f"      {repo_name}:")
                         for dir_path in dirs:
                             typer.echo(f"        - {dir_path}")
+
+                # Show test_runner if present
+                test_runner = group_config.get("test_runner", {})
+                if test_runner:
+                    typer.echo("    Custom test runners:")
+                    for repo_name, runner_path in test_runner.items():
+                        typer.echo(f"      {repo_name}: {runner_path}")
             typer.echo()
         else:
             typer.echo("No repository groups configured\n")
