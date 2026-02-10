@@ -1,11 +1,12 @@
 """Test command for running pytest in repositories."""
 
 import subprocess
+from pathlib import Path
 from typing import Optional
 
 import typer
 
-from dbx_python_cli.commands.repo import get_base_dir, get_config
+from dbx_python_cli.commands.repo import get_base_dir, get_config, get_test_runner
 from dbx_python_cli.commands.repo_utils import (
     find_repo_by_name,
 )
@@ -99,8 +100,6 @@ def test_callback(
         # Determine which group's venv to use
         if group:
             # Use specified group's venv
-            from pathlib import Path
-
             group_path = Path(base_dir) / group
             if not group_path.exists():
                 typer.echo(
@@ -118,15 +117,36 @@ def test_callback(
             typer.echo(f"[verbose] Venv type: {venv_type}")
             typer.echo(f"[verbose] Python: {python_path}\n")
 
-        # Build pytest command using venv's Python
-        pytest_cmd = [python_path, "-m", "pytest"]
-        if verbose:
-            pytest_cmd.append("-v")  # Add pytest verbose flag
-        if keyword:
-            pytest_cmd.extend(["-k", keyword])
-            typer.echo(f"Running pytest -k '{keyword}' in {repo_path}...")
+        # Get test runner configuration
+        test_runner = get_test_runner(config, repo["group"], repo_name)
+
+        # Build test command
+        if test_runner:
+            # Use custom test runner (relative path from repo root)
+            test_script = repo_path / test_runner
+            if not test_script.exists():
+                typer.echo(f"❌ Error: Test runner not found: {test_script}", err=True)
+                raise typer.Exit(1)
+
+            test_cmd = [python_path, str(test_script)]
+            if verbose:
+                test_cmd.append("--verbose")
+            if keyword:
+                typer.echo(
+                    "⚠️  Warning: -k/--keyword option not supported with custom test runner",
+                    err=True,
+                )
+            typer.echo(f"Running {test_runner} in {repo_path}...")
         else:
-            typer.echo(f"Running pytest in {repo_path}...")
+            # Use default pytest
+            test_cmd = [python_path, "-m", "pytest"]
+            if verbose:
+                test_cmd.append("-v")  # Add pytest verbose flag
+            if keyword:
+                test_cmd.extend(["-k", keyword])
+                typer.echo(f"Running pytest -k '{keyword}' in {repo_path}...")
+            else:
+                typer.echo(f"Running pytest in {repo_path}...")
 
         if venv_type == "group":
             typer.echo(f"Using group venv: {group_path}/.venv\n")
@@ -136,12 +156,12 @@ def test_callback(
             typer.echo(f"⚠️  No venv found, using system Python: {python_path}\n")
 
         if verbose:
-            typer.echo(f"[verbose] Running command: {' '.join(pytest_cmd)}")
+            typer.echo(f"[verbose] Running command: {' '.join(test_cmd)}")
             typer.echo(f"[verbose] Working directory: {repo_path}\n")
 
-        # Run pytest in the repository
+        # Run test command in the repository
         result = subprocess.run(
-            pytest_cmd,
+            test_cmd,
             cwd=str(repo_path),
             check=False,
         )

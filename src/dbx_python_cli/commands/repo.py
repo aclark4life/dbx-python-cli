@@ -66,3 +66,25 @@ def get_install_dirs(config, group_name, repo_name):
 
     install_dirs_config = groups[group_name].get("install_dirs", {})
     return install_dirs_config.get(repo_name)
+
+
+def get_test_runner(config, group_name, repo_name):
+    """
+    Get test runner configuration for a repository.
+
+    Returns the test runner command/script if configured, otherwise None (use pytest).
+
+    Args:
+        config: Configuration dictionary
+        group_name: Name of the group (e.g., 'django')
+        repo_name: Name of the repository (e.g., 'django')
+
+    Returns:
+        str: Test runner path/command, or None for default pytest
+    """
+    groups = get_repo_groups(config)
+    if group_name not in groups:
+        return None
+
+    test_runner_config = groups[group_name].get("test_runner", {})
+    return test_runner_config.get(repo_name)
