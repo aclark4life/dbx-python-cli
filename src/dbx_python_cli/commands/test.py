@@ -23,11 +23,15 @@ app = typer.Typer(
 
 
 @app.callback(
-    invoke_without_command=True, context_settings={"allow_interspersed_args": True}
+    invoke_without_command=True, context_settings={"allow_interspersed_args": False}
 )
 def test_callback(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None, help="Repository name to test"),
+    test_args: list[str] = typer.Argument(
+        None,
+        help="Additional arguments to pass to the test runner (e.g., '--verbose', '-k test_name'). For pytest, these are passed directly. For custom test runners, all args are forwarded.",
+    ),
     list_repos: bool = typer.Option(
         False,
         "--list",
@@ -38,7 +42,7 @@ def test_callback(
         None,
         "--keyword",
         "-k",
-        help="Only run tests matching the given keyword expression (passed to pytest -k)",
+        help="Only run tests matching the given keyword expression (passed to pytest -k). Note: Use test_args for custom test runners.",
     ),
     group: Optional[str] = typer.Option(
         None,
@@ -47,13 +51,29 @@ def test_callback(
         help="Group name to use for venv (e.g., 'pymongo')",
     ),
 ):
-    """Run pytest in a cloned repository."""
+    """Run tests in a cloned repository.
+
+    Usage:
+        dbx test <repo_name> [test_args...]
+        dbx test <repo_name> -k <keyword>
+        dbx test <repo_name> -g <group>
+
+    Examples:
+        dbx test mongo-python-driver                    # Run pytest
+        dbx test mongo-python-driver -v                 # Run pytest with verbose
+        dbx test mongo-python-driver -k test_insert     # Run specific test
+        dbx test django --verbose                       # Run custom test runner with args
+    """
     # If a subcommand was invoked, don't run this logic
     if ctx.invoked_subcommand is not None:
         return
 
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+
+    # test_args will be None if not provided, or a list of strings if provided
+    if test_args is None:
+        test_args = []
 
     try:
         config = get_config()
@@ -129,22 +149,40 @@ def test_callback(
                 raise typer.Exit(1)
 
             test_cmd = [python_path, str(test_script)]
-            if verbose:
-                test_cmd.append("--verbose")
+
+            # Add test_args if provided
+            if test_args:
+                test_cmd.extend(test_args)
+                typer.echo(
+                    f"Running {test_runner} {' '.join(test_args)} in {repo_path}..."
+                )
+            else:
+                typer.echo(f"Running {test_runner} in {repo_path}...")
+
+            # Warn if -k/--keyword option is used with custom test runner
             if keyword:
                 typer.echo(
-                    "⚠️  Warning: -k/--keyword option not supported with custom test runner",
+                    "⚠️  Warning: -k/--keyword option not supported with custom test runner. Use test_args instead.",
                     err=True,
                 )
-            typer.echo(f"Running {test_runner} in {repo_path}...")
         else:
             # Use default pytest
             test_cmd = [python_path, "-m", "pytest"]
-            if verbose:
-                test_cmd.append("-v")  # Add pytest verbose flag
+
+            # Add test_args if provided
+            if test_args:
+                test_cmd.extend(test_args)
+
+            # Add verbose flag if set
+            if verbose and "-v" not in test_args and "--verbose" not in test_args:
+                test_cmd.append("-v")
+
+            # Add keyword filter if set
             if keyword:
                 test_cmd.extend(["-k", keyword])
                 typer.echo(f"Running pytest -k '{keyword}' in {repo_path}...")
+            elif test_args:
+                typer.echo(f"Running pytest {' '.join(test_args)} in {repo_path}...")
             else:
                 typer.echo(f"Running pytest in {repo_path}...")
 

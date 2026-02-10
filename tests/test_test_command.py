@@ -337,3 +337,92 @@ def test_test_fallback_to_pytest_when_no_test_runner(mock_config, temp_repos_dir
                 mock_run.assert_called_once()
                 call_args = mock_run.call_args
                 assert call_args[0][0] == ["python", "-m", "pytest"]
+
+
+def test_test_with_custom_test_runner_and_args(tmp_path):
+    """Test that test passes arguments to custom test runner."""
+    # Create temp repos directory
+    repos_dir = tmp_path / "repos"
+    repos_dir.mkdir(parents=True)
+
+    # Create django group and repo
+    django_dir = repos_dir / "django"
+    django_dir.mkdir()
+
+    django_repo = django_dir / "django"
+    django_repo.mkdir()
+    (django_repo / ".git").mkdir()
+
+    # Create custom test runner script
+    tests_dir = django_repo / "tests"
+    tests_dir.mkdir()
+    test_runner = tests_dir / "runtests.py"
+    test_runner.write_text("# Custom test runner")
+
+    # Create config with custom test runner
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+    repos_dir_str = str(repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.django]
+repos = [
+    "https://github.com/django/django.git",
+]
+
+[repo.groups.django.test_runner]
+django = "tests/runtests.py"
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
+            with patch("subprocess.run") as mock_run:
+                mock_get_path.return_value = config_path
+                mock_venv.return_value = ("python", "system")
+
+                # Mock successful test run
+                mock_result = MagicMock()
+                mock_result.returncode = 0
+                mock_run.return_value = mock_result
+
+                result = runner.invoke(
+                    app, ["test", "django", "--verbose", "--parallel"]
+                )
+                assert result.exit_code == 0
+                assert "Running tests/runtests.py --verbose --parallel" in result.stdout
+
+                # Verify custom test runner was called with args
+                mock_run.assert_called_once()
+                call_args = mock_run.call_args
+                assert "runtests.py" in call_args[0][0][1]
+                assert "--verbose" in call_args[0][0]
+                assert "--parallel" in call_args[0][0]
+
+
+def test_test_with_pytest_and_args(mock_config, temp_repos_dir):
+    """Test that test passes arguments to pytest."""
+    with patch("dbx_python_cli.commands.repo.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
+            with patch("subprocess.run") as mock_run:
+                mock_get_path.return_value = mock_config
+                mock_venv.return_value = ("python", "system")
+
+                # Mock successful pytest run
+                mock_result = MagicMock()
+                mock_result.returncode = 0
+                mock_run.return_value = mock_result
+
+                result = runner.invoke(
+                    app, ["test", "mongo-python-driver", "-x", "--tb=short"]
+                )
+                assert result.exit_code == 0
+                assert "Running pytest -x --tb=short" in result.stdout
+
+                # Verify pytest was called with args
+                mock_run.assert_called_once()
+                call_args = mock_run.call_args
+                assert call_args[0][0] == ["python", "-m", "pytest", "-x", "--tb=short"]
