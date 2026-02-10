@@ -55,7 +55,8 @@ def test_callback(
 ):
     """Run tests in a cloned repository.
 
-    Usage:
+    Usage::
+
         dbx test <repo_name> [test_args...]
         dbx test <repo_name> -k <keyword>
         dbx test <repo_name> -g <group>

@@ -40,7 +40,8 @@ def just_callback(
 ):
     """Run just commands in a cloned repository.
 
-    Usage:
+    Usage::
+
         dbx just <repo_name> [just_command] [args...]
 
     If a just command is provided after the repo name, it will be executed.

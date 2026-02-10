@@ -40,7 +40,8 @@ def open_callback(
 ):
     """Open a repository or group of repositories in a web browser.
 
-    Usage:
+    Usage::
+
         dbx open <repo_name>
         dbx open -g <group_name>
 

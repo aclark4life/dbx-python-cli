@@ -52,7 +52,8 @@ def switch_callback(
 ):
     """Switch to a branch in a cloned repository, group of repositories, or project.
 
-    Usage:
+    Usage::
+
         dbx switch <repo_name> <branch_name>
         dbx switch -g <group_name> <branch_name>
         dbx switch -p <project_name> <branch_name>

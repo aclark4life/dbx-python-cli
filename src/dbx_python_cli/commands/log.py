@@ -56,7 +56,8 @@ def log_callback(
 ):
     """Show git commit logs from a repository or group of repositories.
 
-    Usage:
+    Usage::
+
         dbx log <repo_name>              # Show last 10 commits
         dbx log <repo_name> -n 20        # Show last 20 commits
         dbx log <repo_name> --oneline    # Show in oneline format

@@ -49,7 +49,8 @@ def branch_callback(
 ):
     """Run git branch in a cloned repository, group of repositories, or project.
 
-    Usage:
+    Usage::
+
         dbx branch <repo_name> [git_args...]
         dbx branch -g <group_name> [git_args...]
         dbx branch -p <project_name> [git_args...]

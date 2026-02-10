@@ -54,7 +54,8 @@ def remote_callback(
 ):
     """Show git remotes from a repository or group of repositories.
 
-    Usage:
+    Usage::
+
         dbx remote <repo_name>                      # Show remote names
         dbx remote <repo_name> --verbose-remotes    # Show remote names and URLs
         dbx remote -g <group>                       # Show remotes for all repos in group
