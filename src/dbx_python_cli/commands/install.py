@@ -576,12 +576,12 @@ def install_callback(
             typer.echo(f"Failed: {len(failed_items)}")
 
         if skipped_items:
-            typer.echo("\nSkipped packages:")
+            typer.echo("\nSkipped repositories:")
             for item_name in skipped_items:
                 typer.echo(f"  • {item_name}")
 
         if failed_items:
-            typer.echo("\nFailed packages:")
+            typer.echo("\nFailed repositories:")
             for item_name in failed_items:
                 typer.echo(f"  • {item_name}")
             raise typer.Exit(1)
