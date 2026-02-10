@@ -197,7 +197,9 @@ def test_open_with_group(tmp_path, temp_repos_dir, mock_config):
 
                 mock_run.side_effect = mock_git_remote
 
-                with patch("dbx_python_cli.commands.open.webbrowser.open") as mock_browser:
+                with patch(
+                    "dbx_python_cli.commands.open.webbrowser.open"
+                ) as mock_browser:
                     result = runner.invoke(app, ["open", "-g", "pymongo"])
                     assert result.exit_code == 0
                     assert "pymongo" in result.stdout
@@ -232,7 +234,9 @@ def test_open_with_group_fork_urls(tmp_path, temp_repos_dir, mock_config):
 
                 mock_run.side_effect = mock_git_remote
 
-                with patch("dbx_python_cli.commands.open.webbrowser.open") as mock_browser:
+                with patch(
+                    "dbx_python_cli.commands.open.webbrowser.open"
+                ) as mock_browser:
                     result = runner.invoke(app, ["open", "-g", "pymongo"])
                     assert result.exit_code == 0
                     assert "pymongo" in result.stdout
