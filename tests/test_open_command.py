@@ -180,16 +180,68 @@ def test_open_with_group(tmp_path, temp_repos_dir, mock_config):
         "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
     ):
         with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
-            with patch("dbx_python_cli.commands.open.webbrowser.open") as mock_browser:
-                result = runner.invoke(app, ["open", "-g", "pymongo"])
-                assert result.exit_code == 0
-                assert "pymongo" in result.stdout
-                # Should open 2 repos
-                assert mock_browser.call_count == 2
-                # Check URLs
-                calls = [call[0][0] for call in mock_browser.call_args_list]
-                assert "https://github.com/mongodb/mongo-python-driver" in calls
-                assert "https://github.com/mongodb/specifications" in calls
+            with patch("dbx_python_cli.commands.open.subprocess.run") as mock_run:
+                # Mock git remote get-url to return different URLs for different repos
+                def mock_git_remote(cmd, **kwargs):
+                    if "mongo-python-driver" in str(cmd):
+                        return MagicMock(
+                            returncode=0,
+                            stdout="git@github.com:mongodb/mongo-python-driver.git\n",
+                        )
+                    elif "specifications" in str(cmd):
+                        return MagicMock(
+                            returncode=0,
+                            stdout="git@github.com:mongodb/specifications.git\n",
+                        )
+                    return MagicMock(returncode=1, stdout="")
+
+                mock_run.side_effect = mock_git_remote
+
+                with patch("dbx_python_cli.commands.open.webbrowser.open") as mock_browser:
+                    result = runner.invoke(app, ["open", "-g", "pymongo"])
+                    assert result.exit_code == 0
+                    assert "pymongo" in result.stdout
+                    # Should open 2 repos
+                    assert mock_browser.call_count == 2
+                    # Check URLs
+                    calls = [call[0][0] for call in mock_browser.call_args_list]
+                    assert "https://github.com/mongodb/mongo-python-driver" in calls
+                    assert "https://github.com/mongodb/specifications" in calls
+
+
+def test_open_with_group_fork_urls(tmp_path, temp_repos_dir, mock_config):
+    """Test open with group option uses fork URLs when repos were cloned with --fork."""
+    with patch(
+        "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
+    ):
+        with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
+            with patch("dbx_python_cli.commands.open.subprocess.run") as mock_run:
+                # Mock git remote get-url to return fork URLs
+                def mock_git_remote(cmd, **kwargs):
+                    if "mongo-python-driver" in str(cmd):
+                        return MagicMock(
+                            returncode=0,
+                            stdout="git@github.com:aclark4life/mongo-python-driver.git\n",
+                        )
+                    elif "specifications" in str(cmd):
+                        return MagicMock(
+                            returncode=0,
+                            stdout="git@github.com:aclark4life/specifications.git\n",
+                        )
+                    return MagicMock(returncode=1, stdout="")
+
+                mock_run.side_effect = mock_git_remote
+
+                with patch("dbx_python_cli.commands.open.webbrowser.open") as mock_browser:
+                    result = runner.invoke(app, ["open", "-g", "pymongo"])
+                    assert result.exit_code == 0
+                    assert "pymongo" in result.stdout
+                    # Should open 2 repos
+                    assert mock_browser.call_count == 2
+                    # Check that fork URLs are used
+                    calls = [call[0][0] for call in mock_browser.call_args_list]
+                    assert "https://github.com/aclark4life/mongo-python-driver" in calls
+                    assert "https://github.com/aclark4life/specifications" in calls
 
 
 def test_open_with_nonexistent_group(tmp_path, temp_repos_dir, mock_config):

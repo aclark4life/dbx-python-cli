@@ -97,8 +97,30 @@ def open_callback(
             )
 
             for repo_url in repo_urls:
-                browser_url = _convert_git_url_to_browser_url(repo_url)
                 repo_name = _extract_repo_name_from_url(repo_url)
+
+                # Try to find the cloned repo and get its origin URL
+                # This allows us to open fork URLs if the repo was cloned with --fork
+                repo = find_repo_by_name(repo_name, base_dir)
+                if repo:
+                    repo_path = Path(repo["path"])
+                    origin_url = _get_git_remote_url(repo_path, "origin", verbose)
+                    if origin_url:
+                        # Use the actual origin URL from the cloned repo
+                        browser_url = _convert_git_url_to_browser_url(origin_url)
+                        if verbose:
+                            typer.echo(f"[verbose] Found cloned repo at: {repo_path}")
+                            typer.echo(f"[verbose] Origin URL: {origin_url}")
+                    else:
+                        # Fallback to config URL if no origin found
+                        browser_url = _convert_git_url_to_browser_url(repo_url)
+                        if verbose:
+                            typer.echo(f"[verbose] No origin remote found, using config URL")
+                else:
+                    # Repo not cloned, use config URL
+                    browser_url = _convert_git_url_to_browser_url(repo_url)
+                    if verbose:
+                        typer.echo(f"[verbose] Repo not cloned, using config URL")
 
                 if verbose:
                     typer.echo(f"[verbose] Git URL: {repo_url}")
