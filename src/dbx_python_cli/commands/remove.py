@@ -52,7 +52,8 @@ def remove_callback(
 ):
     """Remove repositories or repository groups.
 
-    Examples:
+    Examples::
+
         dbx remove mongo-python-driver              # Remove a single repo
         dbx remove repo1 repo2 repo3                # Remove multiple repos
         dbx remove mongo-python-driver -G langchain # Remove from specific group

@@ -62,7 +62,8 @@ def log_callback(
         dbx log <repo_name> --oneline    # Show in oneline format
         dbx log -g <group>               # Show logs for all repos in group
 
-    Examples:
+    Examples::
+
         dbx log mongo-python-driver      # Show last 10 commits
         dbx log mongo-python-driver -n 5 # Show last 5 commits
         dbx log -g pymongo               # Show logs for all pymongo repos

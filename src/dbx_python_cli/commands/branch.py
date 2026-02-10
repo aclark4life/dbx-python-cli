@@ -54,7 +54,8 @@ def branch_callback(
         dbx branch -g <group_name> [git_args...]
         dbx branch -p <project_name> [git_args...]
 
-    Examples:
+    Examples::
+
         dbx branch mongo-python-driver          # Show branches
         dbx branch mongo-python-driver -a       # Show all branches
         dbx branch -g pymongo                   # Show branches for all repos in group

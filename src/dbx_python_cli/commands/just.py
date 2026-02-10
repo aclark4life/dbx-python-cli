@@ -46,7 +46,8 @@ def just_callback(
     If a just command is provided after the repo name, it will be executed.
     If no just command is provided, 'just' will be run without arguments to show available commands.
 
-    Examples:
+    Examples::
+
         dbx just mongo-python-driver          # Show available just commands
         dbx just mongo-python-driver lint     # Run 'just lint'
         dbx just mongo-python-driver test -v  # Run 'just test -v'

@@ -60,7 +60,8 @@ def test_callback(
         dbx test <repo_name> -k <keyword>
         dbx test <repo_name> -g <group>
 
-    Examples:
+    Examples::
+
         dbx test mongo-python-driver                    # Run pytest
         dbx test mongo-python-driver -v                 # Run pytest with verbose
         dbx test mongo-python-driver -k test_insert     # Run specific test

@@ -64,7 +64,8 @@ def edit():
     environment variable. If EDITOR is not set, falls back to common editors
     (vim, nano, vi) or uses 'open' on macOS.
 
-    Examples:
+    Examples::
+
         dbx config edit                    # Open with default editor
         EDITOR=code dbx config edit        # Open with VS Code
         EDITOR=nano dbx config edit        # Open with nano
@@ -141,7 +142,8 @@ def show():
     Shows the active configuration being used by dbx, including the config file
     location and all settings.
 
-    Examples:
+    Examples::
+
         dbx config show                    # Display current configuration
     """
     config_path = get_config_path()

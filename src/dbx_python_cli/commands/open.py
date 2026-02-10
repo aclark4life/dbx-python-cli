@@ -44,7 +44,8 @@ def open_callback(
         dbx open <repo_name>
         dbx open -g <group_name>
 
-    Examples:
+    Examples::
+
         dbx open mongo-python-driver    # Open repo in browser
         dbx open -g pymongo              # Open all repos in group
     """
@@ -208,7 +209,8 @@ def _convert_git_url_to_browser_url(git_url: str) -> str:
     Returns:
         str: Browser-friendly HTTPS URL
 
-    Examples:
+    Examples::
+
         git@github.com:mongodb/mongo-python-driver.git -> https://github.com/mongodb/mongo-python-driver
         https://github.com/mongodb/mongo-python-driver.git -> https://github.com/mongodb/mongo-python-driver
     """

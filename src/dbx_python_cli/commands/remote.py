@@ -59,7 +59,8 @@ def remote_callback(
         dbx remote <repo_name> --verbose-remotes    # Show remote names and URLs
         dbx remote -g <group>                       # Show remotes for all repos in group
 
-    Examples:
+    Examples::
+
         dbx remote mongo-python-driver              # Show remote names
         dbx remote mongo-python-driver --verbose-remotes  # Show remote names and URLs
         dbx remote -g pymongo                       # Show remotes for all pymongo repos

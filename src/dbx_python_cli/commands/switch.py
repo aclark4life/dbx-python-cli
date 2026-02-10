@@ -57,7 +57,8 @@ def switch_callback(
         dbx switch -g <group_name> <branch_name>
         dbx switch -p <project_name> <branch_name>
 
-    Examples:
+    Examples::
+
         dbx switch mongo-python-driver PYTHON-5683       # Switch to branch
         dbx switch mongo-python-driver main              # Switch to main
         dbx switch -c mongo-python-driver feature-123    # Create and switch to new branch

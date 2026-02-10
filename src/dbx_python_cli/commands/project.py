@@ -194,7 +194,8 @@ def add_project(
 
     Projects are created in base_dir/projects/ by default.
 
-    Examples:
+    Examples::
+
         dbx project add myproject          # Create with explicit name (includes frontend)
         dbx project add myproject --no-frontend  # Create without frontend
         dbx project add --random           # Create with random name (includes frontend)
@@ -431,7 +432,8 @@ def remove_project(
     This will first attempt to uninstall the project package using pip in the
     current Python environment, then remove the project directory.
 
-    Examples:
+    Examples::
+
         dbx project remove                # Remove newest project
         dbx project remove myproject      # Remove specific project
     """
@@ -515,7 +517,8 @@ def run_project(
     If no project name is provided, runs the most recently created project.
     If a frontend directory exists, it will be run automatically alongside the Django server.
 
-    Examples:
+    Examples::
+
         dbx project run                      # Run newest project
         dbx project run myproject
         dbx project run myproject --settings base
@@ -623,7 +626,8 @@ def open_browser(
     """
     Open localhost in the browser.
 
-    Examples:
+    Examples::
+
         dbx project open                    # Opens http://localhost:8000
         dbx project open --port 3000        # Opens http://localhost:3000
         dbx project open --host 127.0.0.1   # Opens http://127.0.0.1:8000
@@ -672,7 +676,8 @@ def manage(
 
     If no project name is provided, uses the most recently created project.
 
-    Examples:
+    Examples::
+
         dbx project manage shell                # Run shell on newest project
         dbx project manage myproject shell
         dbx project manage myproject createsuperuser
@@ -787,7 +792,8 @@ def create_superuser(
 
     If no project name is provided, uses the most recently created project.
 
-    Examples:
+    Examples::
+
         dbx project su                          # Create superuser on newest project
         dbx project su myproject
         dbx project su myproject --settings base
