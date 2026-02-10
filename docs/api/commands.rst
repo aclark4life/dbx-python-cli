@@ -4,7 +4,7 @@ Commands
 The command modules implement the CLI commands for repository management, installation, testing, and more.
 
 dbx_python_cli.commands.branch module
--------------------------------------
+--------------------------------------
 
 .. automodule:: dbx_python_cli.commands.branch
    :members:
@@ -12,7 +12,7 @@ dbx_python_cli.commands.branch module
    :show-inheritance:
 
 dbx_python_cli.commands.clone module
-------------------------------------
+-------------------------------------
 
 .. automodule:: dbx_python_cli.commands.clone
    :members:
@@ -20,7 +20,7 @@ dbx_python_cli.commands.clone module
    :show-inheritance:
 
 dbx_python_cli.commands.config module
--------------------------------------
+--------------------------------------
 
 .. automodule:: dbx_python_cli.commands.config
    :members:
@@ -28,7 +28,7 @@ dbx_python_cli.commands.config module
    :show-inheritance:
 
 dbx_python_cli.commands.env module
-----------------------------------
+-----------------------------------
 
 .. automodule:: dbx_python_cli.commands.env
    :members:
@@ -36,7 +36,7 @@ dbx_python_cli.commands.env module
    :show-inheritance:
 
 dbx_python_cli.commands.install module
---------------------------------------
+---------------------------------------
 
 .. automodule:: dbx_python_cli.commands.install
    :members:
@@ -44,7 +44,7 @@ dbx_python_cli.commands.install module
    :show-inheritance:
 
 dbx_python_cli.commands.just module
------------------------------------
+------------------------------------
 
 .. automodule:: dbx_python_cli.commands.just
    :members:
@@ -52,7 +52,7 @@ dbx_python_cli.commands.just module
    :show-inheritance:
 
 dbx_python_cli.commands.log module
-----------------------------------
+-----------------------------------
 
 .. automodule:: dbx_python_cli.commands.log
    :members:
@@ -60,7 +60,7 @@ dbx_python_cli.commands.log module
    :show-inheritance:
 
 dbx_python_cli.commands.open module
------------------------------------
+------------------------------------
 
 .. automodule:: dbx_python_cli.commands.open
    :members:
@@ -68,7 +68,7 @@ dbx_python_cli.commands.open module
    :show-inheritance:
 
 dbx_python_cli.commands.project module
---------------------------------------
+---------------------------------------
 
 .. automodule:: dbx_python_cli.commands.project
    :members:
@@ -76,7 +76,7 @@ dbx_python_cli.commands.project module
    :show-inheritance:
 
 dbx_python_cli.commands.remote module
--------------------------------------
+--------------------------------------
 
 .. automodule:: dbx_python_cli.commands.remote
    :members:
@@ -84,7 +84,7 @@ dbx_python_cli.commands.remote module
    :show-inheritance:
 
 dbx_python_cli.commands.remove module
--------------------------------------
+--------------------------------------
 
 .. automodule:: dbx_python_cli.commands.remove
    :members:
@@ -92,7 +92,7 @@ dbx_python_cli.commands.remove module
    :show-inheritance:
 
 dbx_python_cli.commands.repo_utils module
------------------------------------------
+------------------------------------------
 
 .. automodule:: dbx_python_cli.commands.repo_utils
    :members:
@@ -100,7 +100,7 @@ dbx_python_cli.commands.repo_utils module
    :show-inheritance:
 
 dbx_python_cli.commands.switch module
--------------------------------------
+--------------------------------------
 
 .. automodule:: dbx_python_cli.commands.switch
    :members:
@@ -108,7 +108,7 @@ dbx_python_cli.commands.switch module
    :show-inheritance:
 
 dbx_python_cli.commands.sync module
------------------------------------
+------------------------------------
 
 .. automodule:: dbx_python_cli.commands.sync
    :members:
@@ -116,7 +116,7 @@ dbx_python_cli.commands.sync module
    :show-inheritance:
 
 dbx_python_cli.commands.test module
------------------------------------
+------------------------------------
 
 .. automodule:: dbx_python_cli.commands.test
    :members:
@@ -124,7 +124,7 @@ dbx_python_cli.commands.test module
    :show-inheritance:
 
 dbx_python_cli.commands.venv_utils module
------------------------------------------
+------------------------------------------
 
 .. automodule:: dbx_python_cli.commands.venv_utils
    :members:
