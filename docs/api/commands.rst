@@ -11,6 +11,22 @@ dbx_python_cli.commands.branch module
    :undoc-members:
    :show-inheritance:
 
+dbx_python_cli.commands.clone module
+------------------------------------
+
+.. automodule:: dbx_python_cli.commands.clone
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dbx_python_cli.commands.config module
+-------------------------------------
+
+.. automodule:: dbx_python_cli.commands.config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 dbx_python_cli.commands.env module
 ----------------------------------
 
@@ -35,10 +51,66 @@ dbx_python_cli.commands.just module
    :undoc-members:
    :show-inheritance:
 
-dbx_python_cli.commands.repo module
+dbx_python_cli.commands.log module
+----------------------------------
+
+.. automodule:: dbx_python_cli.commands.log
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dbx_python_cli.commands.open module
 -----------------------------------
 
-.. automodule:: dbx_python_cli.commands.repo
+.. automodule:: dbx_python_cli.commands.open
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dbx_python_cli.commands.project module
+--------------------------------------
+
+.. automodule:: dbx_python_cli.commands.project
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dbx_python_cli.commands.remote module
+-------------------------------------
+
+.. automodule:: dbx_python_cli.commands.remote
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dbx_python_cli.commands.remove module
+-------------------------------------
+
+.. automodule:: dbx_python_cli.commands.remove
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dbx_python_cli.commands.repo_utils module
+-----------------------------------------
+
+.. automodule:: dbx_python_cli.commands.repo_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dbx_python_cli.commands.switch module
+-------------------------------------
+
+.. automodule:: dbx_python_cli.commands.switch
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dbx_python_cli.commands.sync module
+-----------------------------------
+
+.. automodule:: dbx_python_cli.commands.sync
    :members:
    :undoc-members:
    :show-inheritance:
