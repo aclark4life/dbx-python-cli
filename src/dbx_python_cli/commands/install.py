@@ -569,7 +569,9 @@ def install_callback(
         typer.echo("Installation Summary")
         typer.echo(f"{'=' * 60}")
         typer.echo(f"Total packages: {total_items}")
-        typer.echo(f"Successful: {total_items - len(failed_items) - len(skipped_items)}")
+        typer.echo(
+            f"Successful: {total_items - len(failed_items) - len(skipped_items)}"
+        )
         if skipped_items:
             typer.echo(f"Skipped: {len(skipped_items)}")
         if failed_items:
