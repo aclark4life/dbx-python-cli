@@ -44,7 +44,29 @@ def sync_callback(
         help="Force push after rebasing (use if previous sync failed)",
     ),
 ):
-    """Sync repository with upstream by fetching, rebasing, and pushing."""
+    """Sync repository with upstream by fetching, rebasing, and pushing.
+
+    Rebase behavior:
+
+    - Main/master branches: Rebases to upstream/main or upstream/master
+    - Feature branches: Rebases to upstream's default branch (main/master)
+
+    This allows you to keep your main branch in sync with upstream/main,
+    while also keeping feature branches up-to-date with the latest upstream changes.
+
+    Usage::
+
+        dbx sync <repo_name>         # Sync a single repository
+        dbx sync -g <group>          # Sync all repos in a group
+        dbx sync <repo_name> --force # Force push after rebasing
+        dbx sync --list              # List available repositories
+
+    Examples::
+
+        dbx sync mongo-python-driver  # Sync single repo
+        dbx sync -g pymongo           # Sync all repos in group
+        dbx sync my-repo --force      # Force push after rebase
+    """
     from dbx_python_cli.commands.repo_utils import find_all_repos, find_repo_by_name
 
     # Get verbose flag from parent context
@@ -131,7 +153,11 @@ def sync_callback(
 def _sync_repository(
     repo_path: Path, repo_name: str, verbose: bool = False, force: bool = False
 ):
-    """Sync a single repository with upstream."""
+    """Sync a single repository with upstream.
+
+    For main/master branches: rebases to upstream/<branch_name>
+    For feature branches: rebases to upstream's default branch (main/master)
+    """
     typer.echo(f"  🔄 Syncing {repo_name}...")
 
     if verbose:
@@ -209,13 +235,62 @@ def _sync_repository(
         )
         return
 
-    # Rebase on upstream/<current_branch>
+    # Determine which branch to rebase onto
+    # For main/master: rebase to upstream/<current_branch>
+    # For feature branches: rebase to upstream's default branch
+    if current_branch in ["main", "master"]:
+        rebase_target = f"upstream/{current_branch}"
+        if verbose:
+            typer.echo(f"  [verbose] Main branch detected, rebasing to {rebase_target}")
+    else:
+        # Get upstream's default branch
+        upstream_default = _get_upstream_default_branch(repo_path, verbose)
+        if not upstream_default:
+            # Fallback to trying common default branches
+            if verbose:
+                typer.echo(
+                    "  [verbose] Could not detect upstream default, trying main/master..."
+                )
+            # Try main first, then master
+            for branch in ["main", "master"]:
+                try:
+                    subprocess.run(
+                        [
+                            "git",
+                            "-C",
+                            str(repo_path),
+                            "rev-parse",
+                            f"upstream/{branch}",
+                        ],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    )
+                    upstream_default = branch
+                    break
+                except subprocess.CalledProcessError:
+                    continue
+
+            if not upstream_default:
+                typer.echo(
+                    f"  ❌ {repo_name}: Could not determine upstream default branch",
+                    err=True,
+                )
+                return
+
+        rebase_target = f"upstream/{upstream_default}"
+        if verbose:
+            typer.echo(
+                f"  [verbose] Feature branch detected, rebasing to {rebase_target}"
+            )
+
+    # Rebase on target branch
     try:
         if verbose:
-            typer.echo(f"  [verbose] Rebasing on upstream/{current_branch}...")
+            typer.echo(f"  [verbose] Rebasing on {rebase_target}...")
 
         subprocess.run(
-            ["git", "-C", str(repo_path), "rebase", f"upstream/{current_branch}"],
+            ["git", "-C", str(repo_path), "rebase", rebase_target],
             check=True,
             capture_output=not verbose,
             text=True,
@@ -223,7 +298,7 @@ def _sync_repository(
 
     except subprocess.CalledProcessError as e:
         typer.echo(
-            f"  ❌ {repo_name}: Failed to rebase on upstream/{current_branch}",
+            f"  ❌ {repo_name}: Failed to rebase on {rebase_target}",
             err=True,
         )
         if not verbose and e.stderr:
@@ -267,3 +342,59 @@ def _sync_repository(
             f"     Try running: dbx sync {repo_name} --force",
             err=True,
         )
+
+
+def _get_upstream_default_branch(repo_path: Path, verbose: bool = False) -> str | None:
+    """Get the default branch of the upstream remote.
+
+    Args:
+        repo_path: Path to the repository
+        verbose: Whether to print verbose output
+
+    Returns:
+        str: The default branch name (e.g., 'main', 'master'), or None if not found
+    """
+    try:
+        # Try to get the symbolic ref for upstream/HEAD
+        result = subprocess.run(
+            ["git", "-C", str(repo_path), "symbolic-ref", "refs/remotes/upstream/HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        # Output will be like "refs/remotes/upstream/main"
+        ref = result.stdout.strip()
+        if ref.startswith("refs/remotes/upstream/"):
+            default_branch = ref.replace("refs/remotes/upstream/", "")
+            if verbose:
+                typer.echo(
+                    f"  [verbose] Detected upstream default branch: {default_branch}"
+                )
+            return default_branch
+    except subprocess.CalledProcessError:
+        # symbolic-ref might fail if upstream/HEAD is not set
+        # Try to set it by running remote show
+        try:
+            if verbose:
+                typer.echo(
+                    "  [verbose] Attempting to detect upstream default branch..."
+                )
+            result = subprocess.run(
+                ["git", "-C", str(repo_path), "remote", "show", "upstream"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            # Parse output to find "HEAD branch: <branch>"
+            for line in result.stdout.split("\n"):
+                if "HEAD branch:" in line:
+                    default_branch = line.split("HEAD branch:")[-1].strip()
+                    if verbose:
+                        typer.echo(
+                            f"  [verbose] Detected upstream default branch: {default_branch}"
+                        )
+                    return default_branch
+        except subprocess.CalledProcessError:
+            pass
+
+    return None

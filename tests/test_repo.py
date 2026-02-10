@@ -896,3 +896,213 @@ repos = []
         assert result.exit_code == 2
         output = result.stdout + result.stderr
         assert "Sync repositories with upstream" in output
+
+
+def test_repo_sync_feature_branch_to_upstream_main(tmp_path, temp_repos_dir):
+    """Test syncing a feature branch rebases to upstream/main."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    # Create mock repository
+    group_dir = temp_repos_dir / "test"
+    repo_dir = group_dir / "mongo-python-driver"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+
+            # Mock git commands
+            def mock_run_side_effect(*args, **kwargs):
+                cmd = args[0]
+                if "remote" in cmd and "add" not in cmd and "show" not in cmd:
+                    # git remote command (list remotes)
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="origin\nupstream\n", stderr=""
+                    )
+                    return result
+                elif "branch" in cmd and "--show-current" in cmd:
+                    # git branch --show-current - return feature branch
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="feature-branch\n", stderr=""
+                    )
+                    return result
+                elif "symbolic-ref" in cmd:
+                    # git symbolic-ref refs/remotes/upstream/HEAD
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="refs/remotes/upstream/main\n", stderr=""
+                    )
+                    return result
+                elif "rebase" in cmd:
+                    # Verify we're rebasing to upstream/main, not upstream/feature-branch
+                    assert "upstream/main" in cmd
+                    result = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                    return result
+                else:
+                    # Other commands (fetch, push)
+                    result = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                    return result
+
+            mock_run.side_effect = mock_run_side_effect
+
+            result = runner.invoke(app, ["sync", "mongo-python-driver"])
+            assert result.exit_code == 0
+            assert "Syncing mongo-python-driver" in result.stdout
+            assert "synced and pushed successfully" in result.stdout
+
+            # Verify rebase was called with upstream/main
+            calls = mock_run.call_args_list
+            rebase_calls = [call for call in calls if "rebase" in call[0][0]]
+            assert len(rebase_calls) == 1
+            assert "upstream/main" in rebase_calls[0][0][0]
+
+
+def test_repo_sync_feature_branch_fallback_to_main(tmp_path, temp_repos_dir):
+    """Test syncing a feature branch falls back to main when symbolic-ref fails."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    # Create mock repository
+    group_dir = temp_repos_dir / "test"
+    repo_dir = group_dir / "mongo-python-driver"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+
+            # Mock git commands
+            def mock_run_side_effect(*args, **kwargs):
+                cmd = args[0]
+                if "remote" in cmd and "add" not in cmd and "show" not in cmd:
+                    # git remote command (list remotes)
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="origin\nupstream\n", stderr=""
+                    )
+                    return result
+                elif "branch" in cmd and "--show-current" in cmd:
+                    # git branch --show-current - return feature branch
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="feature-branch\n", stderr=""
+                    )
+                    return result
+                elif "symbolic-ref" in cmd:
+                    # Fail symbolic-ref (upstream/HEAD not set)
+                    raise subprocess.CalledProcessError(1, cmd, stderr="not found")
+                elif "remote" in cmd and "show" in cmd:
+                    # git remote show upstream - return main as default
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="  HEAD branch: main\n", stderr=""
+                    )
+                    return result
+                elif "rebase" in cmd:
+                    # Verify we're rebasing to upstream/main
+                    assert "upstream/main" in cmd
+                    result = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                    return result
+                else:
+                    # Other commands (fetch, push)
+                    result = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                    return result
+
+            mock_run.side_effect = mock_run_side_effect
+
+            result = runner.invoke(app, ["sync", "mongo-python-driver"])
+            assert result.exit_code == 0
+            assert "Syncing mongo-python-driver" in result.stdout
+            assert "synced and pushed successfully" in result.stdout
+
+            # Verify rebase was called with upstream/main
+            calls = mock_run.call_args_list
+            rebase_calls = [call for call in calls if "rebase" in call[0][0]]
+            assert len(rebase_calls) == 1
+            assert "upstream/main" in rebase_calls[0][0][0]
+
+
+def test_repo_sync_main_branch_to_upstream_main(tmp_path, temp_repos_dir):
+    """Test syncing main branch still rebases to upstream/main (not changed)."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.test]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    # Create mock repository
+    group_dir = temp_repos_dir / "test"
+    repo_dir = group_dir / "mongo-python-driver"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+
+            # Mock git commands
+            def mock_run_side_effect(*args, **kwargs):
+                cmd = args[0]
+                if "remote" in cmd and "add" not in cmd:
+                    # git remote command (list remotes)
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="origin\nupstream\n", stderr=""
+                    )
+                    return result
+                elif "branch" in cmd and "--show-current" in cmd:
+                    # git branch --show-current - return main
+                    result = subprocess.CompletedProcess(
+                        cmd, 0, stdout="main\n", stderr=""
+                    )
+                    return result
+                elif "rebase" in cmd:
+                    # Verify we're rebasing to upstream/main
+                    assert "upstream/main" in cmd
+                    result = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                    return result
+                else:
+                    # Other commands (fetch, push)
+                    result = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                    return result
+
+            mock_run.side_effect = mock_run_side_effect
+
+            result = runner.invoke(app, ["sync", "mongo-python-driver"])
+            assert result.exit_code == 0
+            assert "Syncing mongo-python-driver" in result.stdout
+            assert "synced and pushed successfully" in result.stdout
+
+            # Verify rebase was called with upstream/main
+            calls = mock_run.call_args_list
+            rebase_calls = [call for call in calls if "rebase" in call[0][0]]
+            assert len(rebase_calls) == 1
+            assert "upstream/main" in rebase_calls[0][0][0]
