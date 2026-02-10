@@ -46,25 +46,20 @@ def remote_callback(
         "-p",
         help="Show remotes for a project",
     ),
-    verbose_remotes: bool = typer.Option(
-        False,
-        "--verbose-remotes",
-        help="Show remote URLs (verbose output)",
-    ),
 ):
     """Show git remotes from a repository or group of repositories.
 
     Usage::
 
-        dbx remote <repo_name>                      # Show remote names
-        dbx remote <repo_name> --verbose-remotes    # Show remote names and URLs
-        dbx remote -g <group>                       # Show remotes for all repos in group
+        dbx remote <repo_name>           # Show remote names
+        dbx remote -v <repo_name>        # Show remote names and URLs
+        dbx remote -g <group>            # Show remotes for all repos in group
 
     Examples::
 
-        dbx remote mongo-python-driver              # Show remote names
-        dbx remote mongo-python-driver --verbose-remotes  # Show remote names and URLs
-        dbx remote -g pymongo                       # Show remotes for all pymongo repos
+        dbx remote mongo-python-driver   # Show remote names
+        dbx remote -v mongo-python-driver  # Show remote names and URLs
+        dbx remote -g pymongo            # Show remotes for all pymongo repos
     """
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
@@ -72,9 +67,6 @@ def remote_callback(
     try:
         config = get_config()
         base_dir = get_base_dir(config)
-        if verbose:
-            typer.echo(f"[verbose] Using base directory: {base_dir}")
-            typer.echo(f"[verbose] Config: {config}\n")
     except Exception as e:
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
@@ -122,9 +114,7 @@ def remote_callback(
         )
 
         for repo_info in group_repos:
-            _run_git_remote(
-                repo_info["path"], repo_info["name"], verbose_remotes, verbose
-            )
+            _run_git_remote(repo_info["path"], repo_info["name"], verbose)
             typer.echo("")  # Add blank line between repos
 
         return
@@ -140,7 +130,7 @@ def remote_callback(
             )
             raise typer.Exit(1)
 
-        _run_git_remote(project_path, project, verbose_remotes, verbose)
+        _run_git_remote(project_path, project, verbose)
         return
 
     # Require repo_name if not listing, not using group, and not using project
@@ -160,15 +150,10 @@ def remote_callback(
         raise typer.Exit(1)
 
     repo_path = Path(repo["path"])
-    _run_git_remote(repo_path, repo_name, verbose_remotes, verbose)
+    _run_git_remote(repo_path, repo_name, verbose)
 
 
-def _run_git_remote(
-    repo_path: Path,
-    name: str,
-    verbose_remotes: bool = False,
-    verbose: bool = False,
-):
+def _run_git_remote(repo_path: Path, name: str, verbose: bool = False):
     """Run git remote in a repository or project."""
     # Check if it's a git repository
     if not (repo_path / ".git").exists():
@@ -177,17 +162,11 @@ def _run_git_remote(
 
     # Build git remote command
     git_cmd = ["git", "remote"]
-    if verbose_remotes:
+    if verbose:
         git_cmd.append("-v")
-
-    if verbose_remotes:
-        typer.echo(f"🔗 {name}: Remotes (verbose)")
+        typer.echo(f"🔗 {name}: Remotes (with URLs)")
     else:
         typer.echo(f"🔗 {name}: Remotes")
-
-    if verbose:
-        typer.echo(f"[verbose] Running command: {' '.join(git_cmd)}")
-        typer.echo(f"[verbose] Working directory: {repo_path}\n")
 
     # Run git remote in the repository
     result = subprocess.run(

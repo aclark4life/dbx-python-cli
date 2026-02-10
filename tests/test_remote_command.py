@@ -160,9 +160,9 @@ repos = ["https://github.com/test/test-repo.git"]
         mock_result.stderr = ""
 
         with patch("subprocess.run", return_value=mock_result) as mock_run:
-            result = runner.invoke(app, ["remote", "--verbose-remotes", "test-repo"])
+            result = runner.invoke(app, ["-v", "remote", "test-repo"])
             assert result.exit_code == 0
-            assert "🔗 test-repo: Remotes (verbose)" in result.stdout
+            assert "🔗 test-repo: Remotes (with URLs)" in result.stdout
             assert "git@github.com:test/test-repo.git" in result.stdout
 
             # Verify git remote -v was called
