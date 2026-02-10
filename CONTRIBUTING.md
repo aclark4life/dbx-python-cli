@@ -132,6 +132,30 @@ When contributing to this project, please follow these guidelines:
 2. **Update docs**: Update Sphinx documentation for user-facing changes
 3. **Add examples**: Include usage examples in docstrings and documentation
 
+#### Project-Specific Instructions
+
+<!--
+Add project-specific instructions below this comment.
+These instructions will be read by AI assistants in future sessions.
+
+Examples:
+- Specific architectural decisions or patterns to follow
+- Known issues or workarounds
+- Preferred libraries or approaches for certain tasks
+- Domain-specific knowledge about MongoDB, PyMongo, etc.
+- Common pitfalls to avoid
+-->
+
+**Current Project-Specific Instructions:**
+
+1. **Fork workflow**: When repos are cloned with `--fork`, the `origin` remote points to the fork and `upstream` points to the original repo
+2. **Group-based operations**: Many commands support `-g/--group` flag to operate on all repos in a group
+3. **Verbose logging**: Use the `verbose` flag from context for detailed logging: `verbose = ctx.obj.get("verbose", False) if ctx.obj else False`
+4. **Git operations**: Always use subprocess to run git commands, check return codes, and handle errors gracefully
+5. **Config structure**: Configuration is in TOML format with `[repo.groups.GROUP_NAME]` sections containing repo lists
+
+<!-- Add new instructions above this line -->
+
 ### For Human Developers
 
 We encourage you to use AI assistants like Augment Agent to:
