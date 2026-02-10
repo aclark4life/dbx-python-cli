@@ -78,7 +78,7 @@ def main(
 
     # Handle list repos flag
     if list_repos:
-        from dbx_python_cli.commands.repo_utils import list_repos as format_repos
+        from dbx_python_cli.commands.repo import list_repos as format_repos
 
         config = repo.get_config()
         base_dir = repo.get_base_dir(config)

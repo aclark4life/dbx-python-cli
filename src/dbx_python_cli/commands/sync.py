@@ -45,7 +45,7 @@ def sync_callback(
     ),
 ):
     """Sync repository with upstream by fetching, rebasing, and pushing."""
-    from dbx_python_cli.commands.repo_utils import find_all_repos, find_repo_by_name
+    from dbx_python_cli.commands.repo import find_all_repos, find_repo_by_name
 
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
@@ -61,7 +61,7 @@ def sync_callback(
 
         # Handle --list flag
         if list_repos:
-            from dbx_python_cli.commands.repo_utils import list_repos as format_repos
+            from dbx_python_cli.commands.repo import list_repos as format_repos
 
             formatted_output = format_repos(base_dir, config=config)
             if not formatted_output:

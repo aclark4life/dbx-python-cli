@@ -58,7 +58,7 @@ def test_repo_help():
 def test_repo_list_no_repos():
     """Test that 'dbx repo -l' shows message when no repos are cloned."""
     with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = []
             result = runner.invoke(app, ["-l"])
@@ -70,7 +70,7 @@ def test_repo_list_no_repos():
 def test_repo_list_with_repos():
     """Test that 'dbx repo -l' lists all cloned repositories."""
     with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = [
                 {"group": "django", "name": "django"},
@@ -92,7 +92,7 @@ def test_repo_list_with_repos():
 def test_repo_list_long_form():
     """Test that 'dbx repo --list' works."""
     with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = []
             result = runner.invoke(app, ["--list"])

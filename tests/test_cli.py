@@ -75,7 +75,7 @@ def test_list_flag_no_repos():
     from unittest.mock import patch
 
     with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = []
             result = runner.invoke(app, ["-l"])
@@ -89,7 +89,7 @@ def test_list_flag_with_repos():
     from unittest.mock import patch
 
     with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = [
                 {"group": "django", "name": "django"},
@@ -113,7 +113,7 @@ def test_list_flag_short_form():
     from unittest.mock import patch
 
     with patch("dbx_python_cli.commands.repo.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+        with patch("dbx_python_cli.commands.repo.find_all_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             mock_find.return_value = []
             result = runner.invoke(app, ["-l"])

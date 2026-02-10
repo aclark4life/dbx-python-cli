@@ -179,7 +179,7 @@ def test_test_runs_pytest_failure(mock_config, temp_repos_dir):
 
 def test_test_list_base_dir_not_exists(tmp_path):
     """Test that test -l handles non-existent base directory gracefully."""
-    from dbx_python_cli.commands.repo_utils import find_all_repos
+    from dbx_python_cli.commands.repo import find_all_repos
 
     # Test find_all_repos directly with non-existent directory
     nonexistent_dir = tmp_path / "nonexistent_repos"

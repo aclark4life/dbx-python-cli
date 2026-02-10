@@ -7,10 +7,12 @@ from typing import Optional
 
 import typer
 
-from dbx_python_cli.commands.repo import get_base_dir, get_config, get_install_dirs
-from dbx_python_cli.commands.repo_utils import (
+from dbx_python_cli.commands.repo import (
     find_all_repos,
     find_repo_by_name,
+    get_base_dir,
+    get_config,
+    get_install_dirs,
 )
 from dbx_python_cli.commands.venv_utils import get_venv_info
 
@@ -303,7 +305,7 @@ def install_callback(
 
     # Handle --list flag
     if list_repos:
-        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
+        from dbx_python_cli.commands.repo import list_repos as list_repos_func
 
         output = list_repos_func(base_dir, config=config)
         if output:

@@ -1,10 +1,10 @@
-"""Tests for the repo_utils module."""
+"""Tests for the repo module utilities."""
 
 from pathlib import Path
 
 import pytest
 
-from dbx_python_cli.commands.repo_utils import (
+from dbx_python_cli.commands.repo import (
     find_all_repos,
     find_repo_by_name,
     list_repos,
