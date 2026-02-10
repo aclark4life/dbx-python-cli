@@ -148,7 +148,7 @@ def install_package(
         verbose: Whether to show verbose output
 
     Returns:
-        bool: True if successful, False otherwise
+        str: "success" if successful, "skipped" if no setup.py/pyproject.toml, "failed" otherwise
     """
     # Determine the working directory
     if install_dir:
@@ -169,7 +169,7 @@ def install_package(
         typer.echo(
             f"⚠️  Skipping {display_path}: No setup.py or pyproject.toml found", err=True
         )
-        return False
+        return "skipped"
 
     # Build the install spec
     install_spec = "."
@@ -196,7 +196,7 @@ def install_package(
         typer.echo(f"⚠️  Warning: Installation failed for {display_path}", err=True)
         if not verbose and install_result.stderr:
             typer.echo(install_result.stderr, err=True)
-        return False
+        return "failed"
 
     if verbose and install_result.stdout:
         typer.echo(f"[verbose] Output:\n{install_result.stdout}")
@@ -235,12 +235,12 @@ def install_package(
                 )
                 if not verbose and group_result.stderr:
                     typer.echo(group_result.stderr, err=True)
-                return False
+                return "failed"
 
             if verbose and group_result.stdout:
                 typer.echo(f"[verbose] Output:\n{group_result.stdout}")
 
-    return True
+    return "success"
 
 
 @app.callback(
@@ -489,6 +489,7 @@ def install_callback(
 
         # Install each repo in the group
         failed_items = []
+        skipped_items = []
         total_items = 0
 
         for repo in group_repos:
@@ -525,7 +526,7 @@ def install_callback(
                     total_items += 1
                     typer.echo(f"  → Installing from {install_dir}...")
 
-                    success = install_package(
+                    result = install_package(
                         repo_path,
                         python_path,
                         install_dir=install_dir,
@@ -534,15 +535,17 @@ def install_callback(
                         verbose=verbose,
                     )
 
-                    if success:
+                    if result == "success":
                         typer.echo(f"  ✅ {install_dir} installed successfully\n")
+                    elif result == "skipped":
+                        skipped_items.append(f"{repo['name']}/{install_dir}")
                     else:
                         failed_items.append(f"{repo['name']}/{install_dir}")
             else:
                 # Regular repo: install from root
                 total_items += 1
 
-                success = install_package(
+                result = install_package(
                     repo_path,
                     python_path,
                     install_dir=None,
@@ -551,11 +554,13 @@ def install_callback(
                     verbose=verbose,
                 )
 
-                if success:
+                if result == "success":
                     typer.echo(f"✅ {repo['name']} installed successfully")
                     # Check for frontend and install if present
                     install_frontend_if_exists(repo_path, verbose=verbose)
                     typer.echo()
+                elif result == "skipped":
+                    skipped_items.append(repo["name"])
                 else:
                     failed_items.append(repo["name"])
 
@@ -564,9 +569,18 @@ def install_callback(
         typer.echo("Installation Summary")
         typer.echo(f"{'=' * 60}")
         typer.echo(f"Total packages: {total_items}")
-        typer.echo(f"Successful: {total_items - len(failed_items)}")
+        typer.echo(f"Successful: {total_items - len(failed_items) - len(skipped_items)}")
+        if skipped_items:
+            typer.echo(f"Skipped: {len(skipped_items)}")
         if failed_items:
             typer.echo(f"Failed: {len(failed_items)}")
+
+        if skipped_items:
+            typer.echo("\nSkipped packages:")
+            for item_name in skipped_items:
+                typer.echo(f"  • {item_name}")
+
+        if failed_items:
             typer.echo("\nFailed packages:")
             for item_name in failed_items:
                 typer.echo(f"  • {item_name}")
@@ -658,10 +672,11 @@ def install_callback(
         typer.echo(f"Monorepo detected: installing {len(install_dirs)} packages...\n")
 
         failed_items = []
+        skipped_items = []
         for install_dir in install_dirs:
             typer.echo(f"  → Installing from {install_dir}...")
 
-            success = install_package(
+            result = install_package(
                 repo_path,
                 python_path,
                 install_dir=install_dir,
@@ -670,10 +685,17 @@ def install_callback(
                 verbose=verbose,
             )
 
-            if success:
+            if result == "success":
                 typer.echo(f"  ✅ {install_dir} installed successfully\n")
+            elif result == "skipped":
+                skipped_items.append(f"{repo['name']}/{install_dir}")
             else:
                 failed_items.append(f"{repo['name']}/{install_dir}")
+
+        if skipped_items:
+            typer.echo(f"\n⚠️  Skipped {len(skipped_items)} package(s):")
+            for item in skipped_items:
+                typer.echo(f"  • {item}")
 
         if failed_items:
             typer.echo(f"\n❌ Failed to install {len(failed_items)} package(s):")
@@ -689,7 +711,7 @@ def install_callback(
         # Regular repo: install from root
         typer.echo(f"Installing dependencies in {repo_path}...")
 
-        success = install_package(
+        result = install_package(
             repo_path,
             python_path,
             install_dir=None,
@@ -698,8 +720,11 @@ def install_callback(
             verbose=verbose,
         )
 
-        if not success:
+        if result == "failed":
             raise typer.Exit(1)
+        elif result == "skipped":
+            # Already printed skip message, just exit cleanly
+            return
 
         typer.echo("✅ Package installed successfully")
 
