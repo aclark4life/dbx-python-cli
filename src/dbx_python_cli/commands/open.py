@@ -115,12 +115,12 @@ def open_callback(
                         # Fallback to config URL if no origin found
                         browser_url = _convert_git_url_to_browser_url(repo_url)
                         if verbose:
-                            typer.echo(f"[verbose] No origin remote found, using config URL")
+                            typer.echo("[verbose] No origin remote found, using config URL")
                 else:
                     # Repo not cloned, use config URL
                     browser_url = _convert_git_url_to_browser_url(repo_url)
                     if verbose:
-                        typer.echo(f"[verbose] Repo not cloned, using config URL")
+                        typer.echo("[verbose] Repo not cloned, using config URL")
 
                 if verbose:
                     typer.echo(f"[verbose] Git URL: {repo_url}")
