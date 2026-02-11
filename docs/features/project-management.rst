@@ -52,9 +52,6 @@ Create a new Django project with the ``add`` command:
    # Generate a random project name
    dbx project add --random
 
-   # Use specific settings configuration
-   dbx project add myproject --settings=qe
-
    # Create in a custom directory
    dbx project add myproject -d ~/custom/path
 
@@ -232,15 +229,18 @@ Settings Configurations
 
 Projects support multiple settings configurations:
 
-- ``base``: Default settings (used if no ``--settings`` flag is provided)
+- ``base``: Default settings
 - ``qe``: QE environment settings
-- ``<project_name>``: Project-specific settings
+- ``<project_name>``: Project-specific settings (default)
 
-You can specify which settings to use when creating a project:
+The default ``DJANGO_SETTINGS_MODULE`` in the generated ``pyproject.toml`` uses the project-specific settings module (``<project_name>.settings.<project_name>``).
+
+You can specify which settings to use at runtime with the ``--settings`` flag:
 
 .. code-block:: bash
 
-   dbx project add myproject --settings=qe
+   # Run with QE settings
+   dbx project run myproject --settings qe
 
-This sets the ``DJANGO_SETTINGS_MODULE`` in the generated ``pyproject.toml`` to use the specified settings module.
-
+   # Run management commands with QE settings
+   dbx project manage myproject --settings qe migrate

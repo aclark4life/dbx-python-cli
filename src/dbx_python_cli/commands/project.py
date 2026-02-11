@@ -184,12 +184,6 @@ def add_project(
         "-r",
         help="Generate a random project name. If both name and --random are provided, the name takes precedence.",
     ),
-    settings: str = typer.Option(
-        None,
-        "--settings",
-        "-s",
-        help="Settings configuration name to use (e.g., 'qe', 'site1'). Defaults to 'base'.",
-    ),
     auto_install: bool = typer.Option(
         True,
         "--install/--no-install",
@@ -208,8 +202,6 @@ def add_project(
         dbx project add myproject --no-frontend  # Create without frontend
         dbx project add --random           # Create with random name (includes frontend)
         dbx project add -r                 # Short form
-        dbx project add -r --settings=qe   # Random name with qe settings
-        dbx project add myproject --settings=qe  # Explicit name with qe settings
         dbx project add myproject -d ~/custom/path  # Create in custom directory
     """
     # Handle random name generation
@@ -228,13 +220,8 @@ def add_project(
         typer.echo("   or: dbx project add --random [OPTIONS]")
         raise typer.Exit(code=1)
 
-    # Determine settings path
-    if settings:
-        # Construct settings path from the provided name
-        settings_path = f"settings.{settings}"
-        typer.echo(f"🔧 Using settings configuration: {settings_path}")
-    else:
-        settings_path = "settings.base"
+    # Use project name as default settings module
+    settings_path = f"settings.{name}"
 
     # Determine project directory
     if directory is None:

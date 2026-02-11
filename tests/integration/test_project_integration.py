@@ -130,8 +130,8 @@ def test_project_add_custom_directory(tmp_path):
     assert (project_path / "manage.py").exists()
 
 
-def test_project_add_with_settings(tmp_path):
-    """Test creating a project with specific settings."""
+def test_project_add_default_settings(tmp_path):
+    """Test creating a project uses project name as default settings module."""
     config_dir = tmp_path / ".config" / "dbx-python-cli"
     config_dir.mkdir(parents=True)
     config_path = config_dir / "config.toml"
@@ -147,16 +147,14 @@ base_dir = "{base_dir_str}"
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(
-            app, ["project", "add", "--no-install", "qeproject", "--settings=qe"]
-        )
+        result = runner.invoke(app, ["project", "add", "--no-install", "myproject"])
         assert result.exit_code == 0
 
-        # Verify pyproject.toml has correct settings
-        project_path = base_dir / "projects" / "qeproject"
+        # Verify pyproject.toml has correct settings (should use project name)
+        project_path = base_dir / "projects" / "myproject"
         pyproject_content = (project_path / "pyproject.toml").read_text()
         assert "DJANGO_SETTINGS_MODULE" in pyproject_content
-        assert "qeproject.settings.qe" in pyproject_content
+        assert "myproject.settings.myproject" in pyproject_content
 
 
 def test_project_remove(tmp_path):
