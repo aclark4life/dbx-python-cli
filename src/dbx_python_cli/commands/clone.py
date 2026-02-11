@@ -28,7 +28,7 @@ def clone_callback(
         None,
         "--group",
         "-g",
-        help="Repository group(s) to clone (e.g., pymongo, langchain, django). Can be specified multiple times.",
+        help="Repository group(s) to clone (e.g., pymongo, langchain, django). Can be specified multiple times or as comma-separated values.",
     ),
     list_groups: bool = typer.Option(
         False,
@@ -109,8 +109,16 @@ def clone_callback(
         elif group:
             repos_to_clone = {}
 
+            # Parse comma-separated values
+            group_names = []
+            for g in group:
+                # Split by comma and strip whitespace
+                group_names.extend(
+                    [name.strip() for name in g.split(",") if name.strip()]
+                )
+
             # Validate all groups first
-            for group_name in group:
+            for group_name in group_names:
                 if group_name not in groups:
                     typer.echo(
                         f"❌ Error: Group '{group_name}' not found in configuration.",
@@ -136,6 +144,7 @@ def clone_callback(
             typer.echo("\nUsage: dbx clone <repo-name>")
             typer.echo("   or: dbx clone -g <group>")
             typer.echo("   or: dbx clone -g <group1> -g <group2>")
+            typer.echo("   or: dbx clone -g <group1>,<group2>")
             typer.echo("   or: dbx clone --list")
             raise typer.Exit(1)
 
