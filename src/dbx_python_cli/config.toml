@@ -6,15 +6,13 @@
 # Default environment variables for Django projects
 [project.default_env]
 MONGODB_URI = "mongodb://localhost:27017"
-# Uncomment and set the path to your libmongocrypt build for Queryable Encryption support
-# PYMONGOCRYPT_LIB = "~/Developer/mongodb/libmongocrypt/cmake-build/libmongocrypt.dylib"  # macOS
+# Set the path to your libmongocrypt build for Queryable Encryption support
+PYMONGOCRYPT_LIB = "~/Developer/mongodb/libmongocrypt/cmake-build/libmongocrypt.dylib"  # macOS
 # PYMONGOCRYPT_LIB = "~/Developer/mongodb/libmongocrypt/cmake-build/libmongocrypt.so"     # Linux
 # DYLD_LIBRARY_PATH = "~/Developer/mongodb/libmongocrypt/cmake-build"  # macOS (alternative)
 # LD_LIBRARY_PATH = "~/Developer/mongodb/libmongocrypt/cmake-build"    # Linux (alternative)
-# CRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-macos-arm64-enterprise-8.2.2/lib/mongo_crypt_v1.dylib"  # macOS
+CRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-macos-arm64-enterprise-8.2.2/lib/mongo_crypt_v1.dylib"  # macOS
 # CRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-linux-x86_64-enterprise-8.2.2/lib/mongo_crypt_v1.so"     # Linux
-# MONGOCRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-macos-arm64-enterprise-8.2.2/lib/mongo_crypt_v1.dylib"  # macOS
-# MONGOCRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-linux-x86_64-enterprise-8.2.2/lib/mongo_crypt_v1.so"     # Linux
 
 [repo]
 base_dir = "~/Developer/mongodb"
