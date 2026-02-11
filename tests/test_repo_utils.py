@@ -229,7 +229,8 @@ def test_expand_env_var_value_with_placeholders(tmp_path):
     """Test _expand_env_var_value with placeholders."""
     value = "{base_dir}/{group}/drivers-evergreen-tools"
     expanded = _expand_env_var_value(value, tmp_path, "pymongo")
-    assert expanded == f"{tmp_path}/pymongo/drivers-evergreen-tools"
+    expected = str(Path(tmp_path) / "pymongo" / "drivers-evergreen-tools")
+    assert expanded == expected
 
 
 def test_expand_env_var_value_with_tilde(tmp_path):
@@ -238,7 +239,8 @@ def test_expand_env_var_value_with_tilde(tmp_path):
     expanded = _expand_env_var_value(value, tmp_path, "pymongo")
     # Should expand to user's home directory
     assert expanded.startswith(str(Path.home()))
-    assert "some/path" in expanded
+    expected_suffix = str(Path("some") / "path")
+    assert expected_suffix in expanded
 
 
 def test_expand_env_var_value_plain_string(tmp_path):

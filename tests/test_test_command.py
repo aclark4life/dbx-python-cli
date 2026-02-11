@@ -1,5 +1,6 @@
 """Tests for the test command module."""
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -468,7 +469,7 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
                 call_args = mock_run.call_args
                 env = call_args[1]["env"]
                 assert "DRIVERS_TOOLS" in env
-                expected_path = f"{temp_repos_dir}/pymongo/drivers-evergreen-tools"
+                expected_path = str(Path(temp_repos_dir) / "pymongo" / "drivers-evergreen-tools")
                 assert env["DRIVERS_TOOLS"] == expected_path
 
 
