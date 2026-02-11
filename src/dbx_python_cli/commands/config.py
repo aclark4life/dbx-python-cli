@@ -25,6 +25,11 @@ def init(
         "-y",
         help="Skip confirmation prompt and overwrite existing config",
     ),
+    remove_base_dir: bool = typer.Option(
+        False,
+        "--remove-base-dir",
+        help="Remove the base_dir setting from the config file",
+    ),
 ):
     """Initialize user configuration file."""
     user_config_path = get_config_path()
@@ -46,7 +51,32 @@ def init(
         import shutil
 
         shutil.copy(default_config_path, user_config_path)
-        typer.echo(f"✅ Configuration file created at {user_config_path}")
+
+        # Remove base_dir if requested
+        if remove_base_dir:
+            import tomllib
+            import tomli_w
+
+            # Read the config
+            with open(user_config_path, "rb") as f:
+                config = tomllib.load(f)
+
+            # Remove base_dir from repo section
+            if "repo" in config and "base_dir" in config["repo"]:
+                del config["repo"]["base_dir"]
+
+                # Write back the modified config
+                with open(user_config_path, "wb") as f:
+                    tomli_w.dump(config, f)
+
+                typer.echo(f"✅ Configuration file created at {user_config_path}")
+                typer.echo("✅ base_dir setting removed")
+            else:
+                typer.echo(f"✅ Configuration file created at {user_config_path}")
+                typer.echo("⚠️  No base_dir setting found to remove")
+        else:
+            typer.echo(f"✅ Configuration file created at {user_config_path}")
+
         typer.echo("\nYou can now edit this file to customize your repository groups.")
     else:
         typer.echo(

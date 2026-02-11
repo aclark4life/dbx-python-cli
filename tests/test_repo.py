@@ -141,6 +141,31 @@ def test_repo_init_existing_config_with_yes_flag(tmp_path):
         assert "Aborted" not in result.stdout
 
 
+def test_repo_init_with_remove_base_dir(tmp_path):
+    """Test that config init --remove-base-dir removes the base_dir setting."""
+    with patch("dbx_python_cli.commands.config.get_config_path") as mock_get_path:
+        config_path = tmp_path / "config.toml"
+        mock_get_path.return_value = config_path
+
+        # Use --remove-base-dir flag
+        result = runner.invoke(app, ["config", "init", "--remove-base-dir"])
+        assert result.exit_code == 0
+        assert config_path.exists()
+        assert "Configuration file created" in result.stdout
+        assert "base_dir setting removed" in result.stdout
+
+        # Verify base_dir was removed from the config
+        import tomllib
+
+        with open(config_path, "rb") as f:
+            config = tomllib.load(f)
+
+        assert "repo" in config
+        assert "base_dir" not in config["repo"]
+        # fork_user should still be present
+        assert "fork_user" in config["repo"]
+
+
 def test_config_show_displays_test_runner(tmp_path):
     """Test that config show displays custom test runner configuration."""
     config_path = tmp_path / "config.toml"
