@@ -761,6 +761,15 @@ def manage(
     if mongodb_uri:
         typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
         env["MONGODB_URI"] = mongodb_uri
+    elif "MONGODB_URI" not in env:
+        # Check config for default MONGODB_URI
+        config = get_config()
+        default_uri = (
+            config.get("project", {}).get("default_env", {}).get("MONGODB_URI")
+        )
+        if default_uri:
+            typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
+            env["MONGODB_URI"] = default_uri
 
     # Default to project_name.py settings if not specified
     settings_module = settings if settings else name
@@ -879,8 +888,14 @@ def create_superuser(
         typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
         env["MONGODB_URI"] = mongodb_uri
     elif "MONGODB_URI" not in env:
-        # Check if MONGODB_URI is in environment
-        pass
+        # Check config for default MONGODB_URI
+        config = get_config()
+        default_uri = (
+            config.get("project", {}).get("default_env", {}).get("MONGODB_URI")
+        )
+        if default_uri:
+            typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
+            env["MONGODB_URI"] = default_uri
 
     env["DJANGO_SUPERUSER_PASSWORD"] = password
 
