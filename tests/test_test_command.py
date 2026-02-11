@@ -1,5 +1,6 @@
 """Tests for the test command module."""
 
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -426,3 +427,129 @@ def test_test_with_pytest_and_args(mock_config, temp_repos_dir):
                 mock_run.assert_called_once()
                 call_args = mock_run.call_args
                 assert call_args[0][0] == ["python", "-m", "pytest", "-x", "--tb=short"]
+
+
+def test_test_with_env_vars(tmp_path, temp_repos_dir):
+    """Test that environment variables are set for test runs."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.pymongo]
+repos = [
+    "https://github.com/mongodb/mongo-python-driver.git",
+]
+
+[repo.groups.pymongo.test_env]
+mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergreen-tools" }}
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
+            with patch("subprocess.run") as mock_run:
+                mock_get_path.return_value = config_path
+                mock_venv.return_value = ("python", "system")
+
+                # Mock successful test run
+                mock_result = MagicMock()
+                mock_result.returncode = 0
+                mock_run.return_value = mock_result
+
+                result = runner.invoke(app, ["test", "mongo-python-driver"])
+                assert result.exit_code == 0
+
+                # Verify subprocess.run was called with env containing DRIVERS_TOOLS
+                mock_run.assert_called_once()
+                call_args = mock_run.call_args
+                env = call_args[1]["env"]
+                assert "DRIVERS_TOOLS" in env
+                expected_path = f"{temp_repos_dir}/pymongo/drivers-evergreen-tools"
+                assert env["DRIVERS_TOOLS"] == expected_path
+
+
+def test_test_with_multiple_env_vars(tmp_path, temp_repos_dir):
+    """Test that multiple environment variables can be set."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.pymongo]
+repos = [
+    "https://github.com/mongodb/mongo-python-driver.git",
+]
+
+[repo.groups.pymongo.test_env]
+mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergreen-tools", TEST_VAR = "test_value" }}
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
+            with patch("subprocess.run") as mock_run:
+                mock_get_path.return_value = config_path
+                mock_venv.return_value = ("python", "system")
+
+                # Mock successful test run
+                mock_result = MagicMock()
+                mock_result.returncode = 0
+                mock_run.return_value = mock_result
+
+                result = runner.invoke(app, ["test", "mongo-python-driver"])
+                assert result.exit_code == 0
+
+                # Verify subprocess.run was called with both env vars
+                mock_run.assert_called_once()
+                call_args = mock_run.call_args
+                env = call_args[1]["env"]
+                assert "DRIVERS_TOOLS" in env
+                assert "TEST_VAR" in env
+                assert env["TEST_VAR"] == "test_value"
+
+
+def test_test_env_vars_verbose_output(tmp_path, temp_repos_dir):
+    """Test that environment variables are shown in verbose mode."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.pymongo]
+repos = [
+    "https://github.com/mongodb/mongo-python-driver.git",
+]
+
+[repo.groups.pymongo.test_env]
+mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergreen-tools" }}
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
+            with patch("subprocess.run") as mock_run:
+                mock_get_path.return_value = config_path
+                mock_venv.return_value = ("python", "system")
+
+                # Mock successful test run
+                mock_result = MagicMock()
+                mock_result.returncode = 0
+                mock_run.return_value = mock_result
+
+                result = runner.invoke(app, ["--verbose", "test", "mongo-python-driver"])
+                assert result.exit_code == 0
+                assert "Environment variables:" in result.stdout
+                assert "DRIVERS_TOOLS=" in result.stdout

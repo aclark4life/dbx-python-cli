@@ -206,6 +206,16 @@ def show():
                     typer.echo("    Custom test runners:")
                     for repo_name, runner_path in test_runner.items():
                         typer.echo(f"      {repo_name}: {runner_path}")
+
+                # Show test_env if present
+                test_env = group_config.get("test_env", {})
+                if test_env:
+                    typer.echo("    Test environment variables:")
+                    for repo_name, env_vars in test_env.items():
+                        if isinstance(env_vars, dict):
+                            typer.echo(f"      {repo_name}:")
+                            for var_name, var_value in env_vars.items():
+                                typer.echo(f"        {var_name}={var_value}")
             typer.echo()
         else:
             typer.echo("No repository groups configured\n")

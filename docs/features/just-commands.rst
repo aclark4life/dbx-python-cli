@@ -67,6 +67,25 @@ Example Output
    ============================= test session starts ==============================
    ...
 
+Environment Variables
+---------------------
+
+The ``just`` command automatically loads environment variables configured in your ``config.toml`` file,
+just like the ``test`` command. This is useful for setting up environment variables needed by your
+just recipes.
+
+See :doc:`testing` for details on configuring environment variables.
+
+Example configuration:
+
+.. code-block:: toml
+
+   [repo.groups.pymongo.test_env]
+   mongo-python-driver = { DRIVERS_TOOLS = "{base_dir}/{group}/drivers-evergreen-tools", USE_ACTIVE_VENV = "1" }
+
+When you run ``dbx just mongo-python-driver setup-tests``, these environment variables will be
+automatically set.
+
 Verbose Mode
 ------------
 
@@ -79,6 +98,7 @@ Use the ``-v`` / ``--verbose`` flag to see more detailed output:
 This will show:
 
 - Configuration details (base directory, config values)
+- Environment variables being set (if any)
 - Full command being executed
 - Working directory for the just command
 

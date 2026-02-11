@@ -1,5 +1,6 @@
 """Test command for running pytest in repositories."""
 
+import os
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -10,6 +11,7 @@ from dbx_python_cli.commands.repo_utils import (
     find_repo_by_name,
     get_base_dir,
     get_config,
+    get_test_env_vars,
     get_test_runner,
 )
 from dbx_python_cli.commands.venv_utils import get_venv_info
@@ -195,6 +197,18 @@ def test_callback(
         else:
             typer.echo(f"⚠️  No venv found, using system Python: {python_path}\n")
 
+        # Get environment variables for test run
+        test_env = os.environ.copy()
+        env_vars = get_test_env_vars(config, repo["group"], repo_name, base_dir)
+
+        if env_vars:
+            test_env.update(env_vars)
+            if verbose:
+                typer.echo("[verbose] Environment variables:")
+                for key, value in env_vars.items():
+                    typer.echo(f"[verbose]   {key}={value}")
+                typer.echo()
+
         if verbose:
             typer.echo(f"[verbose] Running command: {' '.join(test_cmd)}")
             typer.echo(f"[verbose] Working directory: {repo_path}\n")
@@ -203,6 +217,7 @@ def test_callback(
         result = subprocess.run(
             test_cmd,
             cwd=str(repo_path),
+            env=test_env,
             check=False,
         )
 

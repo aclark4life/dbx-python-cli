@@ -1,5 +1,6 @@
 """Just command for running just commands in repositories."""
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from dbx_python_cli.commands.repo_utils import (
     find_repo_by_name,
     get_base_dir,
     get_config,
+    get_test_env_vars,
 )
 
 # Create a Typer app that will act as a single command
@@ -117,6 +119,18 @@ def just_callback(
     else:
         typer.echo(f"Running 'just' in {repo_path}...\n")
 
+    # Get environment variables for just run
+    just_env = os.environ.copy()
+    env_vars = get_test_env_vars(config, repo["group"], repo_name, base_dir)
+
+    if env_vars:
+        just_env.update(env_vars)
+        if verbose:
+            typer.echo("[verbose] Environment variables:")
+            for key, value in env_vars.items():
+                typer.echo(f"[verbose]   {key}={value}")
+            typer.echo()
+
     if verbose:
         typer.echo(f"[verbose] Running command: {' '.join(just_cmd)}")
         typer.echo(f"[verbose] Working directory: {repo_path}\n")
@@ -125,6 +139,7 @@ def just_callback(
     result = subprocess.run(
         just_cmd,
         cwd=str(repo_path),
+        env=just_env,
         check=False,
     )
 

@@ -4,7 +4,7 @@
 
 [repo]
 base_dir = "~/Developer/mongodb"
-# fork_user = "your-github-username"  # Uncomment and set to enable fork workflow by default
+fork_user = "aclark4life"
 
 [repo.groups.pymongo]
 repos = [
@@ -12,6 +12,11 @@ repos = [
     "git@github.com:mongodb/specifications.git",
     "git@github.com:mongodb-labs/drivers-evergreen-tools.git",
 ]
+
+# Environment variables for test runs
+# You can use {base_dir} and {group} placeholders
+[repo.groups.pymongo.test_env]
+mongo-python-driver = { DRIVERS_TOOLS = "{base_dir}/{group}/drivers-evergreen-tools", USE_ACTIVE_VENV = "1" }
 
 [repo.groups.langchain]
 repos = [
@@ -40,3 +45,10 @@ repos = [
 # Custom test runner configuration: specify test runner script for repos that don't use pytest
 [repo.groups.django.test_runner]
 django = "tests/runtests.py"
+
+[repo.groups.django-thirdparty]
+repos = [
+    "git@github.com:django-allauth/django-allauth.git",
+    "git@github.com:encode/django-rest-framework.git",
+    "git@github.com:jazzband/django-taggit.git",
+]

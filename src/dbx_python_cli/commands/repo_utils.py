@@ -91,6 +91,76 @@ def get_test_runner(config, group_name, repo_name):
     return test_runner_config.get(repo_name)
 
 
+def get_test_env_vars(config, group_name, repo_name, base_dir):
+    """
+    Get environment variables for test runs.
+
+    Returns a dictionary of environment variables to set when running tests.
+    Supports both group-level and repo-specific environment variables.
+
+    Args:
+        config: Configuration dictionary
+        group_name: Name of the group (e.g., 'pymongo')
+        repo_name: Name of the repository (e.g., 'mongo-python-driver')
+        base_dir: Base directory path for resolving relative paths
+
+    Returns:
+        dict: Dictionary of environment variable names to values
+    """
+    groups = get_repo_groups(config)
+    if group_name not in groups:
+        return {}
+
+    env_vars = {}
+
+    # Get group-level environment variables
+    group_env_config = groups[group_name].get("test_env", {})
+    if isinstance(group_env_config, dict):
+        # Check if there are common env vars for the group
+        for key, value in group_env_config.items():
+            if not isinstance(value, dict):
+                # This is a group-level env var
+                env_vars[key] = _expand_env_var_value(value, base_dir, group_name)
+
+    # Get repo-specific environment variables (these override group-level)
+    repo_env_config = groups[group_name].get("test_env", {}).get(repo_name, {})
+    if isinstance(repo_env_config, dict):
+        for key, value in repo_env_config.items():
+            env_vars[key] = _expand_env_var_value(value, base_dir, group_name)
+
+    return env_vars
+
+
+def _expand_env_var_value(value, base_dir, group_name):
+    """
+    Expand special placeholders in environment variable values.
+
+    Supports:
+    - {base_dir}: Expands to the base directory path
+    - {group}: Expands to the group name
+    - ~: Expands to user home directory
+
+    Args:
+        value: The environment variable value (string)
+        base_dir: Base directory path
+        group_name: Name of the group
+
+    Returns:
+        str: Expanded value
+    """
+    if not isinstance(value, str):
+        return str(value)
+
+    # Expand placeholders
+    expanded = value.replace("{base_dir}", str(base_dir))
+    expanded = expanded.replace("{group}", group_name)
+
+    # Expand user home directory
+    expanded = str(Path(expanded).expanduser())
+
+    return expanded
+
+
 def extract_repo_name_from_url(url):
     """
     Extract repository name from a git URL.

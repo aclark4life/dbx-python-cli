@@ -110,6 +110,61 @@ Example with custom test runner:
 
    # This executes: python tests/runtests.py --verbose --parallel
 
+Environment Variables
+---------------------
+
+You can configure environment variables to be set when running tests or just commands. This is useful for setting paths to tools, test configuration, or other environment-specific settings.
+
+Configure environment variables in your config file:
+
+.. code-block:: toml
+
+   [repo.groups.pymongo]
+   repos = [
+       "git@github.com:mongodb/mongo-python-driver.git",
+       "git@github.com:mongodb-labs/drivers-evergreen-tools.git",
+   ]
+
+   # Environment variables for test runs
+   [repo.groups.pymongo.test_env]
+   mongo-python-driver = { DRIVERS_TOOLS = "{base_dir}/{group}/drivers-evergreen-tools" }
+
+Supported placeholders in environment variable values:
+
+- ``{base_dir}`` - Expands to the base directory path (e.g., ``~/Developer/mongodb``)
+- ``{group}`` - Expands to the group name (e.g., ``pymongo``)
+- ``~`` - Expands to the user's home directory
+
+You can set multiple environment variables for a repository:
+
+.. code-block:: toml
+
+   [repo.groups.pymongo.test_env]
+   mongo-python-driver = {
+       DRIVERS_TOOLS = "{base_dir}/{group}/drivers-evergreen-tools",
+       TEST_MODE = "integration",
+       CUSTOM_PATH = "~/my/custom/path"
+   }
+
+When you run tests or just commands, these environment variables will be automatically set:
+
+.. code-block:: bash
+
+   # Run tests with configured environment variables
+   dbx test mongo-python-driver
+
+   # Run just commands with configured environment variables
+   dbx just mongo-python-driver setup-tests
+
+   # View environment variables in verbose mode
+   dbx --verbose test mongo-python-driver
+   dbx --verbose just mongo-python-driver setup-tests
+
+The environment variables are merged with your current environment, so existing environment variables are preserved unless explicitly overridden by the configuration.
+
+.. note::
+   Environment variables configured under ``test_env`` are used by both the ``test`` and ``just`` commands.
+
 Requirements
 ------------
 

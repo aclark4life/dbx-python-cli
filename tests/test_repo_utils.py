@@ -5,8 +5,10 @@ from pathlib import Path
 import pytest
 
 from dbx_python_cli.commands.repo_utils import (
+    _expand_env_var_value,
     find_all_repos,
     find_repo_by_name,
+    get_test_env_vars,
     list_repos,
 )
 
@@ -161,3 +163,93 @@ def test_list_repos_simple_format(temp_repos_dir):
     assert "• django (django)" in result
     assert "• django-mongodb-backend (django)" in result
     assert "• mongo-python-driver (pymongo)" in result
+
+
+def test_get_test_env_vars_no_config(tmp_path):
+    """Test get_test_env_vars with no environment variables configured."""
+    config = {
+        "repo": {
+            "base_dir": str(tmp_path),
+            "groups": {
+                "pymongo": {
+                    "repos": ["git@github.com:mongodb/mongo-python-driver.git"]
+                }
+            }
+        }
+    }
+
+    env_vars = get_test_env_vars(config, "pymongo", "mongo-python-driver", tmp_path)
+    assert env_vars == {}
+
+
+def test_get_test_env_vars_with_repo_specific_vars(tmp_path):
+    """Test get_test_env_vars with repo-specific environment variables."""
+    config = {
+        "repo": {
+            "base_dir": str(tmp_path),
+            "groups": {
+                "pymongo": {
+                    "repos": ["git@github.com:mongodb/mongo-python-driver.git"],
+                    "test_env": {
+                        "mongo-python-driver": {
+                            "DRIVERS_TOOLS": "{base_dir}/{group}/drivers-evergreen-tools",
+                            "TEST_VAR": "test_value"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    env_vars = get_test_env_vars(config, "pymongo", "mongo-python-driver", tmp_path)
+    assert "DRIVERS_TOOLS" in env_vars
+    assert "TEST_VAR" in env_vars
+    assert env_vars["TEST_VAR"] == "test_value"
+    assert env_vars["DRIVERS_TOOLS"] == f"{tmp_path}/pymongo/drivers-evergreen-tools"
+
+
+def test_get_test_env_vars_nonexistent_group(tmp_path):
+    """Test get_test_env_vars with a group that doesn't exist."""
+    config = {
+        "repo": {
+            "base_dir": str(tmp_path),
+            "groups": {
+                "pymongo": {
+                    "repos": ["git@github.com:mongodb/mongo-python-driver.git"]
+                }
+            }
+        }
+    }
+
+    env_vars = get_test_env_vars(config, "nonexistent", "some-repo", tmp_path)
+    assert env_vars == {}
+
+
+def test_expand_env_var_value_with_placeholders(tmp_path):
+    """Test _expand_env_var_value with placeholders."""
+    value = "{base_dir}/{group}/drivers-evergreen-tools"
+    expanded = _expand_env_var_value(value, tmp_path, "pymongo")
+    assert expanded == f"{tmp_path}/pymongo/drivers-evergreen-tools"
+
+
+def test_expand_env_var_value_with_tilde(tmp_path):
+    """Test _expand_env_var_value with tilde expansion."""
+    value = "~/some/path"
+    expanded = _expand_env_var_value(value, tmp_path, "pymongo")
+    # Should expand to user's home directory
+    assert expanded.startswith(str(Path.home()))
+    assert "some/path" in expanded
+
+
+def test_expand_env_var_value_plain_string(tmp_path):
+    """Test _expand_env_var_value with a plain string."""
+    value = "plain_value"
+    expanded = _expand_env_var_value(value, tmp_path, "pymongo")
+    assert expanded == "plain_value"
+
+
+def test_expand_env_var_value_non_string(tmp_path):
+    """Test _expand_env_var_value with non-string value."""
+    value = 123
+    expanded = _expand_env_var_value(value, tmp_path, "pymongo")
+    assert expanded == "123"

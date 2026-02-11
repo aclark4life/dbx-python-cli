@@ -207,6 +207,37 @@ langchain-mongodb = [
         assert "libs/langgraph-checkpoint-mongodb/" in result.stdout
 
 
+def test_config_show_displays_test_env(tmp_path):
+    """Test that config show displays test environment variables configuration."""
+    config_path = tmp_path / "config.toml"
+    repos_dir_str = str(tmp_path / "repos").replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.pymongo]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+
+[repo.groups.pymongo.test_env]
+mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergreen-tools", TEST_VAR = "test_value" }}
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.config.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path2:
+            mock_get_path.return_value = config_path
+            mock_get_path2.return_value = config_path
+
+            result = runner.invoke(app, ["config", "show"])
+            assert result.exit_code == 0
+            assert "Test environment variables:" in result.stdout
+            assert "mongo-python-driver:" in result.stdout
+            assert "DRIVERS_TOOLS={base_dir}/{group}/drivers-evergreen-tools" in result.stdout
+            assert "TEST_VAR=test_value" in result.stdout
+
+
 def test_repo_clone_help():
     """Test that the repo clone help command works."""
     result = runner.invoke(app, ["clone", "--help"])
