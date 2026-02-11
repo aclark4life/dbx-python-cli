@@ -203,7 +203,8 @@ def test_get_test_env_vars_with_repo_specific_vars(tmp_path):
     assert "DRIVERS_TOOLS" in env_vars
     assert "TEST_VAR" in env_vars
     assert env_vars["TEST_VAR"] == "test_value"
-    assert env_vars["DRIVERS_TOOLS"] == f"{tmp_path}/pymongo/drivers-evergreen-tools"
+    expected_path = str(Path(tmp_path) / "pymongo" / "drivers-evergreen-tools")
+    assert env_vars["DRIVERS_TOOLS"] == expected_path
 
 
 def test_get_test_env_vars_nonexistent_group(tmp_path):
