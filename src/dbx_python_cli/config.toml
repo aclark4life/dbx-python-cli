@@ -43,7 +43,7 @@ repos = [
     "git@github.com:aclark4life/medical-records.git",
 ]
 
-# Monorepo configuration: specify install directories for repos with multiple packages
+# Install directories: specify install directories for repos where the package is not at the root
 [repo.groups.django.install_dirs]
 libmongocrypt = [
     "bindings/python/",
