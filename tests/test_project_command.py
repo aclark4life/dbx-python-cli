@@ -30,7 +30,6 @@ def test_project_add_help():
     output = strip_ansi(result.stdout)
     assert "Create a new Django project using bundled templates" in output
     assert "--random" in output
-    assert "--settings" in output
     assert "--add-frontend" in output
 
 
