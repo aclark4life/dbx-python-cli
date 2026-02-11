@@ -74,27 +74,12 @@ INSTALLED_APPS = (
 # }
 #
 # # Database router for encrypted models
+# # The EncryptedRouter is already included in {{ project_name }}/routers.py
+# # It automatically routes models with encrypted fields to the "encrypted" database
 # DATABASE_ROUTERS = [
 #     "django_mongodb_backend.routers.MongoRouter",
-#     # Add your custom router for encrypted models:
-#     # "myapp.routers.EncryptedRouter",
+#     "{{ project_name }}.routers.EncryptedRouter",
 # ]
-#
-# # Example encrypted model router (create in myapp/routers.py):
-# # class EncryptedRouter:
-# #     def allow_migrate(self, db, app_label, model_name=None, **hints):
-# #         if app_label == "myapp":
-# #             return db == "encrypted"
-# #         if db == "encrypted":
-# #             return False
-# #         return None
-# #
-# #     def db_for_read(self, model, **hints):
-# #         if model._meta.app_label == "myapp":
-# #             return "encrypted"
-# #         return None
-# #
-# #     db_for_write = db_for_read
 #
 # # After configuring, run:
 # # python manage.py migrate --database encrypted
