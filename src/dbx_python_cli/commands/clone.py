@@ -257,9 +257,68 @@ def clone_callback(
                             capture_output=True,
                             text=True,
                         )
-                        typer.echo(
-                            f"  ✅ {repo_name} cloned from fork (upstream remote added)"
-                        )
+
+                        # Fetch upstream to compare commits
+                        try:
+                            subprocess.run(
+                                ["git", "-C", str(repo_path), "fetch", "upstream"],
+                                check=True,
+                                capture_output=True,
+                                text=True,
+                            )
+
+                            # Get the default branch name from upstream
+                            result = subprocess.run(
+                                [
+                                    "git",
+                                    "-C",
+                                    str(repo_path),
+                                    "symbolic-ref",
+                                    "refs/remotes/upstream/HEAD",
+                                ],
+                                capture_output=True,
+                                text=True,
+                            )
+
+                            if result and result.returncode == 0:
+                                upstream_branch = result.stdout.strip().split("/")[-1]
+                            else:
+                                # Fallback to main/master
+                                upstream_branch = "main"
+
+                            # Count commits ahead
+                            result = subprocess.run(
+                                [
+                                    "git",
+                                    "-C",
+                                    str(repo_path),
+                                    "rev-list",
+                                    "--count",
+                                    f"upstream/{upstream_branch}..HEAD",
+                                ],
+                                capture_output=True,
+                                text=True,
+                            )
+
+                            if result and result.returncode == 0:
+                                commits_ahead = int(result.stdout.strip())
+                                if commits_ahead > 0:
+                                    typer.echo(
+                                        f"  ✅ {repo_name} cloned from fork (upstream remote added, {commits_ahead} commit{'s' if commits_ahead != 1 else ''} ahead)"
+                                    )
+                                else:
+                                    typer.echo(
+                                        f"  ✅ {repo_name} cloned from fork (upstream remote added, up to date)"
+                                    )
+                            else:
+                                typer.echo(
+                                    f"  ✅ {repo_name} cloned from fork (upstream remote added)"
+                                )
+                        except (subprocess.CalledProcessError, AttributeError):
+                            # If fetch or comparison fails, just show basic message
+                            typer.echo(
+                                f"  ✅ {repo_name} cloned from fork (upstream remote added)"
+                            )
                     else:
                         typer.echo(f"  ✅ {repo_name} cloned successfully")
 
