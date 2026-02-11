@@ -68,9 +68,9 @@ base_dir = "{base_dir_str}"
         result = runner.invoke(
             app, ["project", "add", "--no-install", "simpleproject", "--no-frontend"]
         )
-        assert (
-            result.exit_code == 0
-        ), f"Exit code was {result.exit_code}, output: {result.output}"
+        assert result.exit_code == 0, (
+            f"Exit code was {result.exit_code}, output: {result.output}"
+        )
         assert "Creating project: simpleproject" in result.stdout
 
         # Verify project structure
@@ -342,9 +342,9 @@ base_dir = "{base_dir_str}"
 
         # Create a project
         result = runner.invoke(app, ["project", "add", "--no-install", "listproject"])
-        assert (
-            result.exit_code == 0
-        ), f"Exit code was {result.exit_code}, output: {result.output}"
+        assert result.exit_code == 0, (
+            f"Exit code was {result.exit_code}, output: {result.output}"
+        )
 
         # List with --list flag
         result = runner.invoke(app, ["project", "--list"])
@@ -612,9 +612,9 @@ base_dir = "{base_dir_str}"
         result = runner.invoke(
             app, ["project", "add", "--no-install", "appsproject", "--no-frontend"]
         )
-        assert (
-            result.exit_code == 0
-        ), f"Exit code was {result.exit_code}, output: {result.output}"
+        assert result.exit_code == 0, (
+            f"Exit code was {result.exit_code}, output: {result.output}"
+        )
 
         # Verify project-specific settings file has INSTALLED_APPS
         project_path = base_dir / "projects" / "appsproject"
