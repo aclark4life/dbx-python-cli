@@ -25,6 +25,12 @@ repos = [
     "git@github.com:mongodb-labs/drivers-evergreen-tools.git",
 ]
 
+# Build commands: specify commands to run before installing (e.g., rust builds)
+[repo.groups.pymongo.build_commands]
+mongo-python-driver = [
+    "cd bson/_rbson && maturin build --release",
+]
+
 # Environment variables for test runs
 # You can use {base_dir} and {group} placeholders
 [repo.groups.pymongo.test_env]
