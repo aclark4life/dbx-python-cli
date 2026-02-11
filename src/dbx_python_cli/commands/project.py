@@ -602,15 +602,23 @@ def run_project(
     # Set up environment
     env = os.environ.copy()
 
-    # Check for default MONGODB_URI from config if not in environment
+    # Check for default environment variables from config
+    config = get_config()
+    default_env = config.get("project", {}).get("default_env", {})
+
+    # Set MONGODB_URI if not in environment
     if "MONGODB_URI" not in env:
-        config = get_config()
-        default_uri = (
-            config.get("project", {}).get("default_env", {}).get("MONGODB_URI")
-        )
+        default_uri = default_env.get("MONGODB_URI")
         if default_uri:
             typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
             env["MONGODB_URI"] = default_uri
+
+    # Set library paths for libmongocrypt (Queryable Encryption support)
+    for var in ["PYMONGOCRYPT_LIB", "DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
+        if var not in env and var in default_env:
+            value = os.path.expanduser(default_env[var])
+            env[var] = value
+            typer.echo(f"🔧 Using {var} from config: {value}")
 
     # Default to project_name.py settings if not specified
     settings_module = settings if settings else name
@@ -769,18 +777,25 @@ def manage(
     # Set up environment
     env = os.environ.copy()
 
+    # Check for default environment variables from config
+    config = get_config()
+    default_env = config.get("project", {}).get("default_env", {})
+
     if mongodb_uri:
         typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
         env["MONGODB_URI"] = mongodb_uri
     elif "MONGODB_URI" not in env:
         # Check config for default MONGODB_URI
-        config = get_config()
-        default_uri = (
-            config.get("project", {}).get("default_env", {}).get("MONGODB_URI")
-        )
+        default_uri = default_env.get("MONGODB_URI")
         if default_uri:
             typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
             env["MONGODB_URI"] = default_uri
+
+    # Set library paths for libmongocrypt (Queryable Encryption support)
+    for var in ["PYMONGOCRYPT_LIB", "DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
+        if var not in env and var in default_env:
+            value = os.path.expanduser(default_env[var])
+            env[var] = value
 
     # Default to project_name.py settings if not specified
     settings_module = settings if settings else name
@@ -895,18 +910,25 @@ def create_superuser(
     # Set up environment
     env = os.environ.copy()
 
+    # Check for default environment variables from config
+    config = get_config()
+    default_env = config.get("project", {}).get("default_env", {})
+
     if mongodb_uri:
         typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
         env["MONGODB_URI"] = mongodb_uri
     elif "MONGODB_URI" not in env:
         # Check config for default MONGODB_URI
-        config = get_config()
-        default_uri = (
-            config.get("project", {}).get("default_env", {}).get("MONGODB_URI")
-        )
+        default_uri = default_env.get("MONGODB_URI")
         if default_uri:
             typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
             env["MONGODB_URI"] = default_uri
+
+    # Set library paths for libmongocrypt (Queryable Encryption support)
+    for var in ["PYMONGOCRYPT_LIB", "DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
+        if var not in env and var in default_env:
+            value = os.path.expanduser(default_env[var])
+            env[var] = value
 
     env["DJANGO_SUPERUSER_PASSWORD"] = password
 

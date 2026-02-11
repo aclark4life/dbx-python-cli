@@ -6,6 +6,11 @@
 # Default environment variables for Django projects
 [project.default_env]
 MONGODB_URI = "mongodb://localhost:27017"
+# Uncomment and set the path to your libmongocrypt build for Queryable Encryption support
+# PYMONGOCRYPT_LIB = "~/Developer/mongodb/libmongocrypt/cmake-build/libmongocrypt.dylib"  # macOS
+# PYMONGOCRYPT_LIB = "~/Developer/mongodb/libmongocrypt/cmake-build/libmongocrypt.so"     # Linux
+# DYLD_LIBRARY_PATH = "~/Developer/mongodb/libmongocrypt/cmake-build"  # macOS (alternative)
+# LD_LIBRARY_PATH = "~/Developer/mongodb/libmongocrypt/cmake-build"    # Linux (alternative)
 
 [repo]
 base_dir = "~/Developer/mongodb"
