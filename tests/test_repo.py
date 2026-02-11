@@ -142,28 +142,45 @@ def test_repo_init_existing_config_with_yes_flag(tmp_path):
 
 
 def test_repo_init_with_remove_base_dir(tmp_path):
-    """Test that config init --remove-base-dir removes the base_dir setting."""
+    """Test that config init --remove-base-dir removes the base_dir directory."""
     with patch("dbx_python_cli.commands.config.get_config_path") as mock_get_path:
         config_path = tmp_path / "config.toml"
         mock_get_path.return_value = config_path
 
-        # Use --remove-base-dir flag
-        result = runner.invoke(app, ["config", "init", "--remove-base-dir"])
-        assert result.exit_code == 0
-        assert config_path.exists()
-        assert "Configuration file created" in result.stdout
-        assert "base_dir setting removed" in result.stdout
+        # Create a base_dir directory to be removed
+        base_dir = tmp_path / "test_base_dir"
+        base_dir.mkdir()
+        (base_dir / "test_file.txt").write_text("test content")
 
-        # Verify base_dir was removed from the config
-        import tomllib
+        # Patch the default config to use our test base_dir
+        with patch(
+            "dbx_python_cli.commands.config.get_default_config_path"
+        ) as mock_default:
+            default_config = tmp_path / "default_config.toml"
+            default_config.write_text(f"""
+[repo]
+base_dir = "{str(base_dir)}"
+fork_user = "testuser"
 
-        with open(config_path, "rb") as f:
-            config = tomllib.load(f)
+[repo.groups.test]
+repos = ["https://github.com/test/repo.git"]
+""")
+            mock_default.return_value = default_config
 
-        assert "repo" in config
-        assert "base_dir" not in config["repo"]
-        # fork_user should still be present
-        assert "fork_user" in config["repo"]
+            # Verify base_dir exists before
+            assert base_dir.exists()
+
+            # Use --remove-base-dir flag with --yes to skip confirmation
+            result = runner.invoke(
+                app, ["config", "init", "--remove-base-dir", "--yes"]
+            )
+            assert result.exit_code == 0
+            assert config_path.exists()
+            assert "Configuration file created" in result.stdout
+            assert "Removed directory" in result.stdout
+
+            # Verify base_dir was removed from filesystem
+            assert not base_dir.exists()
 
 
 def test_config_show_displays_test_runner(tmp_path):

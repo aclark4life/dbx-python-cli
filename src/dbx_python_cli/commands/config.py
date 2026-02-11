@@ -2,6 +2,8 @@
 
 import os
 import subprocess
+from pathlib import Path
+
 import typer
 
 from dbx_python_cli.commands.repo_utils import (
@@ -28,7 +30,7 @@ def init(
     remove_base_dir: bool = typer.Option(
         False,
         "--remove-base-dir",
-        help="Remove the base_dir setting from the config file",
+        help="Remove the base_dir directory from the filesystem",
     ),
 ):
     """Initialize user configuration file."""
@@ -52,28 +54,48 @@ def init(
 
         shutil.copy(default_config_path, user_config_path)
 
-        # Remove base_dir if requested
+        # Remove base_dir directory if requested
         if remove_base_dir:
             import tomllib
-            import tomli_w
+            import shutil as shutil2
 
-            # Read the config
+            # Read the config to get base_dir path
             with open(user_config_path, "rb") as f:
                 config = tomllib.load(f)
 
-            # Remove base_dir from repo section
+            # Remove base_dir directory from filesystem
             if "repo" in config and "base_dir" in config["repo"]:
-                del config["repo"]["base_dir"]
+                base_dir_path = Path(config["repo"]["base_dir"]).expanduser()
 
-                # Write back the modified config
-                with open(user_config_path, "wb") as f:
-                    tomli_w.dump(config, f)
+                if base_dir_path.exists():
+                    if not yes:
+                        confirm = typer.confirm(
+                            f"⚠️  This will delete {base_dir_path} and all its contents. Continue?"
+                        )
+                        if not confirm:
+                            typer.echo("Aborted.")
+                            raise typer.Exit(0)
 
-                typer.echo(f"✅ Configuration file created at {user_config_path}")
-                typer.echo("✅ base_dir setting removed")
+                    try:
+                        shutil2.rmtree(base_dir_path)
+                        typer.echo(
+                            f"✅ Configuration file created at {user_config_path}"
+                        )
+                        typer.echo(f"✅ Removed directory: {base_dir_path}")
+                    except Exception as e:
+                        typer.echo(
+                            f"✅ Configuration file created at {user_config_path}"
+                        )
+                        typer.echo(
+                            f"⚠️  Failed to remove directory {base_dir_path}: {e}",
+                            err=True,
+                        )
+                else:
+                    typer.echo(f"✅ Configuration file created at {user_config_path}")
+                    typer.echo(f"⚠️  Directory does not exist: {base_dir_path}")
             else:
                 typer.echo(f"✅ Configuration file created at {user_config_path}")
-                typer.echo("⚠️  No base_dir setting found to remove")
+                typer.echo("⚠️  No base_dir setting found in config")
         else:
             typer.echo(f"✅ Configuration file created at {user_config_path}")
 
