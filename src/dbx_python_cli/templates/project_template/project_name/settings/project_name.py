@@ -15,6 +15,8 @@ INSTALLED_APPS = (
         # Add your project-specific apps here
         # Example:
         # "myapp",
+        # For Queryable Encryption demo:
+        # "medical_records",
     ]
 )
 
