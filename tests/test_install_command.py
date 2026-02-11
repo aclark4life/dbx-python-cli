@@ -310,6 +310,8 @@ def test_install_failure(tmp_path):
     repo_dir = group_dir / "mongo-python-driver"
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
+    # Create setup.py so the install actually runs (and can fail)
+    (repo_dir / "setup.py").write_text("# setup.py")
 
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
