@@ -85,10 +85,13 @@ Run tests for a repository:
 .. code-block:: bash
 
    # Run all tests
-   dbx test django-mongodb-backend
+   dbx test django
+
+   # Run a specific test module (note: django-mongodb-backend modules have trailing underscores)
+   dbx test django encryption_
 
    # Run tests matching a keyword
-   dbx test django-mongodb-backend -k "test_connection"
+   dbx test django encryption_ -k "test_auto_encryption"
 
 Working with Django Projects
 -----------------------------
@@ -211,7 +214,7 @@ Use ``-v`` or ``--verbose`` for detailed output:
 .. code-block:: bash
 
    dbx -v install django-mongodb-backend
-   dbx --verbose test django-mongodb-backend
+   dbx --verbose test django encryption_
 
 Next Steps
 ----------
