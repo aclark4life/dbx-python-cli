@@ -1,5 +1,6 @@
 """Project management commands."""
 
+import os
 import random
 import shutil
 import subprocess
@@ -14,6 +15,8 @@ except ImportError:
     import importlib_resources as resources
 
 from dbx_python_cli.commands.repo_utils import get_base_dir, get_config
+from dbx_python_cli.commands.venv_utils import get_venv_info
+from dbx_python_cli.commands.install import install_package, install_frontend_if_exists
 
 app = typer.Typer(
     help="Project management commands",
@@ -187,6 +190,11 @@ def add_project(
         "-s",
         help="Settings configuration name to use (e.g., 'qe', 'site1'). Defaults to 'base'.",
     ),
+    auto_install: bool = typer.Option(
+        True,
+        "--install/--no-install",
+        help="Automatically install the project after creation (default: True)",
+    ),
 ):
     """
     Create a new Django project using bundled templates.
@@ -325,6 +333,54 @@ def add_project(
         except Exception as e:
             typer.echo(
                 f"⚠️  Project created successfully, but frontend creation failed: {e}",
+                err=True,
+            )
+
+    # Automatically install the project if requested
+    if auto_install:
+        typer.echo(f"\n📦 Installing project '{name}'...")
+        try:
+            # Get the virtual environment info
+            python_path, venv_type = get_venv_info(project_path, None)
+
+            if venv_type == "system":
+                typer.echo(
+                    "⚠️  Warning: No virtual environment detected. Installing to system Python.",
+                    err=True,
+                )
+
+            # Install the Python package
+            result = install_package(
+                project_path,
+                python_path,
+                install_dir=None,
+                extras=None,
+                groups=None,
+                verbose=False,
+            )
+
+            if result == "success":
+                typer.echo("✅ Python package installed successfully")
+            elif result == "skipped":
+                typer.echo(
+                    "⚠️  Installation skipped (no pyproject.toml found)", err=True
+                )
+            else:
+                typer.echo("⚠️  Python package installation failed", err=True)
+
+            # Install frontend dependencies if frontend exists
+            if add_frontend:
+                frontend_installed = install_frontend_if_exists(
+                    project_path, verbose=False
+                )
+                if not frontend_installed and (project_path / "frontend").exists():
+                    typer.echo(
+                        "⚠️  Frontend installation failed or npm not found",
+                        err=True,
+                    )
+        except Exception as e:
+            typer.echo(
+                f"⚠️  Project created successfully, but installation failed: {e}",
                 err=True,
             )
 
@@ -870,6 +926,133 @@ def create_superuser(
             err=True,
         )
         raise typer.Exit(code=1)
+
+
+@app.command("edit")
+def edit_project(
+    name: str = typer.Argument(None, help="Project name (defaults to newest project)"),
+    directory: Path = typer.Option(
+        None,
+        "--directory",
+        "-d",
+        help="Custom directory where the project is located (defaults to base_dir/projects/)",
+    ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to edit (e.g., 'base', 'qe', or project name). Defaults to project name.",
+    ),
+):
+    """
+    Edit project settings file with your default editor.
+
+    Opens the project's settings file using the editor specified in the EDITOR
+    environment variable. If EDITOR is not set, falls back to common editors
+    (vim, nano, vi) or uses 'open' on macOS.
+
+    If no project name is provided, uses the most recently created project.
+
+    Examples::
+
+        dbx project edit                      # Edit newest project's settings
+        dbx project edit myproject            # Edit myproject's settings
+        dbx project edit myproject --settings base  # Edit base settings
+        dbx project edit myproject -s qe      # Edit qe settings
+        EDITOR=code dbx project edit          # Open with VS Code
+    """
+    # Determine project directory
+    if directory is None:
+        config = get_config()
+        base_dir = get_base_dir(config)
+        projects_dir = base_dir / "projects"
+
+        # If no name provided, find the newest project
+        if name is None:
+            name, project_path = get_newest_project(projects_dir)
+            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
+        else:
+            project_path = projects_dir / name
+    else:
+        if name is None:
+            typer.echo("❌ Project name is required when using --directory", err=True)
+            raise typer.Exit(code=1)
+        project_path = directory / name
+
+    if not project_path.exists():
+        typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
+        raise typer.Exit(code=1)
+
+    # Determine which settings file to edit
+    settings_module = settings if settings else name
+    settings_file = project_path / name / "settings" / f"{settings_module}.py"
+
+    if not settings_file.exists():
+        typer.echo(f"❌ Settings file not found: {settings_file}", err=True)
+        typer.echo(f"\nAvailable settings files in {project_path / name / 'settings'}:")
+        settings_dir = project_path / name / "settings"
+        if settings_dir.exists():
+            for file in settings_dir.glob("*.py"):
+                if file.name != "__init__.py":
+                    typer.echo(f"  • {file.stem}")
+        raise typer.Exit(code=1)
+
+    # Get editor from environment variable
+    editor = os.environ.get("EDITOR")
+
+    if not editor:
+        # Try common editors in order of preference
+        common_editors = ["vim", "nano", "vi"]
+        for candidate in common_editors:
+            try:
+                # Check if editor exists in PATH
+                subprocess.run(
+                    ["which", candidate],
+                    check=True,
+                    capture_output=True,
+                )
+                editor = candidate
+                break
+            except subprocess.CalledProcessError:
+                continue
+
+        # If no common editor found, try 'open' on macOS
+        if not editor:
+            import platform
+
+            if platform.system() == "Darwin":
+                editor = "open"
+            else:
+                typer.echo(
+                    "❌ No editor found. Please set the EDITOR environment variable.",
+                    err=True,
+                )
+                typer.echo("\nExample: export EDITOR=nano")
+                raise typer.Exit(1)
+
+    typer.echo(f"📝 Opening {settings_file} with {editor}...")
+
+    try:
+        # Open the editor
+        result = subprocess.run([editor, str(settings_file)])
+
+        if result.returncode == 0:
+            typer.echo("✅ Settings file saved")
+        else:
+            typer.echo(
+                f"⚠️  Editor exited with code {result.returncode}",
+                err=True,
+            )
+            raise typer.Exit(result.returncode)
+    except FileNotFoundError:
+        typer.echo(
+            f"❌ Editor '{editor}' not found. Please check your EDITOR environment variable.",
+            err=True,
+        )
+        raise typer.Exit(1)
+    except KeyboardInterrupt:
+        typer.echo("\n⚠️  Editing cancelled")
+        raise typer.Exit(130)
 
 
 def _install_npm(

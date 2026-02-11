@@ -26,7 +26,7 @@ base_dir = "{base_dir_str}"
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["project", "add", "testproject"])
+        result = runner.invoke(app, ["project", "add", "--no-install", "testproject"])
         assert result.exit_code == 0
         assert "Creating project: testproject" in result.stdout
         assert "Adding frontend" in result.stdout
@@ -65,12 +65,16 @@ base_dir = "{base_dir_str}"
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["project", "add", "nofrontend", "--no-frontend"])
-        assert result.exit_code == 0
-        assert "Creating project: nofrontend" in result.stdout
+        result = runner.invoke(
+            app, ["project", "add", "--no-install", "simpleproject", "--no-frontend"]
+        )
+        assert (
+            result.exit_code == 0
+        ), f"Exit code was {result.exit_code}, output: {result.output}"
+        assert "Creating project: simpleproject" in result.stdout
 
         # Verify project structure
-        project_path = base_dir / "projects" / "nofrontend"
+        project_path = base_dir / "projects" / "simpleproject"
         assert project_path.exists()
         assert (project_path / "manage.py").exists()
         assert (project_path / "pyproject.toml").exists()
@@ -97,7 +101,7 @@ base_dir = "{base_dir_str}"
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["project", "add", "--random"])
+        result = runner.invoke(app, ["project", "add", "--no-install", "--random"])
         assert result.exit_code == 0
         assert "Creating project:" in result.stdout
 
@@ -116,7 +120,7 @@ def test_project_add_custom_directory(tmp_path):
     custom_dir.mkdir()
 
     result = runner.invoke(
-        app, ["project", "add", "customproject", "-d", str(custom_dir)]
+        app, ["project", "add", "--no-install", "customproject", "-d", str(custom_dir)]
     )
     assert result.exit_code == 0
 
@@ -143,7 +147,9 @@ base_dir = "{base_dir_str}"
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["project", "add", "qeproject", "--settings=qe"])
+        result = runner.invoke(
+            app, ["project", "add", "--no-install", "qeproject", "--settings=qe"]
+        )
         assert result.exit_code == 0
 
         # Verify pyproject.toml has correct settings
@@ -171,7 +177,7 @@ base_dir = "{base_dir_str}"
         mock_get_path.return_value = config_path
 
         # First create a project
-        result = runner.invoke(app, ["project", "add", "removetest"])
+        result = runner.invoke(app, ["project", "add", "--no-install", "removetest"])
         assert result.exit_code == 0
 
         project_path = base_dir / "projects" / "removetest"
@@ -226,7 +232,9 @@ base_dir = "{base_dir_str}"
         mock_get_path_1.return_value = config_path
 
         # Create a project
-        result = runner.invoke(app, ["project", "add", "installtest", "--no-frontend"])
+        result = runner.invoke(
+            app, ["project", "add", "--no-install", "installtest", "--no-frontend"]
+        )
         assert result.exit_code == 0
 
     # Now test that it can be found by dbx install
@@ -257,7 +265,7 @@ base_dir = "{base_dir_str}"
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["project", "add", "frontendtest"])
+        result = runner.invoke(app, ["project", "add", "--no-install", "frontendtest"])
         assert result.exit_code == 0
 
         # Verify detailed frontend structure
@@ -297,11 +305,13 @@ base_dir = "{base_dir_str}"
         )  # Could be "No projects directory found" or "No projects found"
 
         # Create a project with frontend
-        result = runner.invoke(app, ["project", "add", "project1"])
+        result = runner.invoke(app, ["project", "add", "--no-install", "project1"])
         assert result.exit_code == 0
 
         # Create a project without frontend
-        result = runner.invoke(app, ["project", "add", "project2", "--no-frontend"])
+        result = runner.invoke(
+            app, ["project", "add", "--no-install", "project2", "--no-frontend"]
+        )
         assert result.exit_code == 0
 
         # List projects
@@ -331,14 +341,16 @@ base_dir = "{base_dir_str}"
         mock_get_path.return_value = config_path
 
         # Create a project
-        result = runner.invoke(app, ["project", "add", "testproject"])
-        assert result.exit_code == 0
+        result = runner.invoke(app, ["project", "add", "--no-install", "listproject"])
+        assert (
+            result.exit_code == 0
+        ), f"Exit code was {result.exit_code}, output: {result.output}"
 
         # List with --list flag
         result = runner.invoke(app, ["project", "--list"])
         assert result.exit_code == 0
         assert "Found 1 project(s)" in result.stdout
-        assert "testproject" in result.stdout
+        assert "listproject" in result.stdout
 
 
 def test_project_run_settings_module(tmp_path):
@@ -407,3 +419,209 @@ base_dir = "{base_dir_str}"
         # Error messages go to stdout in typer
         output = result.stdout + (result.stderr or "")
         assert "not found" in output.lower()
+
+
+def test_project_edit_nonexistent(tmp_path):
+    """Test editing a nonexistent project."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+
+    base_dir = tmp_path / "repos"
+    base_dir_str = str(base_dir).replace("\\", "/")
+
+    config_content = f"""[repo]
+base_dir = "{base_dir_str}"
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        # Try to edit a nonexistent project
+        result = runner.invoke(app, ["project", "edit", "nonexistent"])
+        assert result.exit_code == 1
+        output = result.stdout + (result.stderr or "")
+        assert "not found" in output.lower()
+
+
+def test_project_edit_with_editor(tmp_path):
+    """Test editing a project's settings file."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+
+    base_dir = tmp_path / "repos"
+    base_dir_str = str(base_dir).replace("\\", "/")
+
+    config_content = f"""[repo]
+base_dir = "{base_dir_str}"
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        # Create a project
+        result = runner.invoke(
+            app, ["project", "add", "--no-install", "editproject", "--no-frontend"]
+        )
+        assert result.exit_code == 0
+
+        # Verify settings file exists
+        project_path = base_dir / "projects" / "editproject"
+        settings_file = project_path / "editproject" / "settings" / "editproject.py"
+        assert settings_file.exists()
+
+        # Mock the editor subprocess
+        with patch("subprocess.run") as mock_run:
+            from unittest.mock import MagicMock
+
+            mock_run.return_value = MagicMock(returncode=0)
+
+            # Test editing with mocked editor
+            with patch.dict("os.environ", {"EDITOR": "nano"}):
+                result = runner.invoke(app, ["project", "edit", "editproject"])
+                assert result.exit_code == 0
+                assert "Opening" in result.stdout
+                assert "editproject.py" in result.stdout
+                assert "Settings file saved" in result.stdout
+
+                # Verify subprocess was called with correct arguments
+                mock_run.assert_called_once()
+                args = mock_run.call_args[0][0]
+                assert args[0] == "nano"
+                assert str(settings_file) in args[1]
+
+
+def test_project_edit_with_settings_option(tmp_path):
+    """Test editing a specific settings file."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+
+    base_dir = tmp_path / "repos"
+    base_dir_str = str(base_dir).replace("\\", "/")
+
+    config_content = f"""[repo]
+base_dir = "{base_dir_str}"
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        # Create a project
+        result = runner.invoke(
+            app, ["project", "add", "--no-install", "settingstest", "--no-frontend"]
+        )
+        assert result.exit_code == 0
+
+        # Verify base settings file exists
+        project_path = base_dir / "projects" / "settingstest"
+        base_settings_file = project_path / "settingstest" / "settings" / "base.py"
+        assert base_settings_file.exists()
+
+        # Mock the editor subprocess
+        with patch("subprocess.run") as mock_run:
+            from unittest.mock import MagicMock
+
+            mock_run.return_value = MagicMock(returncode=0)
+
+            # Test editing base settings
+            with patch.dict("os.environ", {"EDITOR": "vim"}):
+                result = runner.invoke(
+                    app, ["project", "edit", "settingstest", "--settings", "base"]
+                )
+                assert result.exit_code == 0
+                assert "base.py" in result.stdout
+
+                # Verify subprocess was called with correct arguments
+                mock_run.assert_called_once()
+                args = mock_run.call_args[0][0]
+                assert args[0] == "vim"
+                assert str(base_settings_file) in args[1]
+
+
+def test_project_edit_newest_project(tmp_path):
+    """Test editing the newest project without specifying name."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+
+    base_dir = tmp_path / "repos"
+    base_dir_str = str(base_dir).replace("\\", "/")
+
+    config_content = f"""[repo]
+base_dir = "{base_dir_str}"
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        # Create two projects
+        result = runner.invoke(
+            app, ["project", "add", "--no-install", "oldproject", "--no-frontend"]
+        )
+        assert result.exit_code == 0
+
+        import time
+
+        time.sleep(0.1)  # Ensure different modification times
+
+        result = runner.invoke(
+            app, ["project", "add", "--no-install", "newproject", "--no-frontend"]
+        )
+        assert result.exit_code == 0
+
+        # Mock the editor subprocess
+        with patch("subprocess.run") as mock_run:
+            from unittest.mock import MagicMock
+
+            mock_run.return_value = MagicMock(returncode=0)
+
+            # Test editing without specifying project name (should use newest)
+            with patch.dict("os.environ", {"EDITOR": "nano"}):
+                result = runner.invoke(app, ["project", "edit"])
+                assert result.exit_code == 0
+                assert (
+                    "No project specified, using newest: 'newproject'" in result.stdout
+                )
+                assert "newproject.py" in result.stdout
+
+
+def test_project_settings_has_installed_apps(tmp_path):
+    """Test that project-specific settings file has INSTALLED_APPS."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+
+    base_dir = tmp_path / "repos"
+    base_dir_str = str(base_dir).replace("\\", "/")
+
+    config_content = f"""[repo]
+base_dir = "{base_dir_str}"
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        # Create a project
+        result = runner.invoke(
+            app, ["project", "add", "--no-install", "appsproject", "--no-frontend"]
+        )
+        assert (
+            result.exit_code == 0
+        ), f"Exit code was {result.exit_code}, output: {result.output}"
+
+        # Verify project-specific settings file has INSTALLED_APPS
+        project_path = base_dir / "projects" / "appsproject"
+        settings_file = project_path / "appsproject" / "settings" / "appsproject.py"
+        assert settings_file.exists()
+
+        settings_content = settings_file.read_text()
+        assert "INSTALLED_APPS" in settings_content
+        assert "INSTALLED_APPS = INSTALLED_APPS + [" in settings_content
+        assert "# Add your project-specific apps here" in settings_content

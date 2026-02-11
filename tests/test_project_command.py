@@ -49,3 +49,13 @@ def test_project_add_no_name_no_random():
     # Error messages go to stderr in typer
     output = strip_ansi(result.stdout + result.stderr)
     assert "Project name is required" in output
+
+
+def test_project_edit_help():
+    """Test that the project edit help command works."""
+    result = runner.invoke(app, ["project", "edit", "--help"])
+    assert result.exit_code == 0
+    output = strip_ansi(result.stdout)
+    assert "Edit project settings file with your default editor" in output
+    assert "--settings" in output
+    assert "--directory" in output
