@@ -374,9 +374,9 @@ def install_callback(
                     install_dirs = get_install_dirs(config, grp, repo_name)
 
                     if install_dirs:
-                        # Monorepo
+                        # Multiple install directories
                         typer.echo(
-                            f"  {repo_name} (monorepo with {len(install_dirs)} packages):"
+                            f"  {repo_name} ({len(install_dirs)} package(s) in subdirectories):"
                         )
                         for install_dir in install_dirs:
                             work_dir = repo_path / install_dir
@@ -455,8 +455,10 @@ def install_callback(
         install_dirs = get_install_dirs(config, selected_group, repo_name)
 
         if install_dirs:
-            # Monorepo: show options for each package
-            typer.echo(f"📦 {repo_name} (monorepo with {len(install_dirs)} packages)\n")
+            # Multiple install directories: show options for each package
+            typer.echo(
+                f"📦 {repo_name} ({len(install_dirs)} package(s) in subdirectories)\n"
+            )
 
             for install_dir in install_dirs:
                 work_dir = repo_path / install_dir
@@ -568,9 +570,9 @@ def install_callback(
                 install_dirs = get_install_dirs(config, grp, repo["name"])
 
                 if install_dirs:
-                    # Monorepo: install each directory separately
+                    # Install from subdirectories
                     typer.echo(
-                        f"Monorepo detected: installing {len(install_dirs)} packages...\n"
+                        f"Installing {len(install_dirs)} package(s) from subdirectories...\n"
                     )
 
                     for install_dir in install_dirs:
@@ -728,8 +730,10 @@ def install_callback(
     install_dirs = get_install_dirs(config, repo["group"], repo["name"])
 
     if install_dirs:
-        # Monorepo: install each directory separately
-        typer.echo(f"Monorepo detected: installing {len(install_dirs)} packages...\n")
+        # Install from subdirectories
+        typer.echo(
+            f"Installing {len(install_dirs)} package(s) from subdirectories...\n"
+        )
 
         failed_items = []
         skipped_items = []

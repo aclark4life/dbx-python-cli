@@ -50,7 +50,7 @@ def get_install_dirs(config, group_name, repo_name):
     """
     Get install directories for a repository.
 
-    For monorepos, returns a list of subdirectories to install.
+    For repos with packages in subdirectories, returns a list of subdirectories to install.
     For regular repos, returns None (install from root).
 
     Args:
@@ -59,7 +59,7 @@ def get_install_dirs(config, group_name, repo_name):
         repo_name: Name of the repository (e.g., 'langchain-mongodb')
 
     Returns:
-        list: List of install directories, or None if not a monorepo
+        list: List of install directories, or None if packages are at the root
     """
     groups = get_repo_groups(config)
     if group_name not in groups:

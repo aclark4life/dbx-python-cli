@@ -519,7 +519,7 @@ def test_install_show_options_no_repo(tmp_path):
 
 
 def test_install_show_options_monorepo(tmp_path):
-    """Test --show-options with monorepo shows options for each package."""
+    """Test --show-options with repos that have packages in subdirectories."""
     # Create mock repository structure
     group_dir = tmp_path / "langchain"
     repo_dir = group_dir / "langchain-mongodb"
@@ -570,7 +570,8 @@ docs = ["sphinx"]
                 )
                 assert result.exit_code == 0
                 assert (
-                    "📦 langchain-mongodb (monorepo with 2 packages)" in result.stdout
+                    "📦 langchain-mongodb (2 package(s) in subdirectories)"
+                    in result.stdout
                 )
                 assert "Package: libs/langchain-mongodb/" in result.stdout
                 assert "Package: libs/langgraph-checkpoint-mongodb/" in result.stdout
