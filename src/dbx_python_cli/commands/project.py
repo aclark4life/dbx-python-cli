@@ -617,8 +617,16 @@ def run_project(
     for var in ["PYMONGOCRYPT_LIB", "DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
         if var not in env and var in default_env:
             value = os.path.expanduser(default_env[var])
-            env[var] = value
-            typer.echo(f"🔧 Using {var} from config: {value}")
+            # For PYMONGOCRYPT_LIB, check if the file exists
+            if var == "PYMONGOCRYPT_LIB":
+                if Path(value).exists():
+                    env[var] = value
+                    typer.echo(f"🔧 Using {var} from config: {value}")
+                # Skip warning - user may not need QE
+            else:
+                # For library paths, set them even if directory doesn't exist yet
+                env[var] = value
+                typer.echo(f"🔧 Using {var} from config: {value}")
 
     # Default to project_name.py settings if not specified
     settings_module = settings if settings else name
@@ -795,7 +803,14 @@ def manage(
     for var in ["PYMONGOCRYPT_LIB", "DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
         if var not in env and var in default_env:
             value = os.path.expanduser(default_env[var])
-            env[var] = value
+            # For PYMONGOCRYPT_LIB, check if the file exists
+            if var == "PYMONGOCRYPT_LIB":
+                if Path(value).exists():
+                    env[var] = value
+                # Skip warning - user may not need QE
+            else:
+                # For library paths, set them even if directory doesn't exist yet
+                env[var] = value
 
     # Default to project_name.py settings if not specified
     settings_module = settings if settings else name
@@ -928,7 +943,14 @@ def create_superuser(
     for var in ["PYMONGOCRYPT_LIB", "DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
         if var not in env and var in default_env:
             value = os.path.expanduser(default_env[var])
-            env[var] = value
+            # For PYMONGOCRYPT_LIB, check if the file exists
+            if var == "PYMONGOCRYPT_LIB":
+                if Path(value).exists():
+                    env[var] = value
+                # Skip warning - user may not need QE
+            else:
+                # For library paths, set them even if directory doesn't exist yet
+                env[var] = value
 
     env["DJANGO_SUPERUSER_PASSWORD"] = password
 
