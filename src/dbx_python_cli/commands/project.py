@@ -614,17 +614,22 @@ def run_project(
             env["MONGODB_URI"] = default_uri
 
     # Set library paths for libmongocrypt (Queryable Encryption support)
-    for var in ["PYMONGOCRYPT_LIB", "DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
+    for var in [
+        "PYMONGOCRYPT_LIB",
+        "DYLD_LIBRARY_PATH",
+        "LD_LIBRARY_PATH",
+        "CRYPT_SHARED_LIB_PATH",
+    ]:
         if var not in env and var in default_env:
             value = os.path.expanduser(default_env[var])
-            # For PYMONGOCRYPT_LIB, check if the file exists
-            if var == "PYMONGOCRYPT_LIB":
+            # For library file paths, check if the file exists
+            if var in ["PYMONGOCRYPT_LIB", "CRYPT_SHARED_LIB_PATH"]:
                 if Path(value).exists():
                     env[var] = value
                     typer.echo(f"🔧 Using {var} from config: {value}")
                 # Skip warning - user may not need QE
             else:
-                # For library paths, set them even if directory doesn't exist yet
+                # For library directory paths, set them even if directory doesn't exist yet
                 env[var] = value
                 typer.echo(f"🔧 Using {var} from config: {value}")
 
@@ -800,17 +805,24 @@ def manage(
             env["MONGODB_URI"] = default_uri
 
     # Set library paths for libmongocrypt (Queryable Encryption support)
-    for var in ["PYMONGOCRYPT_LIB", "DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
+    for var in [
+        "PYMONGOCRYPT_LIB",
+        "DYLD_LIBRARY_PATH",
+        "LD_LIBRARY_PATH",
+        "CRYPT_SHARED_LIB_PATH",
+    ]:
         if var not in env and var in default_env:
             value = os.path.expanduser(default_env[var])
-            # For PYMONGOCRYPT_LIB, check if the file exists
-            if var == "PYMONGOCRYPT_LIB":
+            # For library file paths, check if the file exists
+            if var in ["PYMONGOCRYPT_LIB", "CRYPT_SHARED_LIB_PATH"]:
                 if Path(value).exists():
                     env[var] = value
+                    typer.echo(f"🔧 Using {var} from config: {value}")
                 # Skip warning - user may not need QE
             else:
-                # For library paths, set them even if directory doesn't exist yet
+                # For library directory paths, set them even if directory doesn't exist yet
                 env[var] = value
+                typer.echo(f"🔧 Using {var} from config: {value}")
 
     # Default to project_name.py settings if not specified
     settings_module = settings if settings else name
@@ -940,17 +952,24 @@ def create_superuser(
             env["MONGODB_URI"] = default_uri
 
     # Set library paths for libmongocrypt (Queryable Encryption support)
-    for var in ["PYMONGOCRYPT_LIB", "DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"]:
+    for var in [
+        "PYMONGOCRYPT_LIB",
+        "DYLD_LIBRARY_PATH",
+        "LD_LIBRARY_PATH",
+        "CRYPT_SHARED_LIB_PATH",
+    ]:
         if var not in env and var in default_env:
             value = os.path.expanduser(default_env[var])
-            # For PYMONGOCRYPT_LIB, check if the file exists
-            if var == "PYMONGOCRYPT_LIB":
+            # For library file paths, check if the file exists
+            if var in ["PYMONGOCRYPT_LIB", "CRYPT_SHARED_LIB_PATH"]:
                 if Path(value).exists():
                     env[var] = value
+                    typer.echo(f"🔧 Using {var} from config: {value}")
                 # Skip warning - user may not need QE
             else:
-                # For library paths, set them even if directory doesn't exist yet
+                # For library directory paths, set them even if directory doesn't exist yet
                 env[var] = value
+                typer.echo(f"🔧 Using {var} from config: {value}")
 
     env["DJANGO_SUPERUSER_PASSWORD"] = password
 

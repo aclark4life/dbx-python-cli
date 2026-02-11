@@ -64,7 +64,7 @@ INSTALLED_APPS = (
 #                     # },
 #                 },
 #                 # Exact file name depends on your operating system.
-#                 crypt_shared_lib_path=os.getenv("MONGOCRYPT_SHARED_LIB_PATH"),  # noqa: F405
+#                 crypt_shared_lib_path=os.getenv("CRYPT_SHARED_LIB_PATH"),  # noqa: F405
 #                 crypt_shared_lib_required=True,
 #                 # In production, add encrypted_fields_map from showencryptedfieldsmap
 #                 # encrypted_fields_map=json_util.loads("""..."""),
