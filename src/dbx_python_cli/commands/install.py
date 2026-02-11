@@ -610,6 +610,15 @@ def install_callback(
                         f"⚠️  No venv found, using system Python: {python_path}\n"
                     )
 
+                # Check if this repo needs build commands (e.g., cmake)
+                build_commands = get_build_commands(config, grp, repo["name"])
+                if build_commands:
+                    if not run_build_commands(
+                        repo_path, build_commands, verbose=verbose
+                    ):
+                        typer.echo("❌ Build failed", err=True)
+                        raise typer.Exit(1)
+
                 # Check if this repo has install_dirs (multiple packages in sub-directories)
                 install_dirs = get_install_dirs(config, grp, repo["name"])
 
