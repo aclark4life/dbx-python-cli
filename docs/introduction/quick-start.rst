@@ -91,7 +91,7 @@ Run tests for a repository:
    dbx test django encryption_
 
    # Run tests matching a keyword
-   dbx test django encryption_ -k "test_auto_encryption"
+   dbx test django encryption_ -k test_schema
 
 Working with Django Projects
 -----------------------------
