@@ -399,6 +399,56 @@ def test_repo_clone_no_group_shows_error(mock_config):
         assert "Clone repositories" in output
 
 
+def test_repo_clone_multiple_groups(tmp_path, temp_repos_dir):
+    """Test cloning multiple groups at once."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.django]
+repos = [
+    "https://github.com/django/django.git",
+]
+
+[repo.groups.pymongo]
+repos = [
+    "https://github.com/mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+            mock_run.return_value = None
+
+            result = runner.invoke(app, ["clone", "-g", "django", "-g", "pymongo"])
+            assert result.exit_code == 0
+
+            # Check that both groups are mentioned in output
+            assert "django" in result.stdout
+            assert "pymongo" in result.stdout
+
+            # Check that both group directories were created
+            django_dir = temp_repos_dir / "django"
+            pymongo_dir = temp_repos_dir / "pymongo"
+            assert django_dir.exists()
+            assert pymongo_dir.exists()
+
+            # Verify git clone was called for both repos
+            clone_calls = [
+                call for call in mock_run.call_args_list if call[0][0][1] == "clone"
+            ]
+            assert len(clone_calls) == 2
+
+            # Check that the final summary message appears for multiple groups
+            assert "All done!" in result.stdout
+            assert "2 groups" in result.stdout
+
+
 def test_repo_clone_single_repo_by_name(tmp_path, temp_repos_dir):
     """Test cloning a single repository by name."""
     config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"

@@ -2,9 +2,10 @@
 default:
     @just --list
 
-# Install the package in editable mode
+# Install the package in editable mode and pre-commit hooks
 install:
     uv pip install -e .
+    prek install
 
 # Alias for install
 alias i := install
@@ -122,4 +123,3 @@ docs-clean:
 # Serve documentation locally
 docs-serve:
     python -m http.server --directory docs/_build/html 8000
-

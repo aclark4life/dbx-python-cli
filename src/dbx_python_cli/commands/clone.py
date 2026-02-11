@@ -24,11 +24,11 @@ def clone_callback(
         None,
         help="Repository name to clone (e.g., django-mongodb-backend)",
     ),
-    group: str = typer.Option(
+    group: list[str] = typer.Option(
         None,
         "--group",
         "-g",
-        help="Repository group to clone (e.g., pymongo, langchain, django)",
+        help="Repository group(s) to clone (e.g., pymongo, langchain, django). Can be specified multiple times.",
     ),
     list_groups: bool = typer.Option(
         False,
@@ -47,7 +47,7 @@ def clone_callback(
         help="GitHub username for fork (overrides --fork and config fork_user)",
     ),
 ):
-    """Clone a repository by name or all repositories from a group."""
+    """Clone a repository by name or all repositories from one or more groups."""
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
 
@@ -100,33 +100,42 @@ def clone_callback(
                 raise typer.Exit(1)
 
             # Clone single repo
-            repos = [found_repo]
-            group = found_group
+            repos_to_clone = {found_group: [found_repo]}
 
             if verbose:
-                typer.echo(f"[verbose] Found '{repo_name}' in group '{group}'")
+                typer.echo(f"[verbose] Found '{repo_name}' in group '{found_group}'")
 
-        # Handle group clone
+        # Handle group clone (can be multiple groups)
         elif group:
-            # Get repositories for the group
-            if group not in groups:
-                typer.echo(
-                    f"❌ Error: Group '{group}' not found in configuration.", err=True
-                )
-                typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
-                raise typer.Exit(1)
+            repos_to_clone = {}
 
-            repos = groups[group].get("repos", [])
-            if not repos:
-                typer.echo(
-                    f"❌ Error: No repositories found in group '{group}'.", err=True
-                )
-                raise typer.Exit(1)
+            # Validate all groups first
+            for group_name in group:
+                if group_name not in groups:
+                    typer.echo(
+                        f"❌ Error: Group '{group_name}' not found in configuration.",
+                        err=True,
+                    )
+                    typer.echo(
+                        f"Available groups: {', '.join(groups.keys())}", err=True
+                    )
+                    raise typer.Exit(1)
+
+                group_repos = groups[group_name].get("repos", [])
+                if not group_repos:
+                    typer.echo(
+                        f"❌ Error: No repositories found in group '{group_name}'.",
+                        err=True,
+                    )
+                    raise typer.Exit(1)
+
+                repos_to_clone[group_name] = group_repos
 
         else:
             typer.echo("❌ Error: Repository name or group required", err=True)
             typer.echo("\nUsage: dbx clone <repo-name>")
             typer.echo("   or: dbx clone -g <group>")
+            typer.echo("   or: dbx clone -g <group1> -g <group2>")
             typer.echo("   or: dbx clone --list")
             raise typer.Exit(1)
 
@@ -148,132 +157,139 @@ def clone_callback(
                 f"[verbose] Using fork workflow with user: {effective_fork_user}\n"
             )
 
-        # Create group directory under base directory
-        group_dir = base_dir / group
-        group_dir.mkdir(parents=True, exist_ok=True)
+        # Process each group
+        for group_name, repos in repos_to_clone.items():
+            # Create group directory under base directory
+            group_dir = base_dir / group_name
+            group_dir.mkdir(parents=True, exist_ok=True)
 
-        # Display appropriate message
-        if len(repos) == 1:
-            single_repo_name = repos[0].split("/")[-1].replace(".git", "")
-            if effective_fork_user:
-                typer.echo(
-                    f"Cloning {single_repo_name} from {effective_fork_user}'s fork to {group_dir}"
-                )
-            else:
-                typer.echo(f"Cloning {single_repo_name} to {group_dir}")
-        else:
-            if effective_fork_user:
-                typer.echo(
-                    f"Cloning {len(repos)} repository(ies) from {effective_fork_user}'s forks to {group_dir}"
-                )
-            else:
-                typer.echo(
-                    f"Cloning {len(repos)} repository(ies) from group '{group}' to {group_dir}"
-                )
-
-        for repo_url in repos:
-            # Extract repository name from URL
-            repo_name = repo_url.split("/")[-1].replace(".git", "")
-            repo_path = group_dir / repo_name
-
-            if repo_path.exists():
-                typer.echo(f"  ⏭️  {repo_name} already exists, skipping")
-                continue
-
-            # Determine clone URL and upstream URL
-            if effective_fork_user:
-                # Replace the org/user in the URL with the fork user
-                # Handle both SSH and HTTPS URLs
-                clone_url = repo_url
-                upstream_url = repo_url
-
-                if "git@github.com:" in repo_url:
-                    # SSH format: git@github.com:org/repo.git
-                    parts = repo_url.split(":")
-                    if len(parts) == 2:
-                        repo_part = parts[1].split("/", 1)
-                        if len(repo_part) == 2:
-                            clone_url = (
-                                f"git@github.com:{effective_fork_user}/{repo_part[1]}"
-                            )
-                elif "github.com/" in repo_url:
-                    # HTTPS format: https://github.com/org/repo.git
-                    parts = repo_url.split("github.com/")
-                    if len(parts) == 2:
-                        repo_part = parts[1].split("/", 1)
-                        if len(repo_part) == 2:
-                            clone_url = f"{parts[0]}github.com/{effective_fork_user}/{repo_part[1]}"
-            else:
-                clone_url = repo_url
-                upstream_url = None
-
-            typer.echo(f"  📦 Cloning {repo_name}...")
-            if verbose:
-                typer.echo(f"  [verbose] Clone URL: {clone_url}")
+            # Display appropriate message
+            if len(repos) == 1:
+                single_repo_name = repos[0].split("/")[-1].replace(".git", "")
                 if effective_fork_user:
-                    typer.echo(f"  [verbose] Upstream URL: {upstream_url}")
-                typer.echo(f"  [verbose] Destination: {repo_path}")
-
-            try:
-                # Clone the repository
-                subprocess.run(
-                    ["git", "clone", clone_url, str(repo_path)],
-                    check=True,
-                    capture_output=not verbose,
-                    text=True,
-                )
-
-                # If using fork workflow, add upstream remote
-                if effective_fork_user:
-                    subprocess.run(
-                        [
-                            "git",
-                            "-C",
-                            str(repo_path),
-                            "remote",
-                            "add",
-                            "upstream",
-                            upstream_url,
-                        ],
-                        check=True,
-                        capture_output=True,
-                        text=True,
-                    )
                     typer.echo(
-                        f"  ✅ {repo_name} cloned from fork (upstream remote added)"
+                        f"Cloning {single_repo_name} from {effective_fork_user}'s fork to {group_dir}"
                     )
                 else:
-                    typer.echo(f"  ✅ {repo_name} cloned successfully")
+                    typer.echo(f"Cloning {single_repo_name} to {group_dir}")
+            else:
+                if effective_fork_user:
+                    typer.echo(
+                        f"Cloning {len(repos)} repository(ies) from {effective_fork_user}'s forks to {group_dir}"
+                    )
+                else:
+                    typer.echo(
+                        f"Cloning {len(repos)} repository(ies) from group '{group_name}' to {group_dir}"
+                    )
 
-            except subprocess.CalledProcessError as e:
-                # If fork clone failed, try falling back to upstream
-                if effective_fork_user and upstream_url:
-                    if verbose:
-                        typer.echo(
-                            "  [verbose] Fork clone failed, falling back to upstream"
-                        )
-                    try:
+            for repo_url in repos:
+                # Extract repository name from URL
+                repo_name = repo_url.split("/")[-1].replace(".git", "")
+                repo_path = group_dir / repo_name
+
+                if repo_path.exists():
+                    typer.echo(f"  ⏭️  {repo_name} already exists, skipping")
+                    continue
+
+                # Determine clone URL and upstream URL
+                if effective_fork_user:
+                    # Replace the org/user in the URL with the fork user
+                    # Handle both SSH and HTTPS URLs
+                    clone_url = repo_url
+                    upstream_url = repo_url
+
+                    if "git@github.com:" in repo_url:
+                        # SSH format: git@github.com:org/repo.git
+                        parts = repo_url.split(":")
+                        if len(parts) == 2:
+                            repo_part = parts[1].split("/", 1)
+                            if len(repo_part) == 2:
+                                clone_url = f"git@github.com:{effective_fork_user}/{repo_part[1]}"
+                    elif "github.com/" in repo_url:
+                        # HTTPS format: https://github.com/org/repo.git
+                        parts = repo_url.split("github.com/")
+                        if len(parts) == 2:
+                            repo_part = parts[1].split("/", 1)
+                            if len(repo_part) == 2:
+                                clone_url = f"{parts[0]}github.com/{effective_fork_user}/{repo_part[1]}"
+                else:
+                    clone_url = repo_url
+                    upstream_url = None
+
+                typer.echo(f"  📦 Cloning {repo_name}...")
+                if verbose:
+                    typer.echo(f"  [verbose] Clone URL: {clone_url}")
+                    if effective_fork_user:
+                        typer.echo(f"  [verbose] Upstream URL: {upstream_url}")
+                    typer.echo(f"  [verbose] Destination: {repo_path}")
+
+                try:
+                    # Clone the repository
+                    subprocess.run(
+                        ["git", "clone", clone_url, str(repo_path)],
+                        check=True,
+                        capture_output=not verbose,
+                        text=True,
+                    )
+
+                    # If using fork workflow, add upstream remote
+                    if effective_fork_user:
                         subprocess.run(
-                            ["git", "clone", upstream_url, str(repo_path)],
+                            [
+                                "git",
+                                "-C",
+                                str(repo_path),
+                                "remote",
+                                "add",
+                                "upstream",
+                                upstream_url,
+                            ],
                             check=True,
-                            capture_output=not verbose,
+                            capture_output=True,
                             text=True,
                         )
                         typer.echo(
-                            f"  ✅ {repo_name} cloned from upstream (fork not found)"
+                            f"  ✅ {repo_name} cloned from fork (upstream remote added)"
                         )
-                    except subprocess.CalledProcessError as upstream_error:
+                    else:
+                        typer.echo(f"  ✅ {repo_name} cloned successfully")
+
+                except subprocess.CalledProcessError as e:
+                    # If fork clone failed, try falling back to upstream
+                    if effective_fork_user and upstream_url:
+                        if verbose:
+                            typer.echo(
+                                "  [verbose] Fork clone failed, falling back to upstream"
+                            )
+                        try:
+                            subprocess.run(
+                                ["git", "clone", upstream_url, str(repo_path)],
+                                check=True,
+                                capture_output=not verbose,
+                                text=True,
+                            )
+                            typer.echo(
+                                f"  ✅ {repo_name} cloned from upstream (fork not found)"
+                            )
+                        except subprocess.CalledProcessError as upstream_error:
+                            typer.echo(
+                                f"  ❌ Failed to clone {repo_name}: {upstream_error.stderr if not verbose else ''}",
+                                err=True,
+                            )
+                    else:
                         typer.echo(
-                            f"  ❌ Failed to clone {repo_name}: {upstream_error.stderr if not verbose else ''}",
+                            f"  ❌ Failed to clone {repo_name}: {e.stderr if not verbose else ''}",
                             err=True,
                         )
-                else:
-                    typer.echo(
-                        f"  ❌ Failed to clone {repo_name}: {e.stderr if not verbose else ''}",
-                        err=True,
-                    )
 
-        typer.echo(f"\n✨ Done! Repositories cloned to {group_dir}")
+            typer.echo(f"\n✨ Done! Repositories cloned to {group_dir}")
+
+        # Final summary message
+        total_groups = len(repos_to_clone)
+        if total_groups > 1:
+            typer.echo(
+                f"\n🎉 All done! Cloned repositories from {total_groups} groups."
+            )
 
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
