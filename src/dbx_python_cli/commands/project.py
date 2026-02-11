@@ -601,6 +601,17 @@ def run_project(
 
     # Set up environment
     env = os.environ.copy()
+
+    # Check for default MONGODB_URI from config if not in environment
+    if "MONGODB_URI" not in env:
+        config = get_config()
+        default_uri = (
+            config.get("project", {}).get("default_env", {}).get("MONGODB_URI")
+        )
+        if default_uri:
+            typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
+            env["MONGODB_URI"] = default_uri
+
     # Default to project_name.py settings if not specified
     settings_module = settings if settings else name
     env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
