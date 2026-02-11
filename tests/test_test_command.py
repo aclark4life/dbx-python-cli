@@ -469,7 +469,9 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
                 call_args = mock_run.call_args
                 env = call_args[1]["env"]
                 assert "DRIVERS_TOOLS" in env
-                expected_path = str(Path(temp_repos_dir) / "pymongo" / "drivers-evergreen-tools")
+                expected_path = str(
+                    Path(temp_repos_dir) / "pymongo" / "drivers-evergreen-tools"
+                )
                 assert env["DRIVERS_TOOLS"] == expected_path
 
 
@@ -549,7 +551,9 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
                 mock_result.returncode = 0
                 mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["--verbose", "test", "mongo-python-driver"])
+                result = runner.invoke(
+                    app, ["--verbose", "test", "mongo-python-driver"]
+                )
                 assert result.exit_code == 0
                 assert "Environment variables:" in result.stdout
                 assert "DRIVERS_TOOLS=" in result.stdout

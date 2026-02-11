@@ -171,10 +171,8 @@ def test_get_test_env_vars_no_config(tmp_path):
         "repo": {
             "base_dir": str(tmp_path),
             "groups": {
-                "pymongo": {
-                    "repos": ["git@github.com:mongodb/mongo-python-driver.git"]
-                }
-            }
+                "pymongo": {"repos": ["git@github.com:mongodb/mongo-python-driver.git"]}
+            },
         }
     }
 
@@ -193,11 +191,11 @@ def test_get_test_env_vars_with_repo_specific_vars(tmp_path):
                     "test_env": {
                         "mongo-python-driver": {
                             "DRIVERS_TOOLS": "{base_dir}/{group}/drivers-evergreen-tools",
-                            "TEST_VAR": "test_value"
+                            "TEST_VAR": "test_value",
                         }
-                    }
+                    },
                 }
-            }
+            },
         }
     }
 
@@ -214,10 +212,8 @@ def test_get_test_env_vars_nonexistent_group(tmp_path):
         "repo": {
             "base_dir": str(tmp_path),
             "groups": {
-                "pymongo": {
-                    "repos": ["git@github.com:mongodb/mongo-python-driver.git"]
-                }
-            }
+                "pymongo": {"repos": ["git@github.com:mongodb/mongo-python-driver.git"]}
+            },
         }
     }
 

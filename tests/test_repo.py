@@ -226,7 +226,9 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
     config_path.write_text(config_content)
 
     with patch("dbx_python_cli.commands.config.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path2:
+        with patch(
+            "dbx_python_cli.commands.repo_utils.get_config_path"
+        ) as mock_get_path2:
             mock_get_path.return_value = config_path
             mock_get_path2.return_value = config_path
 
@@ -234,7 +236,10 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
             assert result.exit_code == 0
             assert "Test environment variables:" in result.stdout
             assert "mongo-python-driver:" in result.stdout
-            assert "DRIVERS_TOOLS={base_dir}/{group}/drivers-evergreen-tools" in result.stdout
+            assert (
+                "DRIVERS_TOOLS={base_dir}/{group}/drivers-evergreen-tools"
+                in result.stdout
+            )
             assert "TEST_VAR=test_value" in result.stdout
 
 
