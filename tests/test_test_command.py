@@ -1,6 +1,5 @@
 """Tests for the test command module."""
 
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
