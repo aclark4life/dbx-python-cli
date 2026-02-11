@@ -18,7 +18,7 @@ INSTALLED_APPS = (
     ]
 )
 
-# QE (Quality Engineering) environment settings
+# QE (Queryable Encryption) environment settings
 # Uncomment and modify these settings for QE environment:
 #
 # DEBUG = False

@@ -230,7 +230,7 @@ Settings Configurations
 Projects support multiple settings configurations:
 
 - ``base``: Default settings
-- ``qe``: QE environment settings
+- ``qe``: Queryable Encryption environment settings
 - ``<project_name>``: Project-specific settings (default)
 
 The default ``DJANGO_SETTINGS_MODULE`` in the generated ``pyproject.toml`` uses the project-specific settings module (``<project_name>.settings.<project_name>``).
