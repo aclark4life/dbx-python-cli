@@ -1287,3 +1287,83 @@ repos = [
             rebase_calls = [call for call in calls if "rebase" in call[0][0]]
             assert len(rebase_calls) == 1
             assert "upstream/main" in rebase_calls[0][0][0]
+
+
+def test_install_multiple_groups_csv(tmp_path):
+    """Test installing multiple groups using comma-separated values."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Create base directory structure
+    base_dir = tmp_path / "repos"
+    base_dir.mkdir()
+
+    # Create django group with a repo
+    django_dir = base_dir / "django"
+    django_dir.mkdir()
+    django_repo = django_dir / "django"
+    django_repo.mkdir()
+    (django_repo / ".git").mkdir()
+    (django_repo / "pyproject.toml").write_text("""
+[project]
+name = "django"
+""")
+
+    # Create pymongo group with a repo
+    pymongo_dir = base_dir / "pymongo"
+    pymongo_dir.mkdir()
+    pymongo_repo = pymongo_dir / "mongo-python-driver"
+    pymongo_repo.mkdir()
+    (pymongo_repo / ".git").mkdir()
+    (pymongo_repo / "pyproject.toml").write_text("""
+[project]
+name = "pymongo"
+""")
+
+    # Create config
+    base_dir_str = str(base_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{base_dir_str}"
+
+[repo.groups.django]
+repos = [
+    "https://github.com/django/django.git",
+]
+
+[repo.groups.pymongo]
+repos = [
+    "https://github.com/mongodb/mongo-python-driver.git",
+]
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.install.subprocess.run") as mock_run:
+            mock_get_path.return_value = config_path
+            # Mock successful installation
+            mock_run.return_value = type(
+                "obj", (object,), {"returncode": 0, "stdout": "", "stderr": ""}
+            )()
+
+            # Test CSV format: -g django,pymongo
+            result = runner.invoke(app, ["install", "-g", "django,pymongo"])
+            assert result.exit_code == 0
+
+            # Check that both groups are mentioned in output
+            assert "django" in result.stdout.lower()
+            assert (
+                "pymongo" in result.stdout.lower()
+                or "mongo-python-driver" in result.stdout.lower()
+            )
+
+            # Check for success message mentioning multiple groups
+            assert "installed successfully" in result.stdout.lower()
+
+            # Verify uv pip install was called for both repos
+            install_calls = [
+                call
+                for call in mock_run.call_args_list
+                if len(call[0]) > 0 and "uv" in call[0][0]
+            ]
+            assert len(install_calls) >= 2

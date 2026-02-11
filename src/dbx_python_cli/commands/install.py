@@ -266,7 +266,7 @@ def install_callback(
         None,
         "--group",
         "-g",
-        help="Group name: use group's venv, or install all repos in group if no repo specified",
+        help="Group name: use group's venv, or install all repos in group if no repo specified. Can be comma-separated for multiple groups.",
     ),
     list_repos: bool = typer.Option(
         False,
@@ -324,65 +324,91 @@ def install_callback(
     if show_options:
         # Case 1: Show options for all repos in a group (-g <group>)
         if group and not repo_name:
-            group_path = base_dir / group
-            if not group_path.exists():
-                typer.echo(
-                    f"❌ Error: Group '{group}' not found in {base_dir}", err=True
-                )
+            # Parse comma-separated groups
+            groups = [name.strip() for name in group.split(",") if name.strip()]
+
+            if not groups:
+                typer.echo("❌ Error: No valid groups specified", err=True)
                 raise typer.Exit(1)
 
-            # Find all repos in this group
+            # Validate all groups exist
             all_repos = find_all_repos(base_dir)
-            group_repos = [r for r in all_repos if r["group"] == group]
-
-            if not group_repos:
-                typer.echo(
-                    f"❌ Error: No repositories found in group '{group}'", err=True
-                )
-                typer.echo(f"\nClone repositories using: dbx clone -g {group}")
-                raise typer.Exit(1)
-
-            typer.echo(f"📦 Showing options for all repositories in group '{group}':\n")
-
-            for repo in group_repos:
-                repo_path = repo["path"]
-                repo_name = repo["name"]
-                install_dirs = get_install_dirs(config, group, repo_name)
-
-                if install_dirs:
-                    # Monorepo
+            for grp in groups:
+                group_path = base_dir / grp
+                if not group_path.exists():
                     typer.echo(
-                        f"  {repo_name} (monorepo with {len(install_dirs)} packages):"
+                        f"❌ Error: Group '{grp}' not found in {base_dir}", err=True
                     )
-                    for install_dir in install_dirs:
-                        work_dir = repo_path / install_dir
-                        options = get_package_options(work_dir)
-                        typer.echo(f"    Package: {install_dir}")
+                    raise typer.Exit(1)
+
+                group_repos = [r for r in all_repos if r["group"] == grp]
+                if not group_repos:
+                    typer.echo(
+                        f"❌ Error: No repositories found in group '{grp}'", err=True
+                    )
+                    typer.echo(f"\nClone repositories using: dbx clone -g {grp}")
+                    raise typer.Exit(1)
+
+            # Display header
+            if len(groups) == 1:
+                typer.echo(
+                    f"📦 Showing options for all repositories in group '{groups[0]}':\n"
+                )
+            else:
+                typer.echo(
+                    f"📦 Showing options for all repositories in groups: {', '.join(groups)}\n"
+                )
+
+            # Show options for all groups
+            for grp in groups:
+                group_repos = [r for r in all_repos if r["group"] == grp]
+
+                if len(groups) > 1:
+                    typer.echo(f"{'#' * 60}")
+                    typer.echo(f"# Group: {grp}")
+                    typer.echo(f"{'#' * 60}\n")
+
+                for repo in group_repos:
+                    repo_path = repo["path"]
+                    repo_name = repo["name"]
+                    install_dirs = get_install_dirs(config, grp, repo_name)
+
+                    if install_dirs:
+                        # Monorepo
+                        typer.echo(
+                            f"  {repo_name} (monorepo with {len(install_dirs)} packages):"
+                        )
+                        for install_dir in install_dirs:
+                            work_dir = repo_path / install_dir
+                            options = get_package_options(work_dir)
+                            typer.echo(f"    Package: {install_dir}")
+                            if options["extras"]:
+                                typer.echo(
+                                    f"      Extras: {', '.join(options['extras'])}"
+                                )
+                            else:
+                                typer.echo("      Extras: (none)")
+                            if options["dependency_groups"]:
+                                typer.echo(
+                                    f"      Dependency groups: {', '.join(options['dependency_groups'])}"
+                                )
+                            else:
+                                typer.echo("      Dependency groups: (none)")
+                    else:
+                        # Regular repo
+                        options = get_package_options(repo_path)
+                        typer.echo(f"  {repo_name}:")
                         if options["extras"]:
-                            typer.echo(f"      Extras: {', '.join(options['extras'])}")
+                            typer.echo(f"    Extras: {', '.join(options['extras'])}")
                         else:
-                            typer.echo("      Extras: (none)")
+                            typer.echo("    Extras: (none)")
                         if options["dependency_groups"]:
                             typer.echo(
-                                f"      Dependency groups: {', '.join(options['dependency_groups'])}"
+                                f"    Dependency groups: {', '.join(options['dependency_groups'])}"
                             )
                         else:
-                            typer.echo("      Dependency groups: (none)")
-                else:
-                    # Regular repo
-                    options = get_package_options(repo_path)
-                    typer.echo(f"  {repo_name}:")
-                    if options["extras"]:
-                        typer.echo(f"    Extras: {', '.join(options['extras'])}")
-                    else:
-                        typer.echo("    Extras: (none)")
-                    if options["dependency_groups"]:
-                        typer.echo(
-                            f"    Dependency groups: {', '.join(options['dependency_groups'])}"
-                        )
-                    else:
-                        typer.echo("    Dependency groups: (none)")
-                typer.echo()
+                            typer.echo("    Dependency groups: (none)")
+                    typer.echo()
 
             return
 
@@ -470,99 +496,124 @@ def install_callback(
 
     # Handle installing all repos in a group when only -g is provided
     if not repo_name and group:
-        # Install all repos in the specified group
-        group_path = base_dir / group
-        if not group_path.exists():
-            typer.echo(f"❌ Error: Group '{group}' not found in {base_dir}", err=True)
+        # Parse comma-separated groups
+        groups = [name.strip() for name in group.split(",") if name.strip()]
+
+        if not groups:
+            typer.echo("❌ Error: No valid groups specified", err=True)
             raise typer.Exit(1)
 
-        # Find all repos in this group
+        # Validate all groups exist before installing
         all_repos = find_all_repos(base_dir)
-        group_repos = [r for r in all_repos if r["group"] == group]
+        for grp in groups:
+            group_path = base_dir / grp
+            if not group_path.exists():
+                typer.echo(f"❌ Error: Group '{grp}' not found in {base_dir}", err=True)
+                raise typer.Exit(1)
 
-        if not group_repos:
-            typer.echo(f"❌ Error: No repositories found in group '{group}'", err=True)
-            typer.echo(f"\nClone repositories using: dbx clone -g {group}")
-            raise typer.Exit(1)
+            group_repos = [r for r in all_repos if r["group"] == grp]
+            if not group_repos:
+                typer.echo(
+                    f"❌ Error: No repositories found in group '{grp}'", err=True
+                )
+                typer.echo(f"\nClone repositories using: dbx clone -g {grp}")
+                raise typer.Exit(1)
 
-        typer.echo(f"Installing all repositories in group '{group}'...\n")
+        # Display which groups we're installing
+        if len(groups) == 1:
+            typer.echo(f"Installing all repositories in group '{groups[0]}'...\n")
+        else:
+            typer.echo(
+                f"Installing all repositories in groups: {', '.join(groups)}...\n"
+            )
 
-        # Install each repo in the group
+        # Install repos in all groups
         failed_items = []
         skipped_items = []
         total_items = 0
 
-        for repo in group_repos:
-            repo_path = Path(repo["path"])
-            typer.echo(f"{'=' * 60}")
-            typer.echo(f"Installing: {repo['name']}")
-            typer.echo(f"{'=' * 60}\n")
+        for grp in groups:
+            group_path = base_dir / grp
+            group_repos = [r for r in all_repos if r["group"] == grp]
 
-            # Detect venv
-            python_path, venv_type = get_venv_info(repo_path, group_path)
+            if len(groups) > 1:
+                typer.echo(f"\n{'#' * 60}")
+                typer.echo(f"# Group: {grp}")
+                typer.echo(f"{'#' * 60}\n")
 
-            if verbose:
-                typer.echo(f"[verbose] Venv type: {venv_type}")
-                typer.echo(f"[verbose] Python: {python_path}\n")
+            for repo in group_repos:
+                repo_path = Path(repo["path"])
+                typer.echo(f"{'=' * 60}")
+                typer.echo(f"Installing: {repo['name']}")
+                typer.echo(f"{'=' * 60}\n")
 
-            # Show venv info
-            if venv_type == "group":
-                typer.echo(f"Using group venv: {group_path}/.venv\n")
-            elif venv_type == "venv":
-                typer.echo(f"Using venv: {python_path}\n")
-            else:
-                typer.echo(f"⚠️  No venv found, using system Python: {python_path}\n")
+                # Detect venv
+                python_path, venv_type = get_venv_info(repo_path, group_path)
 
-            # Check if this repo has install_dirs (monorepo)
-            install_dirs = get_install_dirs(config, group, repo["name"])
+                if verbose:
+                    typer.echo(f"[verbose] Venv type: {venv_type}")
+                    typer.echo(f"[verbose] Python: {python_path}\n")
 
-            if install_dirs:
-                # Monorepo: install each directory separately
-                typer.echo(
-                    f"Monorepo detected: installing {len(install_dirs)} packages...\n"
-                )
+                # Show venv info
+                if venv_type == "group":
+                    typer.echo(f"Using group venv: {group_path}/.venv\n")
+                elif venv_type == "venv":
+                    typer.echo(f"Using venv: {python_path}\n")
+                else:
+                    typer.echo(
+                        f"⚠️  No venv found, using system Python: {python_path}\n"
+                    )
 
-                for install_dir in install_dirs:
+                # Check if this repo has install_dirs (monorepo)
+                install_dirs = get_install_dirs(config, grp, repo["name"])
+
+                if install_dirs:
+                    # Monorepo: install each directory separately
+                    typer.echo(
+                        f"Monorepo detected: installing {len(install_dirs)} packages...\n"
+                    )
+
+                    for install_dir in install_dirs:
+                        total_items += 1
+                        typer.echo(f"  → Installing from {install_dir}...")
+
+                        result = install_package(
+                            repo_path,
+                            python_path,
+                            install_dir=install_dir,
+                            extras=extras,
+                            groups=dependency_groups,
+                            verbose=verbose,
+                        )
+
+                        if result == "success":
+                            typer.echo(f"  ✅ {install_dir} installed successfully\n")
+                        elif result == "skipped":
+                            skipped_items.append(f"{repo['name']}/{install_dir}")
+                        else:
+                            failed_items.append(f"{repo['name']}/{install_dir}")
+                else:
+                    # Regular repo: install from root
                     total_items += 1
-                    typer.echo(f"  → Installing from {install_dir}...")
 
                     result = install_package(
                         repo_path,
                         python_path,
-                        install_dir=install_dir,
+                        install_dir=None,
                         extras=extras,
                         groups=dependency_groups,
                         verbose=verbose,
                     )
 
                     if result == "success":
-                        typer.echo(f"  ✅ {install_dir} installed successfully\n")
+                        typer.echo(f"✅ {repo['name']} installed successfully")
+                        # Check for frontend and install if present
+                        install_frontend_if_exists(repo_path, verbose=verbose)
+                        typer.echo()
                     elif result == "skipped":
-                        skipped_items.append(f"{repo['name']}/{install_dir}")
+                        skipped_items.append(repo["name"])
                     else:
-                        failed_items.append(f"{repo['name']}/{install_dir}")
-            else:
-                # Regular repo: install from root
-                total_items += 1
-
-                result = install_package(
-                    repo_path,
-                    python_path,
-                    install_dir=None,
-                    extras=extras,
-                    groups=dependency_groups,
-                    verbose=verbose,
-                )
-
-                if result == "success":
-                    typer.echo(f"✅ {repo['name']} installed successfully")
-                    # Check for frontend and install if present
-                    install_frontend_if_exists(repo_path, verbose=verbose)
-                    typer.echo()
-                elif result == "skipped":
-                    skipped_items.append(repo["name"])
-                else:
-                    failed_items.append(repo["name"])
+                        failed_items.append(repo["name"])
 
         # Summary
         typer.echo(f"\n{'=' * 60}")
@@ -588,7 +639,14 @@ def install_callback(
                 typer.echo(f"  • {item_name}")
             raise typer.Exit(1)
         else:
-            typer.echo(f"\n✅ All packages in group '{group}' installed successfully!")
+            if len(groups) == 1:
+                typer.echo(
+                    f"\n✅ All packages in group '{groups[0]}' installed successfully!"
+                )
+            else:
+                typer.echo(
+                    f"\n✅ All packages in groups {', '.join(groups)} installed successfully!"
+                )
         return
 
     # Require repo_name if not listing and not installing group
