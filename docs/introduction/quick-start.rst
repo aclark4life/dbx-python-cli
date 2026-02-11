@@ -17,7 +17,7 @@ This creates a configuration file at ``~/.config/dbx-python-cli/config.toml`` wi
 The default configuration includes:
 
 - Base directory: ``~/Developer/mongodb``
-- Pre-configured repository groups (pymongo, langchain, etc.)
+- Pre-configured repository groups (django, pymongo, langchain, etc.)
 
 You can edit this file to customize your setup.
 
@@ -28,10 +28,10 @@ Clone a group of related repositories:
 
 .. code-block:: bash
 
-   # Clone the pymongo group
-   dbx clone -g pymongo
+   # Clone the django group
+   dbx clone -g django
 
-This will clone all repositories in the pymongo group to ``~/Developer/mongodb/pymongo/``.
+This will clone all repositories in the django group to ``~/Developer/mongodb/django/``.
 
 To see available groups:
 
@@ -46,16 +46,16 @@ Create a virtual environment for the group:
 
 .. code-block:: bash
 
-   # Create venv for pymongo group
-   dbx env init -g pymongo
+   # Create venv for django group
+   dbx env init -g django
 
-This creates a virtual environment at ``~/Developer/mongodb/pymongo/.venv``.
+This creates a virtual environment at ``~/Developer/mongodb/django/.venv``.
 
 To specify a Python version:
 
 .. code-block:: bash
 
-   dbx env init -g pymongo --python 3.11
+   dbx env init -g django --python 3.11
 
 Step 4: Install Dependencies
 -----------------------------
@@ -64,18 +64,18 @@ Install dependencies for a repository:
 
 .. code-block:: bash
 
-   # Install dependencies for mongo-python-driver
-   dbx install mongo-python-driver
+   # Install dependencies for django-mongodb-backend
+   dbx install django-mongodb-backend
 
 To install with extras:
 
 .. code-block:: bash
 
    # Install with test extras
-   dbx install mongo-python-driver -e test
+   dbx install django-mongodb-backend -e test
 
-   # Install with multiple extras
-   dbx install mongo-python-driver -e test,aws,encryption
+   # Install libmongocrypt (includes cmake build step for Queryable Encryption)
+   dbx install libmongocrypt
 
 Step 5: Run Tests
 -----------------
@@ -85,10 +85,10 @@ Run tests for a repository:
 .. code-block:: bash
 
    # Run all tests
-   dbx test mongo-python-driver
+   dbx test django-mongodb-backend
 
    # Run tests matching a keyword
-   dbx test mongo-python-driver -k "test_connection"
+   dbx test django-mongodb-backend -k "test_connection"
 
 Working with Django Projects
 -----------------------------
@@ -150,13 +150,13 @@ If a repository has a ``justfile``, you can run just commands:
 .. code-block:: bash
 
    # Show available just commands
-   dbx just mongo-python-driver
+   dbx just django-mongodb-backend
 
    # Run a specific just command
-   dbx just mongo-python-driver lint
+   dbx just django-mongodb-backend lint
 
    # Run just command with arguments
-   dbx just mongo-python-driver test -v
+   dbx just django-mongodb-backend test -v
 
 Sync Repositories
 ~~~~~~~~~~~~~~~~~
@@ -166,10 +166,10 @@ Keep your repositories up to date:
 .. code-block:: bash
 
    # Sync a single repository
-   dbx sync mongo-python-driver
+   dbx sync django-mongodb-backend
 
    # Sync all repositories in a group
-   dbx sync -g pymongo
+   dbx sync -g django
 
 View Git Branches
 ~~~~~~~~~~~~~~~~~
@@ -179,13 +179,13 @@ View branches across repositories:
 .. code-block:: bash
 
    # View branches in a single repository
-   dbx branch mongo-python-driver
+   dbx branch django-mongodb-backend
 
    # View all branches (including remote)
-   dbx branch mongo-python-driver -a
+   dbx branch django-mongodb-backend -a
 
    # View branches in all repositories in a group
-   dbx branch -g pymongo
+   dbx branch -g django
 
 Working with Multiple Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -210,8 +210,8 @@ Use ``-v`` or ``--verbose`` for detailed output:
 
 .. code-block:: bash
 
-   dbx -v install mongo-python-driver
-   dbx --verbose test mongo-python-driver
+   dbx -v install django-mongodb-backend
+   dbx --verbose test django-mongodb-backend
 
 Next Steps
 ----------
