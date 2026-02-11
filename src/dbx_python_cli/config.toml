@@ -59,6 +59,14 @@ libmongocrypt = [
     "bindings/python/",
 ]
 
+# Build commands: specify commands to run before installing (e.g., cmake builds)
+[repo.groups.django.build_commands]
+libmongocrypt = [
+    "mkdir -p cmake-build",
+    "cd cmake-build && cmake ..",
+    "cd cmake-build && make",
+]
+
 # Custom test runner configuration: specify test runner script for repos that don't use pytest
 [repo.groups.django.test_runner]
 django = "tests/runtests.py"

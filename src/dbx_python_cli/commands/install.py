@@ -11,10 +11,54 @@ from dbx_python_cli.commands.repo_utils import (
     find_all_repos,
     find_repo_by_name,
     get_base_dir,
+    get_build_commands,
     get_config,
     get_install_dirs,
 )
 from dbx_python_cli.commands.venv_utils import get_venv_info
+
+
+def run_build_commands(repo_path, build_commands, verbose=False):
+    """
+    Run build commands for a repository.
+
+    Args:
+        repo_path: Path to the repository root
+        build_commands: List of shell commands to run
+        verbose: Whether to show verbose output
+
+    Returns:
+        bool: True if all commands succeeded, False otherwise
+    """
+    typer.echo(f"🔨 Running {len(build_commands)} build command(s)...\n")
+
+    for i, cmd in enumerate(build_commands, 1):
+        typer.echo(f"  [{i}/{len(build_commands)}] {cmd}")
+
+        try:
+            result = subprocess.run(
+                cmd,
+                shell=True,
+                cwd=repo_path,
+                check=False,
+                capture_output=not verbose,
+                text=True,
+            )
+
+            if result.returncode != 0:
+                typer.echo(f"  ❌ Build command failed: {cmd}", err=True)
+                if not verbose and result.stderr:
+                    typer.echo(result.stderr, err=True)
+                return False
+
+            typer.echo("  ✅ Command completed successfully\n")
+
+        except Exception as e:
+            typer.echo(f"  ❌ Error running build command: {e}", err=True)
+            return False
+
+    typer.echo("✅ All build commands completed successfully\n")
+    return True
 
 
 def install_frontend_if_exists(repo_path, verbose=False):
@@ -725,6 +769,13 @@ def install_callback(
         typer.echo(f"Using venv: {python_path}\n")
     else:
         typer.echo(f"⚠️  No venv found, using system Python: {python_path}\n")
+
+    # Check if this repo needs build commands (e.g., cmake)
+    build_commands = get_build_commands(config, repo["group"], repo["name"])
+    if build_commands:
+        if not run_build_commands(repo_path, build_commands, verbose=verbose):
+            typer.echo("❌ Build failed", err=True)
+            raise typer.Exit(1)
 
     # Check if this repo has install_dirs (monorepo)
     install_dirs = get_install_dirs(config, repo["group"], repo["name"])

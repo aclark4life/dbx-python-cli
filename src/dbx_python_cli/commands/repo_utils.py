@@ -69,6 +69,29 @@ def get_install_dirs(config, group_name, repo_name):
     return install_dirs_config.get(repo_name)
 
 
+def get_build_commands(config, group_name, repo_name):
+    """
+    Get build commands for a repository.
+
+    For repos that need a build step before installation (e.g., cmake builds),
+    returns a list of shell commands to run.
+
+    Args:
+        config: Configuration dictionary
+        group_name: Name of the group (e.g., 'django')
+        repo_name: Name of the repository (e.g., 'libmongocrypt')
+
+    Returns:
+        list: List of build commands, or None if no build needed
+    """
+    groups = get_repo_groups(config)
+    if group_name not in groups:
+        return None
+
+    build_commands_config = groups[group_name].get("build_commands", {})
+    return build_commands_config.get(repo_name)
+
+
 def get_test_runner(config, group_name, repo_name):
     """
     Get test runner configuration for a repository.
