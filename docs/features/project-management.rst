@@ -10,7 +10,7 @@ Projects are Django applications created from bundled templates that include:
 
 - Django project structure with MongoDB backend configuration
 - Optional frontend application with webpack setup
-- Pre-configured settings for different environments (base, qe, etc.)
+- Pre-configured settings with commented Queryable Encryption (QE) support
 - Justfile for common development tasks
 - Pre-generated migrations for Django's built-in apps
 
@@ -73,8 +73,7 @@ A generated project includes:
    │   ├── settings/
    │   │   ├── __init__.py
    │   │   ├── base.py
-   │   │   ├── qe.py
-   │   │   └── myproject.py
+   │   │   └── myproject.py  (includes commented QE configuration)
    │   ├── urls.py
    │   ├── wsgi.py
    │   └── migrations/
@@ -116,8 +115,8 @@ Run a Django project's development server with the ``run`` command:
    # Run with custom host and port
    dbx project run myproject --host 0.0.0.0 --port 8080
 
-   # Run with specific settings configuration
-   dbx project run myproject --settings qe
+   # Run with custom MongoDB URI
+   dbx project run myproject --mongodb-uri mongodb://localhost:27017
 
 This will:
 
@@ -141,11 +140,8 @@ Run Django management commands with the ``manage`` command:
    # Create migrations
    dbx project manage myproject makemigrations
 
-   # Run with specific settings
-   dbx project manage myproject --settings qe shell
-
    # Run with MongoDB URI
-   dbx project manage myproject --mongodb-uri mongodb://localhost:27017
+   dbx project manage myproject --mongodb-uri mongodb://localhost:27017 shell
 
 Creating Superusers
 -------------------
@@ -163,8 +159,8 @@ Create a Django superuser with the ``su`` command:
    # Create with custom credentials
    dbx project su myproject -u admin -p secretpass -e admin@example.com
 
-   # Create with specific settings
-   dbx project su myproject --settings qe
+   # Create with custom MongoDB URI
+   dbx project su myproject --mongodb-uri mongodb://localhost:27017
 
 The default username and password are both ``admin``. The email defaults to the ``PROJECT_EMAIL`` environment variable or ``admin@example.com`` if not set.
 
@@ -224,23 +220,111 @@ Projects are created in the directory specified by ``base_dir`` in your configur
 
 With this configuration, projects will be created in ``~/Developer/mongodb/projects/``.
 
-Settings Configurations
------------------------
+Environment Variables
+---------------------
 
-Projects support multiple settings configurations:
+Project commands automatically set environment variables from your ``~/.config/dbx-python-cli/config.toml`` file. The default configuration includes:
 
-- ``base``: Default settings
-- ``qe``: Queryable Encryption environment settings
-- ``<project_name>``: Project-specific settings (default)
+.. code-block:: toml
 
-The default ``DJANGO_SETTINGS_MODULE`` in the generated ``pyproject.toml`` uses the project-specific settings module (``<project_name>.settings.<project_name>``).
+   [project.default_env]
+   MONGODB_URI = "mongodb://localhost:27017"
+   # Set the path to your libmongocrypt build for Queryable Encryption support
+   PYMONGOCRYPT_LIB = "~/Developer/mongodb/django/libmongocrypt/cmake-build/libmongocrypt.dylib"  # macOS
+   # PYMONGOCRYPT_LIB = "~/Developer/mongodb/django/libmongocrypt/cmake-build/libmongocrypt.so"     # Linux
+   # DYLD_LIBRARY_PATH = "~/Developer/mongodb/django/libmongocrypt/cmake-build"  # macOS (alternative)
+   # LD_LIBRARY_PATH = "~/Developer/mongodb/django/libmongocrypt/cmake-build"    # Linux (alternative)
+   CRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-macos-arm64-enterprise-8.2.2/lib/mongo_crypt_v1.dylib"  # macOS
+   # CRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-linux-x86_64-enterprise-8.2.2/lib/mongo_crypt_v1.so"     # Linux
 
-You can specify which settings to use at runtime with the ``--settings`` flag:
+These environment variables are automatically used by the ``run``, ``manage``, and ``su`` commands. You can override them using command-line flags:
 
 .. code-block:: bash
 
-   # Run with QE settings
-   dbx project run myproject --settings qe
+   # Override MongoDB URI
+   dbx project run myproject --mongodb-uri mongodb://custom-host:27017
 
-   # Run management commands with QE settings
-   dbx project manage myproject --settings qe migrate
+   # Environment variables from config are used if not overridden
+   dbx project manage myproject migrate
+
+Settings Configurations
+-----------------------
+
+Projects include multiple settings files:
+
+- ``base.py``: Shared base settings
+- ``<project_name>.py``: Project-specific settings (default) with commented Queryable Encryption configuration
+
+The default ``DJANGO_SETTINGS_MODULE`` in the generated ``pyproject.toml`` uses the project-specific settings module (``<project_name>.settings.<project_name>``).
+
+Queryable Encryption Support
+-----------------------------
+
+Projects include commented configuration for MongoDB Queryable Encryption (QE) in the main settings file. To enable QE:
+
+1. **Uncomment the QE database configuration** in ``<project_name>/settings/<project_name>.py``:
+
+   .. code-block:: python
+
+      DATABASES = {
+          "default": {
+              "ENGINE": "django_mongodb_backend",
+              "NAME": "<project_name>",
+              "CLIENT": {
+                  "host": os.getenv("MONGODB_URI", "mongodb://localhost:27017"),
+                  "auto_encryption_opts": AutoEncryptionOpts(
+                      key_vault_namespace="<project_name>_encrypted.__keyVault",
+                      kms_providers={
+                          "local": {
+                              "key": b"..."  # 96-byte key included in template
+                          },
+                      },
+                      crypt_shared_lib_path=os.getenv("CRYPT_SHARED_LIB_PATH"),
+                      crypt_shared_lib_required=True,
+                  )
+              },
+          },
+          # Optional: separate database for encrypted data
+          "encrypted": {
+              "ENGINE": "django_mongodb_backend",
+              "NAME": "<project_name>_encrypted",
+              "CLIENT": {
+                  "host": os.getenv("MONGODB_URI", "mongodb://localhost:27017"),
+              },
+          },
+      }
+
+2. **Uncomment the medical_records app** (if using the QE demo):
+
+   .. code-block:: python
+
+      INSTALLED_APPS = (
+          INSTALLED_APPS
+          + [
+              "medical_records",  # Uncomment for QE demo
+          ]
+      )
+
+3. **Ensure environment variables are set** in your ``~/.config/dbx-python-cli/config.toml``:
+
+   - ``PYMONGOCRYPT_LIB``: Path to the libmongocrypt shared library
+   - ``CRYPT_SHARED_LIB_PATH``: Path to the MongoDB Automatic Encryption Shared Library
+   - ``MONGODB_URI``: MongoDB connection string (defaults to ``mongodb://localhost:27017``)
+
+4. **Build libmongocrypt** (if not already built):
+
+   .. code-block:: bash
+
+      # Install libmongocrypt (includes cmake build step)
+      dbx install libmongocrypt
+
+The ``dbx install`` command will automatically run the cmake build commands configured in ``config.toml`` to build the libmongocrypt C library.
+
+.. note::
+
+   **Queryable Encryption Requirements:**
+
+   - MongoDB 7.0+ (replica set or sharded cluster)
+   - libmongocrypt C library (built via ``dbx install libmongocrypt``)
+   - MongoDB Automatic Encryption Shared Library (download from MongoDB)
+   - pymongocrypt Python package (installed automatically with django-mongodb-backend)
