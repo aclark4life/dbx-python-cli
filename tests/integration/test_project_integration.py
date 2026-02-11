@@ -623,5 +623,5 @@ base_dir = "{base_dir_str}"
 
         settings_content = settings_file.read_text()
         assert "INSTALLED_APPS" in settings_content
-        assert "INSTALLED_APPS = INSTALLED_APPS + [" in settings_content
+        assert "INSTALLED_APPS  # noqa: F405" in settings_content
         assert "# Add your project-specific apps here" in settings_content
