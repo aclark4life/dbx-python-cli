@@ -157,9 +157,11 @@ def test_repo_init_with_remove_base_dir(tmp_path):
             "dbx_python_cli.commands.config.get_default_config_path"
         ) as mock_default:
             default_config = tmp_path / "default_config.toml"
+            # Convert path to use forward slashes for TOML compatibility on Windows
+            base_dir_str = str(base_dir).replace("\\", "/")
             default_config.write_text(f"""
 [repo]
-base_dir = "{str(base_dir)}"
+base_dir = "{base_dir_str}"
 fork_user = "testuser"
 
 [repo.groups.test]
