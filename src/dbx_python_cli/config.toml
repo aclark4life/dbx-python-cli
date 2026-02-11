@@ -28,6 +28,7 @@ repos = [
 # Build commands: specify commands to run before installing (e.g., rust builds)
 [repo.groups.pymongo.build_commands]
 mongo-python-driver = [
+    "pip install maturin",
     "cd bson/_rbson && maturin build --release",
 ]
 
