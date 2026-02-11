@@ -145,7 +145,7 @@ API documentation is auto-generated from docstrings using Sphinx autodoc:
        Args:
            repo_path: Path to the repository root
            python_path: Path to Python executable
-           install_dir: Subdirectory to install from (for monorepos), or None for root
+           install_dir: Subdirectory to install from (for repos with multiple packages), or None for root
 
        Returns:
            bool: True if successful, False otherwise

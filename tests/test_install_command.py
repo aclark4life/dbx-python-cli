@@ -518,7 +518,7 @@ def test_install_show_options_no_repo(tmp_path):
             assert "Repository name required with --show-options" in output
 
 
-def test_install_show_options_monorepo(tmp_path):
+def test_install_show_options_multiple_packages(tmp_path):
     """Test --show-options with repos that have packages in subdirectories."""
     # Create mock repository structure
     group_dir = tmp_path / "langchain"
@@ -526,7 +526,7 @@ def test_install_show_options_monorepo(tmp_path):
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
 
-    # Create subdirectories for monorepo
+    # Create subdirectories for multiple packages
     pkg1_dir = repo_dir / "libs" / "langchain-mongodb"
     pkg2_dir = repo_dir / "libs" / "langgraph-checkpoint-mongodb"
     pkg1_dir.mkdir(parents=True)

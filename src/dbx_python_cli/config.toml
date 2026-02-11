@@ -38,7 +38,7 @@ repos = [
     "git@github.com:langchain-ai/langchain-mongodb.git",
 ]
 
-# Monorepo configuration: specify install directories for repos with multiple packages
+# Sub-directory configuration: specify install directories for repos with multiple packages
 [repo.groups.langchain.install_dirs]
 langchain-mongodb = [
     "libs/langchain-mongodb/",

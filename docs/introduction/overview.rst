@@ -38,7 +38,7 @@ Fast, reliable dependency installation powered by uv:
 
 - **Extras Support** - Install with optional dependencies (e.g., ``-e test,aws``)
 - **Dependency Groups** - Support for PEP 735 dependency groups
-- **Monorepo Support** - Install from specific directories in monorepos
+- **Sub-directory Support** - Install from specific directories in repositories with multiple packages
 - **Group Installation** - Install all repositories in a group at once
 - **Show Options** - Preview what will be installed before running
 

@@ -68,22 +68,22 @@ Example Output
 
    ✅ Dependency group 'dev' installed successfully
 
-Monorepo Support
-----------------
+Support for Installing Sub-directories
+---------------------------------------
 
-``dbx`` supports installing from monorepos (repositories with multiple packages). For example, ``langchain-mongodb`` is a monorepo containing three packages:
+``dbx`` supports installing from repositories with multiple packages in sub-directories. For example, ``langchain-mongodb`` is a repository containing three packages:
 
 - ``libs/langchain-mongodb/``
 - ``libs/langgraph-checkpoint-mongodb/``
 - ``libs/langgraph-store-mongodb/``
 
-When you install a monorepo, ``dbx`` automatically detects the ``install_dirs`` configuration and installs each package separately:
+When you install a repository with sub-directories, ``dbx`` automatically detects the ``install_dirs`` configuration and installs each package separately:
 
 .. code-block:: bash
 
    $ dbx install langchain-mongodb
 
-   Monorepo detected: installing 3 packages...
+   Multiple packages detected: installing 3 packages...
 
      → Installing from libs/langchain-mongodb/...
      ✅ libs/langchain-mongodb/ installed successfully
@@ -96,7 +96,7 @@ When you install a monorepo, ``dbx`` automatically detects the ``install_dirs`` 
 
    ✅ All packages in langchain-mongodb installed successfully!
 
-You can also install monorepos with extras and dependency groups:
+You can also install repositories with sub-directories using extras and dependency groups:
 
 .. code-block:: bash
 
@@ -106,10 +106,10 @@ You can also install monorepos with extras and dependency groups:
    # Install all packages with extras
    dbx install langchain-mongodb -e test
 
-Configuring Monorepos
-~~~~~~~~~~~~~~~~~~~~~
+Configuring Sub-directory Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Monorepos are configured in ``config.toml`` using the ``install_dirs`` setting:
+Repositories with multiple packages are configured in ``config.toml`` using the ``install_dirs`` setting:
 
 .. code-block:: toml
 
@@ -118,7 +118,7 @@ Monorepos are configured in ``config.toml`` using the ``install_dirs`` setting:
        "git@github.com:langchain-ai/langchain-mongodb.git",
    ]
 
-   # Monorepo configuration: specify install directories
+   # Sub-directory configuration: specify install directories for repos with multiple packages
    [repo.groups.langchain.install_dirs]
    langchain-mongodb = [
        "libs/langchain-mongodb/",
@@ -143,10 +143,10 @@ Before installing, you can see what extras and dependency groups are available f
      Extras: aws, encryption, test
      Dependency groups: dev, docs
 
-   # Show available options for a monorepo
+   # Show available options for a repository with multiple packages
    $ dbx install langchain-mongodb --show-options
 
-   📦 langchain-mongodb (monorepo with 3 packages)
+   📦 langchain-mongodb (repository with 3 packages)
 
      Package: libs/langchain-mongodb/
        Extras: test
@@ -206,7 +206,7 @@ This is useful when:
 - You need to install dependencies for the first time
 - Dependencies have been updated
 - You want to install specific extras or dependency groups
-- You're working with monorepos that have multiple packages
+- You're working with repositories that have multiple packages in sub-directories
 - You want to see what options are available before installing
 
 Requirements
@@ -214,4 +214,4 @@ Requirements
 
 - The repository must be cloned first using ``dbx clone``
 - The repository must have a ``pyproject.toml`` or ``setup.py``
-- For monorepos, each ``install_dirs`` directory must have a ``pyproject.toml`` or ``setup.py``
+- For repositories with sub-directories, each ``install_dirs`` directory must have a ``pyproject.toml`` or ``setup.py``

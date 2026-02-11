@@ -186,7 +186,7 @@ def install_package(
     Args:
         repo_path: Path to the repository root
         python_path: Path to Python executable
-        install_dir: Subdirectory to install from (for monorepos), or None for root
+        install_dir: Subdirectory to install from (for repos with multiple packages), or None for root
         extras: Comma-separated extras to install
         groups: Comma-separated dependency groups to install
         verbose: Whether to show verbose output
@@ -610,7 +610,7 @@ def install_callback(
                         f"⚠️  No venv found, using system Python: {python_path}\n"
                     )
 
-                # Check if this repo has install_dirs (monorepo)
+                # Check if this repo has install_dirs (multiple packages in sub-directories)
                 install_dirs = get_install_dirs(config, grp, repo["name"])
 
                 if install_dirs:
@@ -777,7 +777,7 @@ def install_callback(
             typer.echo("❌ Build failed", err=True)
             raise typer.Exit(1)
 
-    # Check if this repo has install_dirs (monorepo)
+    # Check if this repo has install_dirs (multiple packages in sub-directories)
     install_dirs = get_install_dirs(config, repo["group"], repo["name"])
 
     if install_dirs:
@@ -820,7 +820,7 @@ def install_callback(
         else:
             typer.echo(f"\n✅ All packages in {repo['name']} installed successfully!")
 
-        # Check for frontend and install if present (even for monorepos)
+        # Check for frontend and install if present (even for repos with multiple packages)
         install_frontend_if_exists(repo_path, verbose=verbose)
     else:
         # Regular repo: install from root
