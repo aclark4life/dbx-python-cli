@@ -213,7 +213,11 @@ def test_callback(
         default_env = config.get("project", {}).get("default_env", {})
 
         # Set MONGODB_URI if not in environment
-        if "MONGODB_URI" not in test_env:
+        if "MONGODB_URI" in test_env:
+            typer.echo(
+                f"🔗 Using MONGODB_URI from environment: {test_env['MONGODB_URI']}"
+            )
+        else:
             default_uri = default_env.get("MONGODB_URI")
             if default_uri:
                 typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
