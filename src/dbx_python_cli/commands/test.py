@@ -4,6 +4,7 @@ import os
 import subprocess
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 
 import typer
 
@@ -222,6 +223,25 @@ def test_callback(
             if default_uri:
                 typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
                 test_env["MONGODB_URI"] = default_uri
+
+        # For pymongo tests: parse MONGODB_URI and set DB_IP and DB_PORT
+        # The pymongo test suite uses DB_IP and DB_PORT instead of MONGODB_URI
+        if "MONGODB_URI" in test_env and "DB_IP" not in test_env:
+            try:
+                parsed = urlparse(test_env["MONGODB_URI"])
+                if parsed.hostname:
+                    test_env["DB_IP"] = parsed.hostname
+                    if parsed.port:
+                        test_env["DB_PORT"] = str(parsed.port)
+                    else:
+                        test_env["DB_PORT"] = "27017"  # Default MongoDB port
+                    if verbose:
+                        typer.echo(
+                            f"[verbose] Set DB_IP={test_env['DB_IP']} and DB_PORT={test_env['DB_PORT']} from MONGODB_URI"
+                        )
+            except Exception as e:
+                if verbose:
+                    typer.echo(f"[verbose] Could not parse MONGODB_URI: {e}")
 
         # Check for libmongocrypt environment variables from project config
         for var in [
