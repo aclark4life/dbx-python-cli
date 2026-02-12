@@ -39,7 +39,6 @@ mongo-python-driver = { DRIVERS_TOOLS = "{base_dir}/{group}/drivers-evergreen-to
 
 [repo.groups.langchain]
 repos = [
-    "git@github.com:mongodb/mongo-python-driver.git",
     "git@github.com:mongodb-labs/pymongo-search-utils.git",
     "git@github.com:mongodb-labs/ai-ml-pipeline-testing.git",
     "git@github.com:langchain-ai/langchain-mongodb.git",
@@ -55,7 +54,6 @@ langchain-mongodb = [
 
 [repo.groups.django]
 repos = [
-    "git@github.com:mongodb/mongo-python-driver.git",
     "git@github.com:mongodb-forks/django.git",
     "git@github.com:mongodb-labs/django-mongodb-backend.git",
     "git@github.com:mongodb-labs/django-mongodb-extensions.git",
