@@ -43,6 +43,11 @@ def sync_callback(
         "-f",
         help="Force push after rebasing (use if previous sync failed)",
     ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Show what would be synced without making changes",
+    ),
 ):
     """Sync repository with upstream by fetching, rebasing, and pushing.
 
@@ -56,16 +61,18 @@ def sync_callback(
 
     Usage::
 
-        dbx sync <repo_name>         # Sync a single repository
-        dbx sync -g <group>          # Sync all repos in a group
-        dbx sync <repo_name> --force # Force push after rebasing
-        dbx sync --list              # List available repositories
+        dbx sync <repo_name>            # Sync a single repository
+        dbx sync -g <group>             # Sync all repos in a group
+        dbx sync <repo_name> --force    # Force push after rebasing
+        dbx sync <repo_name> --dry-run  # Show what would be synced
+        dbx sync --list                 # List available repositories
 
     Examples::
 
-        dbx sync mongo-python-driver  # Sync single repo
-        dbx sync -g pymongo           # Sync all repos in group
-        dbx sync my-repo --force      # Force push after rebase
+        dbx sync mongo-python-driver         # Sync single repo
+        dbx sync -g pymongo                  # Sync all repos in group
+        dbx sync my-repo --force             # Force push after rebase
+        dbx sync my-repo --dry-run           # Preview changes without syncing
     """
     from dbx_python_cli.commands.repo_utils import find_all_repos, find_repo_by_name
 
@@ -123,9 +130,16 @@ def sync_callback(
             )
 
             for repo_info in group_repos:
-                _sync_repository(repo_info["path"], repo_info["name"], verbose, force)
+                _sync_repository(
+                    repo_info["path"], repo_info["name"], verbose, force, dry_run
+                )
 
-            typer.echo(f"\n✨ Done! Synced {len(group_repos)} repository(ies)")
+            if dry_run:
+                typer.echo(
+                    f"\n✨ Dry run complete! Checked {len(group_repos)} repository(ies)"
+                )
+            else:
+                typer.echo(f"\n✨ Done! Synced {len(group_repos)} repository(ies)")
             return
 
         # Handle single repo sync
@@ -143,7 +157,7 @@ def sync_callback(
             typer.echo("\nUse 'dbx sync --list' to see available repositories")
             raise typer.Exit(1)
 
-        _sync_repository(repo_info["path"], repo_info["name"], verbose, force)
+        _sync_repository(repo_info["path"], repo_info["name"], verbose, force, dry_run)
 
     except Exception as e:
         typer.echo(f"❌ Error: {e}", err=True)
@@ -151,19 +165,28 @@ def sync_callback(
 
 
 def _sync_repository(
-    repo_path: Path, repo_name: str, verbose: bool = False, force: bool = False
+    repo_path: Path,
+    repo_name: str,
+    verbose: bool = False,
+    force: bool = False,
+    dry_run: bool = False,
 ):
     """Sync a single repository with upstream.
 
     For main/master branches: rebases to upstream/<branch_name>
     For feature branches: rebases to upstream's default branch (main/master)
     """
-    typer.echo(f"  🔄 Syncing {repo_name}...")
+    if dry_run:
+        typer.echo(f"  🔍 Checking {repo_name}...")
+    else:
+        typer.echo(f"  🔄 Syncing {repo_name}...")
 
     if verbose:
         typer.echo(f"  [verbose] Repository path: {repo_path}")
         if force:
             typer.echo("  [verbose] Force push enabled")
+        if dry_run:
+            typer.echo("  [verbose] Dry run mode enabled")
 
     # Check if upstream remote exists
     try:
@@ -284,6 +307,13 @@ def _sync_repository(
                 f"  [verbose] Feature branch detected, rebasing to {rebase_target}"
             )
 
+    # If dry-run, compare commits and show what would happen
+    if dry_run:
+        _show_commit_comparison(
+            repo_path, repo_name, current_branch, rebase_target, verbose
+        )
+        return
+
     # Rebase on target branch
     try:
         if verbose:
@@ -398,3 +428,142 @@ def _get_upstream_default_branch(repo_path: Path, verbose: bool = False) -> str 
             pass
 
     return None
+
+
+def _show_commit_comparison(
+    repo_path: Path,
+    repo_name: str,
+    current_branch: str,
+    rebase_target: str,
+    verbose: bool = False,
+):
+    """Show comparison between upstream and origin commits.
+
+    Args:
+        repo_path: Path to the repository
+        repo_name: Name of the repository
+        current_branch: Current branch name
+        rebase_target: Target branch to rebase onto (e.g., 'upstream/main')
+        verbose: Whether to print verbose output
+    """
+    try:
+        # Get the origin branch reference
+        origin_branch = f"origin/{current_branch}"
+
+        # Check if origin branch exists
+        try:
+            subprocess.run(
+                ["git", "-C", str(repo_path), "rev-parse", origin_branch],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError:
+            typer.echo(
+                f"  ⚠️  {repo_name}: No origin/{current_branch} branch found",
+                err=True,
+            )
+            return
+
+        # Count commits ahead of upstream (commits in origin but not in upstream)
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repo_path),
+                "rev-list",
+                "--count",
+                f"{rebase_target}..{origin_branch}",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        commits_ahead = int(result.stdout.strip())
+
+        # Count commits behind upstream (commits in upstream but not in origin)
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repo_path),
+                "rev-list",
+                "--count",
+                f"{origin_branch}..{rebase_target}",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        commits_behind = int(result.stdout.strip())
+
+        # Show status
+        if commits_ahead == 0 and commits_behind == 0:
+            typer.echo(f"  ✅ {repo_name}: Already up to date with {rebase_target}")
+        else:
+            status_parts = []
+            if commits_behind > 0:
+                status_parts.append(
+                    f"{commits_behind} commit(s) behind {rebase_target}"
+                )
+            if commits_ahead > 0:
+                status_parts.append(f"{commits_ahead} commit(s) ahead")
+
+            status = ", ".join(status_parts)
+            typer.echo(f"  📊 {repo_name}: {status}")
+
+            # Show commit details if verbose or if there are commits
+            if verbose or commits_behind > 0 or commits_ahead > 0:
+                # Show commits that would be applied from upstream
+                if commits_behind > 0:
+                    typer.echo(
+                        f"\n  Commits from {rebase_target} that would be applied:"
+                    )
+                    result = subprocess.run(
+                        [
+                            "git",
+                            "-C",
+                            str(repo_path),
+                            "log",
+                            "--oneline",
+                            "--no-decorate",
+                            f"{origin_branch}..{rebase_target}",
+                        ],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    )
+                    for line in result.stdout.strip().split("\n"):
+                        if line:
+                            typer.echo(f"    + {line}")
+
+                # Show commits in origin that would be rebased
+                if commits_ahead > 0:
+                    typer.echo(
+                        f"\n  Commits in origin/{current_branch} that would be rebased:"
+                    )
+                    result = subprocess.run(
+                        [
+                            "git",
+                            "-C",
+                            str(repo_path),
+                            "log",
+                            "--oneline",
+                            "--no-decorate",
+                            f"{rebase_target}..{origin_branch}",
+                        ],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    )
+                    for line in result.stdout.strip().split("\n"):
+                        if line:
+                            typer.echo(f"    * {line}")
+
+                typer.echo("")  # Empty line for spacing
+
+    except subprocess.CalledProcessError as e:
+        typer.echo(
+            f"  ❌ {repo_name}: Failed to compare commits: {e.stderr if e.stderr else 'Unknown error'}",
+            err=True,
+        )

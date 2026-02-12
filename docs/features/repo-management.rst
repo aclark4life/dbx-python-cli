@@ -107,6 +107,9 @@ After cloning with the fork workflow, you can easily sync your local repository 
    # Sync all repositories in a group
    dbx sync -g pymongo
 
+   # Preview what would be synced without making changes
+   dbx sync mongo-python-driver --dry-run
+
    # Force push after rebasing (use if previous sync failed to push)
    dbx sync mongo-python-driver --force
 
@@ -119,6 +122,7 @@ This command will:
 2. Rebase your current branch on top of ``upstream/<current-branch>``
 3. Push the rebased branch to ``origin`` (your fork)
 4. If ``--force`` is used, force push with ``--force-with-lease`` for safety
+5. If ``--dry-run`` is used, compare commits between upstream and origin without making changes
 
 **Example workflow:**
 
@@ -132,6 +136,10 @@ This command will:
    git checkout -b my-feature
    # ... make changes ...
    git commit -am "Add new feature"
+
+   # Preview what would be synced (dry run)
+   dbx sync mongo-python-driver --dry-run
+   # Shows commits that would be applied from upstream and commits that would be rebased
 
    # Sync with upstream to get latest changes and push
    dbx sync mongo-python-driver
