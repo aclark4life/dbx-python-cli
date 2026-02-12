@@ -209,6 +209,27 @@ def test_callback(
                     typer.echo(f"[verbose]   {key}={value}")
                 typer.echo()
 
+        # Check for libmongocrypt environment variables from project config
+        default_env = config.get("project", {}).get("default_env", {})
+        for var in [
+            "PYMONGOCRYPT_LIB",
+            "DYLD_LIBRARY_PATH",
+            "LD_LIBRARY_PATH",
+            "CRYPT_SHARED_LIB_PATH",
+        ]:
+            if var not in test_env and var in default_env:
+                value = os.path.expanduser(default_env[var])
+                # For library file paths, check if the file exists
+                if var in ["PYMONGOCRYPT_LIB", "CRYPT_SHARED_LIB_PATH"]:
+                    if Path(value).exists():
+                        test_env[var] = value
+                        typer.echo(f"🔧 Using {var} from config: {value}")
+                    # Skip warning - user may not need QE
+                else:
+                    # For library directory paths, set them even if directory doesn't exist yet
+                    test_env[var] = value
+                    typer.echo(f"🔧 Using {var} from config: {value}")
+
         if verbose:
             typer.echo(f"[verbose] Running command: {' '.join(test_cmd)}")
             typer.echo(f"[verbose] Working directory: {repo_path}\n")
