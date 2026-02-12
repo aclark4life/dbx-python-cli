@@ -209,8 +209,17 @@ def test_callback(
                     typer.echo(f"[verbose]   {key}={value}")
                 typer.echo()
 
-        # Check for libmongocrypt environment variables from project config
+        # Check for default environment variables from project config
         default_env = config.get("project", {}).get("default_env", {})
+
+        # Set MONGODB_URI if not in environment
+        if "MONGODB_URI" not in test_env:
+            default_uri = default_env.get("MONGODB_URI")
+            if default_uri:
+                typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
+                test_env["MONGODB_URI"] = default_uri
+
+        # Check for libmongocrypt environment variables from project config
         for var in [
             "PYMONGOCRYPT_LIB",
             "DYLD_LIBRARY_PATH",
