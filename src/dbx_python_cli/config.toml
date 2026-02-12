@@ -16,7 +16,7 @@ CRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-macos-arm64-enterpris
 
 [repo]
 base_dir = "~/Developer/mongodb"
-fork_user = "aclark4life"
+# fork_user = "your-github-username"  # Optional: specify your GitHub username for fork operations
 
 [repo.groups.pymongo]
 repos = [

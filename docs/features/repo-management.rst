@@ -71,13 +71,13 @@ This will:
 
 **Configuration:**
 
-You can set a default fork username in your configuration file to avoid typing it every time:
+You can optionally set a default fork username in your configuration file to avoid typing it every time:
 
 .. code-block:: toml
 
    [repo]
    base_dir = "~/Developer/mongodb"
-   fork_user = "aclark4life"  # Your GitHub username
+   # fork_user = "your-github-username"  # Optional: specify your GitHub username for fork operations
 
    [repo.groups.pymongo]
    repos = [
