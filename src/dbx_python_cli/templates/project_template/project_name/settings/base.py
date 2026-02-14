@@ -56,6 +56,17 @@ DATABASES = {
     },
 }
 
+# PostgreSQL configuration (uncomment to use PostgreSQL instead of MongoDB)
+# Requires: pip install -e ".[postgres]"
+# import dj_database_url
+# DATABASES = {
+#     "default": dj_database_url.config(
+#         default="postgres://postgres:postgres@localhost:5432/{{ project_name }}",
+#         conn_max_age=600,
+#         conn_health_checks=True,
+#     )
+# }
+
 STATIC_URL = "static/"
 
 # Debug toolbar

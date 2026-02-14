@@ -405,6 +405,10 @@ test = [
 encryption = [
     "pymongocrypt",
 ]
+postgres = [
+    "dj-database-url",
+    "psycopg[binary]",
+]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "{project_name}.{settings_path}"
