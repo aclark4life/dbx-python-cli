@@ -100,6 +100,31 @@ This will:
 
 The ``dbx install`` command now supports frontend installation for both projects and regular repositories. If a ``frontend/`` directory is detected with a ``package.json`` file, npm dependencies will be installed automatically after the Python package installation completes.
 
+Just Recipes
+------------
+
+Each project includes a ``justfile`` with convenient recipes for common development tasks:
+
+.. code-block:: bash
+
+   # Django recipes
+   just django-open      # Open http://localhost:8000 in browser (alias: o)
+   just django-serve     # Run Django development server
+   just django-migrate   # Run Django migrations (alias: m)
+   just django-drop      # Drop the project database (alias: d)
+
+   # Python recipes
+   just pip-install      # Install project dependencies (alias: i)
+
+   # NPM recipes (if frontend exists)
+   just npm-install      # Install frontend dependencies
+   just npm-serve        # Run frontend development server
+
+   # Combined recipe
+   just serve            # Install and run both frontend and Django servers (alias: s)
+
+The ``django-drop`` recipe uses ``mongosh`` to drop the MongoDB database with the same name as your project. This is useful for resetting your database during development.
+
 Running Projects
 ----------------
 

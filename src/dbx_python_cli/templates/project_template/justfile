@@ -17,6 +17,11 @@ django-migrate:
     python manage.py migrate
 alias m := django-migrate
 
+[group('django')]
+django-drop:
+    mongosh --eval "db.getSiblingDB('{{ project_name }}').dropDatabase()"
+alias d := django-drop
+
 [group('npm')]
 npm-install:
     cd frontend && npm install
