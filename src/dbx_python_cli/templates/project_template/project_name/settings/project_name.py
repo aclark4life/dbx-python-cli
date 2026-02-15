@@ -20,6 +20,17 @@ INSTALLED_APPS = (
     ]
 )
 
+# PostgreSQL configuration (uncomment to use PostgreSQL instead of MongoDB)
+# Requires: pip install -e ".[postgres]"
+# import dj_database_url
+# DATABASES = {
+#     "default": dj_database_url.config(
+#         default="postgres://postgres:postgres@localhost:5432/{{ project_name }}",
+#         conn_max_age=600,
+#         conn_health_checks=True,
+#     )
+# }
+
 # Queryable Encryption (QE) Configuration
 # Uncomment and configure these settings to enable Queryable Encryption.
 # See: https://django-mongodb-backend.readthedocs.io/en/latest/howto/queryable-encryption/
