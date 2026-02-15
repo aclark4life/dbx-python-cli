@@ -115,9 +115,11 @@ Create and manage Django projects with MongoDB backend:
    # Create a superuser (defaults to newest project)
    dbx project su
 
+   # Run migrations (defaults to newest project)
+   dbx project migrate
+
    # Run Django management commands (defaults to newest project)
    dbx project manage shell
-   dbx project manage migrate
 
 .. note::
 

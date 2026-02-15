@@ -1008,6 +1008,138 @@ def create_superuser(
         raise typer.Exit(code=1)
 
 
+@app.command("migrate")
+def migrate_project(
+    name: str = typer.Argument(None, help="Project name (defaults to newest project)"),
+    directory: Path = typer.Option(
+        None,
+        "--directory",
+        "-d",
+        help="Custom directory where the project is located (defaults to base_dir/projects/)",
+    ),
+    database: str = typer.Option(
+        None,
+        "--database",
+        help="Specify the database to migrate (e.g., 'default', 'encrypted')",
+    ),
+    mongodb_uri: str = typer.Option(
+        None,
+        "--mongodb-uri",
+        help="Optional MongoDB connection URI. Falls back to $MONGODB_URI if not provided.",
+    ),
+    settings: str = typer.Option(
+        None,
+        "--settings",
+        "-s",
+        help="Settings configuration name to use (defaults to project name)",
+    ),
+):
+    """
+    Run Django migrations on a project.
+
+    If no project name is provided, uses the most recently created project.
+
+    Examples::
+
+        dbx project migrate                          # Migrate newest project
+        dbx project migrate myproject
+        dbx project migrate myproject --settings base
+        dbx project migrate myproject --database encrypted
+    """
+    import os
+
+    # Determine project directory
+    if directory is None:
+        config = get_config()
+        base_dir = get_base_dir(config)
+        projects_dir = base_dir / "projects"
+
+        # If no name provided, find the newest project
+        if name is None:
+            name, project_path = get_newest_project(projects_dir)
+            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
+        else:
+            project_path = projects_dir / name
+    else:
+        if name is None:
+            typer.echo("❌ Project name is required when using --directory", err=True)
+            raise typer.Exit(code=1)
+        project_path = directory / name
+
+    if not project_path.exists():
+        typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
+        raise typer.Exit(code=1)
+
+    # Set up environment
+    env = os.environ.copy()
+
+    # Check for default environment variables from config
+    config = get_config()
+    default_env = config.get("project", {}).get("default_env", {})
+
+    if mongodb_uri:
+        typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
+        env["MONGODB_URI"] = mongodb_uri
+    elif "MONGODB_URI" not in env:
+        # Check config for default MONGODB_URI
+        default_uri = default_env.get("MONGODB_URI")
+        if default_uri:
+            typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
+            env["MONGODB_URI"] = default_uri
+
+    # Set library paths for libmongocrypt (Queryable Encryption support)
+    for var in [
+        "PYMONGOCRYPT_LIB",
+        "DYLD_LIBRARY_PATH",
+        "LD_LIBRARY_PATH",
+        "CRYPT_SHARED_LIB_PATH",
+    ]:
+        if var not in env and var in default_env:
+            value = os.path.expanduser(default_env[var])
+            # For library file paths, check if the file exists
+            if var in ["PYMONGOCRYPT_LIB", "CRYPT_SHARED_LIB_PATH"]:
+                if Path(value).exists():
+                    env[var] = value
+                    typer.echo(f"🔧 Using {var} from config: {value}")
+                # Skip warning - user may not need QE
+            else:
+                # For library directory paths, set them even if directory doesn't exist yet
+                env[var] = value
+                typer.echo(f"🔧 Using {var} from config: {value}")
+
+    # Default to project_name.py settings if not specified
+    settings_module = settings if settings else name
+    env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
+    env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
+    typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
+
+    # Build migrate command
+    cmd = ["django-admin", "migrate"]
+    if database:
+        cmd.append(f"--database={database}")
+        typer.echo(f"🗄️  Running migrations for database: {database}")
+    else:
+        typer.echo(f"🗄️  Running migrations for project '{name}'")
+
+    try:
+        subprocess.run(
+            cmd,
+            cwd=project_path.parent,
+            env=env,
+            check=True,
+        )
+        typer.echo("✅ Migrations completed successfully")
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"❌ Command failed with exit code {e.returncode}", err=True)
+        raise typer.Exit(code=e.returncode)
+    except FileNotFoundError:
+        typer.echo(
+            "❌ 'django-admin' command not found. Make sure Django is installed.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+
 @app.command("edit")
 def edit_project(
     name: str = typer.Argument(None, help="Project name (defaults to newest project)"),

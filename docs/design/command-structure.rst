@@ -56,10 +56,10 @@ Top-Level Commands (Preferred)
 
    # Clone repositories
    dbx clone -g pymongo
-   
+
    # Sync a repository
    dbx sync mongo-python-driver
-   
+
    # List repositories
    dbx -l
 
@@ -72,7 +72,7 @@ Command Groups (When Appropriate)
    dbx env create -g pymongo
    dbx env activate -g pymongo
    dbx env list
-   
+
    # Project management
    dbx project add myproject
    dbx project run myproject
@@ -117,6 +117,7 @@ Most ``dbx project`` commands default to the newest project when no project name
    dbx project run              # Run newest project
    dbx project manage shell     # Open shell on newest project
    dbx project su               # Create superuser on newest project
+   dbx project migrate          # Run migrations on newest project
    dbx project remove           # Remove newest project
 
 The "newest" project is determined by filesystem modification time. This is particularly useful during active development when you're frequently working with the same project.
@@ -144,4 +145,3 @@ We should also look for opportunities to add smart defaults that reduce typing w
 - **Easy override**: Defaults should be easy to override when needed
 
 The goal is to keep the CLI intuitive and easy to use while maintaining good organization.
-

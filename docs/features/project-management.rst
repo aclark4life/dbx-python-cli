@@ -33,6 +33,7 @@ Commands that support this behavior:
 - ``dbx project remove`` - Remove a project
 - ``dbx project manage`` - Run Django management commands
 - ``dbx project su`` - Create a superuser
+- ``dbx project migrate`` - Run Django migrations
 
 This feature is particularly useful during active development when you're frequently working with the same project.
 
@@ -164,6 +165,30 @@ Create a Django superuser with the ``su`` command:
 
 The default username and password are both ``admin``. The email defaults to the ``PROJECT_EMAIL`` environment variable or ``admin@example.com`` if not set.
 
+Running Migrations
+------------------
+
+Run Django migrations with the ``migrate`` command:
+
+.. code-block:: bash
+
+   # Run migrations on the newest project (no name required)
+   dbx project migrate
+
+   # Run migrations on a specific project
+   dbx project migrate myproject
+
+   # Run migrations with custom settings
+   dbx project migrate myproject --settings base
+
+   # Run migrations on a specific database
+   dbx project migrate myproject --database encrypted
+
+   # Run migrations with custom MongoDB URI
+   dbx project migrate myproject --mongodb-uri mongodb://localhost:27017
+
+This is a convenience command that wraps ``django-admin migrate`` with the same environment setup as other project commands.
+
 Removing Projects
 -----------------
 
@@ -237,7 +262,7 @@ Project commands automatically set environment variables from your ``~/.config/d
    CRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-macos-arm64-enterprise-8.2.2/lib/mongo_crypt_v1.dylib"  # macOS
    # CRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-linux-x86_64-enterprise-8.2.2/lib/mongo_crypt_v1.so"     # Linux
 
-These environment variables are automatically used by the ``run``, ``manage``, and ``su`` commands. You can override them using command-line flags:
+These environment variables are automatically used by the ``run``, ``manage``, ``migrate``, and ``su`` commands. You can override them using command-line flags:
 
 .. code-block:: bash
 
@@ -245,7 +270,7 @@ These environment variables are automatically used by the ``run``, ``manage``, a
    dbx project run myproject --mongodb-uri mongodb://custom-host:27017
 
    # Environment variables from config are used if not overridden
-   dbx project manage myproject migrate
+   dbx project migrate myproject
 
 Settings Configurations
 -----------------------
