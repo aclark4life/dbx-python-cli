@@ -101,9 +101,11 @@ base_dir = "{base_dir_str}"
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["project", "add", "--no-install", "--random"])
+        # When no name is provided, a random name is automatically generated
+        result = runner.invoke(app, ["project", "add", "--no-install"])
         assert result.exit_code == 0
         assert "Creating project:" in result.stdout
+        assert "Generated random project name:" in result.stdout
 
         # Verify a project was created
         projects_dir = base_dir / "projects"

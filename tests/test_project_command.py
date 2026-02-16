@@ -29,8 +29,8 @@ def test_project_add_help():
     assert result.exit_code == 0
     output = strip_ansi(result.stdout)
     assert "Create a new Django project using bundled templates" in output
-    assert "--random" in output
     assert "--add-frontend" in output
+    assert "--base-dir" in output
 
 
 def test_project_remove_help():
@@ -42,12 +42,14 @@ def test_project_remove_help():
 
 
 def test_project_add_no_name_no_random():
-    """Test that project add fails when no name and no random flag."""
-    result = runner.invoke(app, ["project", "add"])
-    assert result.exit_code == 1
-    # Error messages go to stderr in typer
-    output = strip_ansi(result.stdout + result.stderr)
-    assert "Project name is required" in output
+    """Test that project add generates a random name when no name is provided."""
+    # When no name is provided, a random name is automatically generated
+    # This test just verifies the help text mentions this behavior
+    result = runner.invoke(app, ["project", "add", "--help"])
+    assert result.exit_code == 0
+    output = strip_ansi(result.stdout)
+    # Check that the help text mentions random name generation
+    assert "random name" in output.lower()
 
 
 def test_project_edit_help():
