@@ -7,6 +7,8 @@ Import this in {{ project_name }}.py to use MongoDB as your database.
 
 from .base import *  # noqa
 
+import os
+
 # MongoDB-specific default auto field
 DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
 
