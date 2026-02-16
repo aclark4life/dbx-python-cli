@@ -133,7 +133,7 @@ def test_project_add_custom_directory(tmp_path):
 
 
 def test_project_add_with_base_dir_override(tmp_path):
-    """Test creating a project with --base-dir override (should not append /projects/)."""
+    """Test creating a project with --base-dir override (uses it as project root)."""
     config_dir = tmp_path / ".config" / "dbx-python-cli"
     config_dir.mkdir(parents=True)
     config_path = config_dir / "config.toml"
@@ -147,9 +147,8 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    # Use --base-dir to override to a different location
-    override_dir = tmp_path / "override_location"
-    override_dir.mkdir()
+    # Use --base-dir to specify the exact project location
+    project_path = tmp_path / "custom_location" / "myproject"
 
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
@@ -160,20 +159,25 @@ base_dir = "{base_dir_str}"
                 "project",
                 "add",
                 "--no-install",
-                "overrideproject",
+                "myproject",
                 "--base-dir",
-                str(override_dir),
+                str(project_path),
             ],
         )
         assert result.exit_code == 0
 
-        # Verify project is created directly in override_dir (not override_dir/projects/)
-        project_path = override_dir / "overrideproject"
+        # Verify project is created directly at the specified path
         assert project_path.exists()
         assert (project_path / "manage.py").exists()
+        assert (project_path / "pyproject.toml").exists()
 
-        # Verify it was NOT created in override_dir/projects/
-        wrong_path = override_dir / "projects" / "overrideproject"
+        # Verify the inner project module exists (this is normal Django structure)
+        inner_module = project_path / "myproject"
+        assert inner_module.exists()
+        assert (inner_module / "settings").is_dir()
+
+        # Verify it was NOT created with double nesting
+        wrong_path = project_path / "myproject" / "myproject"
         assert not wrong_path.exists()
 
 

@@ -175,7 +175,7 @@ def add_project(
     base_dir: Path = typer.Option(
         None,
         "--base-dir",
-        help="Use this directory for projects (without appending /projects/). Only used when --directory is not specified.",
+        help="Use this as the project root directory. Only used when --directory is not specified.",
     ),
     add_frontend: bool = typer.Option(
         True,
@@ -203,30 +203,37 @@ def add_project(
         dbx project add myproject --no-frontend  # Create without frontend
         dbx project add -d ~/custom/path   # Create with random name in custom directory
         dbx project add myproject -d ~/custom/path  # Create in custom directory
-        dbx project add --base-dir ~/other/path  # Create in ~/other/path (no /projects/ appended)
+        dbx project add myproject --base-dir ~/path/to/myproject  # Create directly at ~/path/to/myproject
     """
-    # Generate random name if not provided
-    if name is None:
-        name = generate_random_project_name()
-        typer.echo(f"🎲 Generated random project name: {name}")
-
-    # Use project name as default settings module
-    settings_path = f"settings.{name}"
-
-    # Determine project directory
+    # Determine project directory and name
+    use_base_dir_override = False
     if directory is None:
         config = get_config()
         if base_dir is None:
-            # Use base_dir/projects/ as default when using config
+            # Use base_dir/projects/name as default when using config
+            if name is None:
+                name = generate_random_project_name()
+                typer.echo(f"🎲 Generated random project name: {name}")
             base_dir = get_base_dir(config)
             projects_dir = base_dir / "projects"
+            projects_dir.mkdir(parents=True, exist_ok=True)
+            project_path = projects_dir / name
         else:
-            # When --base-dir is specified, use it directly without appending /projects/
-            projects_dir = base_dir.expanduser()
-        projects_dir.mkdir(parents=True, exist_ok=True)
-        project_path = projects_dir / name
+            # When --base-dir is specified, use it as the project root directly
+            # Extract project name from the path
+            use_base_dir_override = True
+            project_path = base_dir.expanduser()
+            name = project_path.name
+            # Ensure parent directory exists
+            project_path.parent.mkdir(parents=True, exist_ok=True)
     else:
+        if name is None:
+            name = generate_random_project_name()
+            typer.echo(f"🎲 Generated random project name: {name}")
         project_path = directory / name
+
+    # Use project name as default settings module
+    settings_path = f"settings.{name}"
 
     if project_path.exists():
         typer.echo(f"❌ Project '{name}' already exists at {project_path}", err=True)
@@ -242,18 +249,29 @@ def add_project(
             str(template_path),
             name,
         ]
+
+        # When using --base-dir override, pass the full path to django-admin
+        if use_base_dir_override:
+            cmd.append(str(project_path))
+
         typer.echo(f"📦 Creating project: {name}")
 
         # Run django-admin in a way that surfaces a clean, user-friendly error
         # instead of a full Python traceback when Django is missing or
         # misconfigured in the current environment.
         try:
+            # When using --base-dir override, run from parent; otherwise from project parent
+            cwd = (
+                str(project_path.parent)
+                if use_base_dir_override
+                else str(project_path.parent)
+            )
             result = subprocess.run(
                 cmd,
                 check=False,
                 capture_output=True,
                 text=True,
-                cwd=str(project_path.parent),
+                cwd=cwd,
             )
         except FileNotFoundError:
             typer.echo(
