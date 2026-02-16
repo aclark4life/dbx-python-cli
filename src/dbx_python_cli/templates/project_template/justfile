@@ -18,8 +18,15 @@ django-migrate:
 alias m := django-migrate
 
 [group('django')]
-django-drop:
+django-drop-mongo:
     mongosh --eval "db.getSiblingDB('{{ project_name }}').dropDatabase()"
+
+[group('django')]
+django-drop-postgres:
+    psql -U postgres -c "DROP DATABASE IF EXISTS {{ project_name }}; CREATE DATABASE {{ project_name }};"
+
+[group('django')]
+django-drop: django-drop-mongo
 alias d := django-drop
 
 [group('npm')]

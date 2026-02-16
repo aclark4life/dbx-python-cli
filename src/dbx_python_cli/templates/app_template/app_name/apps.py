@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class DemoConfig(AppConfig):
-    default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
+    # default_auto_field is inherited from project settings (mongodb.py or postgresql.py)
     name = "{{ app_name }}"

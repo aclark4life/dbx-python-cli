@@ -1,13 +1,24 @@
+"""
+Base Django settings for {{ project_name }}.
+
+Database Configuration:
+-----------------------
+This template supports both MongoDB and PostgreSQL.
+- mongodb.py: MongoDB-specific settings
+- postgresql.py: PostgreSQL-specific settings
+- {{ project_name }}.py: Project settings (imports from mongodb.py by default)
+
+To switch databases, edit {{ project_name }}.py to import from postgresql.py instead.
+"""
+
 from pathlib import Path
 
-import os
 
 base_dir = Path(__file__).resolve().parent.parent
 frontend_dir = Path(__file__).resolve().parent.parent.parent
 
 ALLOWED_HOSTS = []
 DEBUG = True
-DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
 SECRET_KEY = "your-secret-key"
 
 INSTALLED_APPS = [
@@ -15,7 +26,6 @@ INSTALLED_APPS = [
     "{{ project_name }}.apps.CustomAuthConfig",
     "{{ project_name }}.apps.CustomContentTypesConfig",
     "debug_toolbar",
-    "django_mongodb_extensions",  # MQL Panel for Debug Toolbar
     "django.contrib.messages",
     "django.contrib.sessions",
     "django.contrib.staticfiles",
@@ -48,13 +58,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "{{ project_name }}.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django_mongodb_backend",
-        "HOST": os.getenv("MONGODB_URI"),
-        "NAME": "{{ project_name }}",
-    },
-}
+# Database configuration is in mongodb.py or postgresql.py
+# Import the appropriate settings file in {{ project_name }}.py
 
 STATIC_URL = "static/"
 
@@ -70,7 +75,7 @@ DEBUG_TOOLBAR_PANELS = [
     "debug_toolbar.panels.settings.SettingsPanel",
     "debug_toolbar.panels.headers.HeadersPanel",
     "debug_toolbar.panels.request.RequestPanel",
-    "django_mongodb_extensions.debug_toolbar.panels.MQLPanel",
+    # Database-specific panel added in mongodb.py or postgresql.py
     "debug_toolbar.panels.staticfiles.StaticFilesPanel",
     "debug_toolbar.panels.templates.TemplatesPanel",
     "debug_toolbar.panels.alerts.AlertsPanel",
@@ -89,6 +94,8 @@ WEBPACK_LOADER = {
     "MANIFEST_FILE": frontend_dir / "frontend/build/manifest.json",
 }
 
+# Custom migration directories
+# Can be overridden in database-specific settings
 MIGRATION_MODULES = {
     "admin": "{{ project_name }}.migrations.admin",
     "auth": "{{ project_name }}.migrations.auth",

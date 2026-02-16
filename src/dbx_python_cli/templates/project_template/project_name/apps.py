@@ -1,3 +1,10 @@
+"""
+Custom app configurations for {{ project_name }}.
+
+Note: default_auto_field is set in mongodb.py or postgresql.py settings.
+These custom configs allow for database-specific customization if needed.
+"""
+
 from django.contrib.admin.apps import AdminConfig
 from django.contrib.auth.apps import AuthConfig
 from django.contrib.contenttypes.apps import ContentTypesConfig
@@ -7,30 +14,24 @@ from django.contrib.sites.apps import SitesConfig
 
 
 class CustomAdminConfig(AdminConfig):
-    default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
-    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
+    pass
 
 
 class CustomAuthConfig(AuthConfig):
-    default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
-    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
+    pass
 
 
 class CustomContentTypesConfig(ContentTypesConfig):
-    default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
-    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
+    pass
 
 
 class CustomFlatPagesConfig(FlatPagesConfig):
-    default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
-    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
+    pass
 
 
 class CustomRedirectsConfig(RedirectsConfig):
-    default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
-    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
+    pass
 
 
 class CustomSitesConfig(SitesConfig):
-    default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
-    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
+    pass
