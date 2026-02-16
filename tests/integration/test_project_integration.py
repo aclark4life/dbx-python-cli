@@ -132,6 +132,51 @@ def test_project_add_custom_directory(tmp_path):
     assert (project_path / "manage.py").exists()
 
 
+def test_project_add_with_base_dir_override(tmp_path):
+    """Test creating a project with --base-dir override (should not append /projects/)."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+
+    # Set up config with a base_dir
+    base_dir = tmp_path / "repos"
+    base_dir_str = str(base_dir).replace("\\", "/")
+
+    config_content = f"""[repo]
+base_dir = "{base_dir_str}"
+"""
+    config_path.write_text(config_content)
+
+    # Use --base-dir to override to a different location
+    override_dir = tmp_path / "override_location"
+    override_dir.mkdir()
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        result = runner.invoke(
+            app,
+            [
+                "project",
+                "add",
+                "--no-install",
+                "overrideproject",
+                "--base-dir",
+                str(override_dir),
+            ],
+        )
+        assert result.exit_code == 0
+
+        # Verify project is created directly in override_dir (not override_dir/projects/)
+        project_path = override_dir / "overrideproject"
+        assert project_path.exists()
+        assert (project_path / "manage.py").exists()
+
+        # Verify it was NOT created in override_dir/projects/
+        wrong_path = override_dir / "projects" / "overrideproject"
+        assert not wrong_path.exists()
+
+
 def test_project_add_default_settings(tmp_path):
     """Test creating a project uses project name as default settings module."""
     config_dir = tmp_path / ".config" / "dbx-python-cli"

@@ -175,7 +175,7 @@ def add_project(
     base_dir: Path = typer.Option(
         None,
         "--base-dir",
-        help="Override the configured base_dir (only used when --directory is not specified)",
+        help="Use this directory for projects (without appending /projects/). Only used when --directory is not specified.",
     ),
     add_frontend: bool = typer.Option(
         True,
@@ -203,7 +203,7 @@ def add_project(
         dbx project add myproject --no-frontend  # Create without frontend
         dbx project add -d ~/custom/path   # Create with random name in custom directory
         dbx project add myproject -d ~/custom/path  # Create in custom directory
-        dbx project add --base-dir ~/other/path  # Override configured base_dir
+        dbx project add --base-dir ~/other/path  # Create in ~/other/path (no /projects/ appended)
     """
     # Generate random name if not provided
     if name is None:
@@ -215,13 +215,14 @@ def add_project(
 
     # Determine project directory
     if directory is None:
-        # Use base_dir/projects/ as default
         config = get_config()
         if base_dir is None:
+            # Use base_dir/projects/ as default when using config
             base_dir = get_base_dir(config)
+            projects_dir = base_dir / "projects"
         else:
-            base_dir = base_dir.expanduser()
-        projects_dir = base_dir / "projects"
+            # When --base-dir is specified, use it directly without appending /projects/
+            projects_dir = base_dir.expanduser()
         projects_dir.mkdir(parents=True, exist_ok=True)
         project_path = projects_dir / name
     else:
