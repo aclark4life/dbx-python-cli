@@ -164,7 +164,7 @@ def generate_random_project_name():
 @app.command("add")
 def add_project(
     name: str = typer.Argument(
-        None, help="Project name (optional if --random is used)"
+        None, help="Project name (optional, generates random name if not provided)"
     ),
     directory: Path = typer.Option(
         None,
@@ -178,12 +178,6 @@ def add_project(
         "-f/-F",
         help="Add frontend (default: True)",
     ),
-    random_name: bool = typer.Option(
-        False,
-        "--random",
-        "-r",
-        help="Generate a random project name. If both name and --random are provided, the name takes precedence.",
-    ),
     auto_install: bool = typer.Option(
         True,
         "--install/--no-install",
@@ -195,30 +189,20 @@ def add_project(
     Frontend is added by default. Use --no-frontend to skip frontend creation.
 
     Projects are created in base_dir/projects/ by default.
+    If no name is provided, a random name is generated.
 
     Examples::
 
+        dbx project add                    # Create with random name (includes frontend)
         dbx project add myproject          # Create with explicit name (includes frontend)
         dbx project add myproject --no-frontend  # Create without frontend
-        dbx project add --random           # Create with random name (includes frontend)
-        dbx project add -r                 # Short form
+        dbx project add -d ~/custom/path   # Create with random name in custom directory
         dbx project add myproject -d ~/custom/path  # Create in custom directory
     """
-    # Handle random name generation
-    if random_name:
-        if name is not None:
-            typer.echo(
-                "⚠️  Both a project name and --random flag were provided. Using the provided name.",
-                err=True,
-            )
-        else:
-            name = generate_random_project_name()
-            typer.echo(f"🎲 Generated random project name: {name}")
-    elif name is None:
-        typer.echo("❌ Error: Project name is required", err=True)
-        typer.echo("\nUsage: dbx project add <name> [OPTIONS]")
-        typer.echo("   or: dbx project add --random [OPTIONS]")
-        raise typer.Exit(code=1)
+    # Generate random name if not provided
+    if name is None:
+        name = generate_random_project_name()
+        typer.echo(f"🎲 Generated random project name: {name}")
 
     # Use project name as default settings module
     settings_path = f"settings.{name}"
