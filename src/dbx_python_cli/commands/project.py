@@ -219,13 +219,14 @@ def add_project(
             projects_dir.mkdir(parents=True, exist_ok=True)
             project_path = projects_dir / name
         else:
-            # When --base-dir is specified, use it as the project root directly
-            # Extract project name from the path
+            # When --base-dir is specified, create project in that existing directory
             use_base_dir_override = True
             project_path = base_dir.expanduser()
-            name = project_path.name
-            # Ensure parent directory exists
-            project_path.parent.mkdir(parents=True, exist_ok=True)
+            # Ensure the directory exists
+            project_path.mkdir(parents=True, exist_ok=True)
+            # Use the provided name, or extract from path if not provided
+            if name is None:
+                name = project_path.name
     else:
         if name is None:
             name = generate_random_project_name()
@@ -235,8 +236,16 @@ def add_project(
     # Use project name as default settings module
     settings_path = f"settings.{name}"
 
-    if project_path.exists():
+    # Only check if project exists when NOT using --base-dir override
+    if not use_base_dir_override and project_path.exists():
         typer.echo(f"❌ Project '{name}' already exists at {project_path}", err=True)
+        raise typer.Exit(code=1)
+
+    # When using --base-dir, check if manage.py already exists
+    if use_base_dir_override and (project_path / "manage.py").exists():
+        typer.echo(
+            f"❌ Project already exists at {project_path} (manage.py found)", err=True
+        )
         raise typer.Exit(code=1)
 
     with resources.path(
@@ -250,9 +259,13 @@ def add_project(
             name,
         ]
 
-        # When using --base-dir override, pass the full path to django-admin
+        # When using --base-dir override, create project in current directory (.)
+        # Otherwise, let django-admin create the directory
         if use_base_dir_override:
-            cmd.append(str(project_path))
+            cmd.append(".")
+            cwd = str(project_path)
+        else:
+            cwd = str(project_path.parent)
 
         typer.echo(f"📦 Creating project: {name}")
 
@@ -260,12 +273,6 @@ def add_project(
         # instead of a full Python traceback when Django is missing or
         # misconfigured in the current environment.
         try:
-            # When using --base-dir override, run from parent; otherwise from project parent
-            cwd = (
-                str(project_path.parent)
-                if use_base_dir_override
-                else str(project_path.parent)
-            )
             result = subprocess.run(
                 cmd,
                 check=False,
