@@ -11,9 +11,9 @@ DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
 SECRET_KEY = "your-secret-key"
 
 INSTALLED_APPS = [
-    "{{ project_name }}.apps.MongoDBAdminConfig",
-    "{{ project_name }}.apps.MongoDBAuthConfig",
-    "{{ project_name }}.apps.MongoDBContentTypesConfig",
+    "{{ project_name }}.apps.CustomAdminConfig",
+    "{{ project_name }}.apps.CustomAuthConfig",
+    "{{ project_name }}.apps.CustomContentTypesConfig",
     "debug_toolbar",
     "django_mongodb_extensions",  # MQL Panel for Debug Toolbar
     "django.contrib.messages",

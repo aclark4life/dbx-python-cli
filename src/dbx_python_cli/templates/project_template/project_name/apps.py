@@ -6,25 +6,31 @@ from django.contrib.redirects.apps import RedirectsConfig
 from django.contrib.sites.apps import SitesConfig
 
 
-class MongoDBAdminConfig(AdminConfig):
+class CustomAdminConfig(AdminConfig):
     default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
+    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
 
 
-class MongoDBAuthConfig(AuthConfig):
+class CustomAuthConfig(AuthConfig):
     default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
+    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
 
 
-class MongoDBContentTypesConfig(ContentTypesConfig):
+class CustomContentTypesConfig(ContentTypesConfig):
     default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
+    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
 
 
-class MongoDBFlatPagesConfig(FlatPagesConfig):
+class CustomFlatPagesConfig(FlatPagesConfig):
     default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
+    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
 
 
-class MongoDBRedirectsConfig(RedirectsConfig):
+class CustomRedirectsConfig(RedirectsConfig):
     default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
+    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
 
 
-class MongoDBSitesConfig(SitesConfig):
+class CustomSitesConfig(SitesConfig):
     default_auto_field = "django_mongodb_backend.fields.ObjectIdAutoField"
+    # default_auto_field = "django.db.models.BigAutoField"  # For PostgreSQL
