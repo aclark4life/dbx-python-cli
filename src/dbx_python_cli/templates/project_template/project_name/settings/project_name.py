@@ -9,16 +9,13 @@ from .base import *  # noqa
 # ALLOWED_HOSTS = ['example.com']
 
 # Add project-specific apps to INSTALLED_APPS
-INSTALLED_APPS = (
-    INSTALLED_APPS  # noqa: F405
-    + [
-        # Add your project-specific apps here
-        # Example:
-        # "myapp",
-        # For Queryable Encryption demo:
-        # "medical_records",
-    ]
-)
+INSTALLED_APPS += [  # noqa: F405
+    # Add your project-specific apps here
+    # Example:
+    # "myapp",
+    # For Queryable Encryption demo:
+    # "medical_records",
+]
 
 # PostgreSQL configuration (uncomment to use PostgreSQL instead of MongoDB)
 # Requires: pip install -e ".[postgres]"
