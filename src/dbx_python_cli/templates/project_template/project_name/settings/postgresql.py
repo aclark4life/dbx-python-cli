@@ -29,3 +29,7 @@ DEBUG_TOOLBAR_PANELS.insert(  # noqa: F405
     DEBUG_TOOLBAR_PANELS.index("debug_toolbar.panels.staticfiles.StaticFilesPanel"),  # noqa: F405
     "debug_toolbar.panels.sql.SQLPanel",
 )
+
+# Use default Django migrations for PostgreSQL (not custom directories)
+# This allows switching between databases without migration conflicts
+MIGRATION_MODULES = {}

@@ -31,3 +31,10 @@ DEBUG_TOOLBAR_PANELS.insert(  # noqa: F405
     DEBUG_TOOLBAR_PANELS.index("debug_toolbar.panels.staticfiles.StaticFilesPanel"),  # noqa: F405
     "django_mongodb_extensions.debug_toolbar.panels.MQLPanel",
 )
+
+# Custom migration directories for MongoDB
+MIGRATION_MODULES = {
+    "admin": "{{ project_name }}.migrations.admin",
+    "auth": "{{ project_name }}.migrations.auth",
+    "contenttypes": "{{ project_name }}.migrations.contenttypes",
+}

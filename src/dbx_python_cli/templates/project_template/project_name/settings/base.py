@@ -95,9 +95,4 @@ WEBPACK_LOADER = {
 }
 
 # Custom migration directories
-# Can be overridden in database-specific settings
-MIGRATION_MODULES = {
-    "admin": "{{ project_name }}.migrations.admin",
-    "auth": "{{ project_name }}.migrations.auth",
-    "contenttypes": "{{ project_name }}.migrations.contenttypes",
-}
+# Overridden in database-specific settings (mongodb.py or postgresql.py)
