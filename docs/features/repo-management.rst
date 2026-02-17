@@ -267,10 +267,26 @@ This command will:
    🌿 specifications:
    * master
 
+   # View all branches (local and remote) across all repos in a group
+   $ dbx branch -g pymongo -a
+   Running git branch in 2 repository(ies) in group 'pymongo':
+
+   🌿 mongo-python-driver: git branch -a
+   * main
+     feature-branch
+     remotes/origin/HEAD -> origin/main
+     remotes/origin/main
+     remotes/origin/feature-branch
+   🌿 specifications: git branch -a
+   * master
+     remotes/origin/HEAD -> origin/master
+     remotes/origin/master
+
 **Notes:**
 
 - The command works with any repository that has been cloned using ``dbx clone``
 - You can pass any valid ``git branch`` arguments (e.g., ``-a``, ``-r``, ``-v``, ``--merged``)
+- The ``-a`` or ``--all`` flag shows all branches (local and remote) for all repositories
 - When using with a group, the command runs in all repositories in that group
 - Projects without a ``.git`` directory will be skipped with a warning
 - Use the ``--list`` flag to see all available repositories and projects

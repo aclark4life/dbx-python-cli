@@ -26,7 +26,7 @@ def branch_callback(
     repo_name: str = typer.Argument(None, help="Repository name to run git branch in"),
     git_args: list[str] = typer.Argument(
         None,
-        help="Git branch arguments to run (e.g., '-a', '-r', '-v'). If not provided, runs 'git branch' without arguments.",
+        help="Git branch arguments to run (e.g., '-r', '-v', '--merged'). If not provided, runs 'git branch' without arguments.",
     ),
     list_repos: bool = typer.Option(
         False,
@@ -46,6 +46,12 @@ def branch_callback(
         "-p",
         help="Run git branch in a specific project",
     ),
+    all_branches: bool = typer.Option(
+        False,
+        "--all",
+        "-a",
+        help="Show all branches (local and remote)",
+    ),
 ):
     """Run git branch in a cloned repository, group of repositories, or project.
 
@@ -60,6 +66,7 @@ def branch_callback(
         dbx branch mongo-python-driver          # Show branches
         dbx branch mongo-python-driver -a       # Show all branches
         dbx branch -g pymongo                   # Show branches for all repos in group
+        dbx branch -g pymongo -a                # Show all branches for all repos in group
         dbx branch -p myproject                 # Show branches for a project
     """
     # Get verbose flag from parent context
@@ -68,6 +75,10 @@ def branch_callback(
     # git_args will be None if not provided, or a list of strings if provided
     if git_args is None:
         git_args = []
+
+    # Add -a flag if --all option is specified
+    if all_branches and "-a" not in git_args:
+        git_args.insert(0, "-a")
 
     try:
         config = get_config()

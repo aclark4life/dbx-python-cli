@@ -240,3 +240,72 @@ def test_verbose_flag_with_branch_command(tmp_path, temp_repos_dir, mock_config)
                 output = strip_ansi(result.stdout)
                 assert "[verbose]" in output
                 assert "Running command:" in output
+
+
+def test_branch_with_all_flag(tmp_path, temp_repos_dir, mock_config):
+    """Test running branch with -a/--all flag."""
+    with patch(
+        "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
+    ):
+        with patch("dbx_python_cli.commands.branch.get_config", return_value={}):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+                result = runner.invoke(app, ["branch", "mongo-python-driver", "-a"])
+                assert result.exit_code == 0
+                assert "git branch -a" in result.stdout
+                mock_run.assert_called_once()
+                args = mock_run.call_args[0][0]
+                assert args == ["git", "--no-pager", "branch", "-a"]
+
+
+def test_branch_with_all_flag_long_form(tmp_path, temp_repos_dir, mock_config):
+    """Test running branch with --all flag (as option, not git arg)."""
+    with patch(
+        "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
+    ):
+        with patch("dbx_python_cli.commands.branch.get_config", return_value={}):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+                # --all as an option (before repo name) gets converted to -a
+                result = runner.invoke(app, ["branch", "--all", "mongo-python-driver"])
+                assert result.exit_code == 0
+                assert "git branch -a" in result.stdout
+                mock_run.assert_called_once()
+                args = mock_run.call_args[0][0]
+                assert args == ["git", "--no-pager", "branch", "-a"]
+
+
+def test_branch_with_group_and_all_flag(tmp_path, temp_repos_dir, mock_config):
+    """Test running branch with a group and -a flag."""
+    config = {
+        "repo": {
+            "base_dir": str(temp_repos_dir),
+            "groups": {
+                "pymongo": {
+                    "repos": [
+                        "https://github.com/mongodb/mongo-python-driver.git",
+                        "https://github.com/mongodb/specifications.git",
+                    ]
+                }
+            },
+        }
+    }
+    with patch(
+        "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
+    ):
+        with patch("dbx_python_cli.commands.branch.get_config", return_value=config):
+            with patch(
+                "dbx_python_cli.commands.branch.get_repo_groups",
+                return_value=config["repo"]["groups"],
+            ):
+                with patch("subprocess.run") as mock_run:
+                    mock_run.return_value = MagicMock(returncode=0)
+                    result = runner.invoke(app, ["branch", "-g", "pymongo", "-a"])
+                    assert result.exit_code == 0
+                    assert "Running git branch in 2 repository(ies)" in result.stdout
+                    assert "git branch -a" in result.stdout
+                    assert mock_run.call_count == 2
+                    # Check that both calls used -a flag
+                    for call in mock_run.call_args_list:
+                        args = call[0][0]
+                        assert args == ["git", "--no-pager", "branch", "-a"]

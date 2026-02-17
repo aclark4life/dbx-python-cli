@@ -192,6 +192,9 @@ View branches across repositories:
    # View branches in all repositories in a group
    dbx branch -g django
 
+   # View all branches in all repositories in a group
+   dbx branch -g django -a
+
 Working with Multiple Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

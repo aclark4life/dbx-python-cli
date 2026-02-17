@@ -80,6 +80,7 @@ dbx just mongo-python-driver test -v  # Run 'just test -v'
 dbx branch mongo-python-driver        # Show branches in a repo
 dbx branch mongo-python-driver -a     # Show all branches (including remote)
 dbx branch -g pymongo                 # Show branches in all repos in a group
+dbx branch -g pymongo -a              # Show all branches in all repos in a group
 dbx branch -p myproject               # Show branches in a project
 
 # Use verbose mode for more detailed output
