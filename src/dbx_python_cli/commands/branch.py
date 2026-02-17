@@ -14,7 +14,8 @@ app = typer.Typer(
     no_args_is_help=True,
     invoke_without_command=True,
     context_settings={
-        "allow_interspersed_args": False,
+        "allow_interspersed_args": True,
+        "ignore_unknown_options": True,
         "help_option_names": ["-h", "--help"],
     },
 )
@@ -63,11 +64,14 @@ def branch_callback(
 
     Examples::
 
-        dbx branch mongo-python-driver          # Show branches
-        dbx branch mongo-python-driver -a       # Show all branches
-        dbx branch -g pymongo                   # Show branches for all repos in group
-        dbx branch -g pymongo -a                # Show all branches for all repos in group
-        dbx branch -p myproject                 # Show branches for a project
+        dbx branch mongo-python-driver                 # Show branches
+        dbx branch mongo-python-driver -a              # Show all branches
+        dbx branch mongo-python-driver -d feature      # Delete branch 'feature'
+        dbx branch mongo-python-driver -D feature      # Force delete branch 'feature'
+        dbx branch -g pymongo                          # Show branches for all repos in group
+        dbx branch -g pymongo -a                       # Show all branches for all repos in group
+        dbx branch -g pymongo -d old-feature           # Delete 'old-feature' in all repos
+        dbx branch -p myproject                        # Show branches for a project
     """
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
@@ -75,6 +79,12 @@ def branch_callback(
     # git_args will be None if not provided, or a list of strings if provided
     if git_args is None:
         git_args = []
+
+    # Handle case where repo_name is actually a git argument (starts with -)
+    # This happens when using -g or -p options with git args like -d
+    if repo_name and repo_name.startswith("-"):
+        git_args.insert(0, repo_name)
+        repo_name = None
 
     # Add -a flag if --all option is specified
     if all_branches and "-a" not in git_args:

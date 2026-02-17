@@ -72,6 +72,12 @@ def log_callback(
     if git_args is None:
         git_args = []
 
+    # Handle case where repo_name is actually a git argument (starts with -)
+    # This happens when using -g or -p options with git args like -n
+    if repo_name and repo_name.startswith("-"):
+        git_args.insert(0, repo_name)
+        repo_name = None
+
     # If no args provided, default to showing last 10 commits
     if not git_args:
         git_args = ["-n", "10"]
