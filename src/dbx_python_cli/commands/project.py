@@ -256,6 +256,8 @@ def add_project(
             "startproject",
             "--template",
             str(template_path),
+            "--name",
+            "justfile",
             name,
         ]
 

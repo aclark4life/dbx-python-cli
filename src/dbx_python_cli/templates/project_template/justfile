@@ -29,6 +29,12 @@ django-drop-postgres:
 django-drop: django-drop-mongo
 alias d := django-drop
 
+[group('django')]
+# Create Django superuser (admin/admin)
+django-create-superuser:
+    export DJANGO_SUPERUSER_PASSWORD=admin && python manage.py createsuperuser --noinput --username=admin
+alias su := django-create-superuser
+
 [group('npm')]
 npm-install:
     cd frontend && npm install
