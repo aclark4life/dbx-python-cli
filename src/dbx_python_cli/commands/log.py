@@ -14,7 +14,8 @@ app = typer.Typer(
     no_args_is_help=True,
     invoke_without_command=True,
     context_settings={
-        "allow_interspersed_args": False,
+        "allow_interspersed_args": True,
+        "ignore_unknown_options": True,
         "help_option_names": ["-h", "--help"],
     },
 )
@@ -24,6 +25,10 @@ app = typer.Typer(
 def log_callback(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None, help="Repository name to show logs for"),
+    git_args: list[str] = typer.Argument(
+        None,
+        help="Git log arguments to run (e.g., '-n 5', '--oneline', '--graph'). If not provided, runs 'git log -n 10'.",
+    ),
     list_repos: bool = typer.Option(
         False,
         "--list",
@@ -42,35 +47,34 @@ def log_callback(
         "-p",
         help="Show logs for a project",
     ),
-    num_commits: int = typer.Option(
-        10,
-        "--number",
-        "-n",
-        help="Number of commits to show (default: 10)",
-    ),
-    oneline: bool = typer.Option(
-        False,
-        "--oneline",
-        help="Show logs in oneline format",
-    ),
 ):
     """Show git commit logs from a repository or group of repositories.
 
     Usage::
 
-        dbx log <repo_name>              # Show last 10 commits
-        dbx log <repo_name> -n 20        # Show last 20 commits
-        dbx log <repo_name> --oneline    # Show in oneline format
-        dbx log -g <group>               # Show logs for all repos in group
+        dbx log <repo_name> [git_args...]
+        dbx log -g <group> [git_args...]
+        dbx log -p <project> [git_args...]
 
     Examples::
 
-        dbx log mongo-python-driver      # Show last 10 commits
-        dbx log mongo-python-driver -n 5 # Show last 5 commits
-        dbx log -g pymongo               # Show logs for all pymongo repos
+        dbx log mongo-python-driver                    # Show last 10 commits
+        dbx log mongo-python-driver -n 5               # Show last 5 commits
+        dbx log mongo-python-driver --oneline          # Show in oneline format
+        dbx log mongo-python-driver --graph -n 5       # Show graph with last 5 commits
+        dbx log -g pymongo -n 20                       # Show last 20 commits for all repos
+        dbx log -g pymongo --oneline -n 5              # Show last 5 commits in oneline format
     """
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+
+    # git_args will be None if not provided, or a list of strings if provided
+    if git_args is None:
+        git_args = []
+
+    # If no args provided, default to showing last 10 commits
+    if not git_args:
+        git_args = ["-n", "10"]
 
     try:
         config = get_config()
@@ -125,9 +129,7 @@ def log_callback(
         )
 
         for repo_info in group_repos:
-            _run_git_log(
-                repo_info["path"], repo_info["name"], num_commits, oneline, verbose
-            )
+            _run_git_log(repo_info["path"], repo_info["name"], git_args, verbose)
             typer.echo("")  # Add blank line between repos
 
         return
@@ -143,15 +145,15 @@ def log_callback(
             )
             raise typer.Exit(1)
 
-        _run_git_log(project_path, project, num_commits, oneline, verbose)
+        _run_git_log(project_path, project, git_args, verbose)
         return
 
     # Require repo_name if not listing, not using group, and not using project
     if not repo_name:
         typer.echo("❌ Error: Repository name, group, or project is required", err=True)
-        typer.echo("\nUsage: dbx log <repo_name> [-n <number>]")
-        typer.echo("   or: dbx log -g <group> [-n <number>]")
-        typer.echo("   or: dbx log -p <project> [-n <number>]")
+        typer.echo("\nUsage: dbx log <repo_name> [git_args...]")
+        typer.echo("   or: dbx log -g <group> [git_args...]")
+        typer.echo("   or: dbx log -p <project> [git_args...]")
         typer.echo("   or: dbx log --list")
         raise typer.Exit(1)
 
@@ -163,15 +165,11 @@ def log_callback(
         raise typer.Exit(1)
 
     repo_path = Path(repo["path"])
-    _run_git_log(repo_path, repo_name, num_commits, oneline, verbose)
+    _run_git_log(repo_path, repo_name, git_args, verbose)
 
 
 def _run_git_log(
-    repo_path: Path,
-    name: str,
-    num_commits: int = 10,
-    oneline: bool = False,
-    verbose: bool = False,
+    repo_path: Path, name: str, git_args: list[str], verbose: bool = False
 ):
     """Run git log in a repository or project."""
     # Check if it's a git repository
@@ -180,14 +178,13 @@ def _run_git_log(
         return
 
     # Build git log command
-    git_cmd = ["git", "--no-pager", "log", f"-n{num_commits}"]
-    if oneline:
-        git_cmd.append("--oneline")
+    git_cmd = ["git", "--no-pager", "log"] + git_args
 
-    if oneline:
-        typer.echo(f"📜 {name}: Last {num_commits} commits (oneline)")
+    # Display what we're doing
+    if git_args:
+        typer.echo(f"📜 {name}: git log {' '.join(git_args)}")
     else:
-        typer.echo(f"📜 {name}: Last {num_commits} commits")
+        typer.echo(f"📜 {name}: git log")
 
     if verbose:
         typer.echo(f"[verbose] Running command: {' '.join(git_cmd)}")
