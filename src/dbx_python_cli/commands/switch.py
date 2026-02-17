@@ -216,6 +216,21 @@ def _run_git_switch(
 
     if result.returncode == 0:
         typer.echo(f"✅ {name}: Successfully switched to '{branch_name}'")
+
+        # Check if the branch is tracking a remote branch
+        tracking_result = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"],
+            cwd=str(repo_path),
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        if tracking_result.returncode == 0 and tracking_result.stdout.strip():
+            tracking_branch = tracking_result.stdout.strip()
+            typer.echo(f"   📍 Tracking: {tracking_branch}")
+        elif verbose:
+            typer.echo("   ℹ️  Not tracking any remote branch")
     else:
         typer.echo(f"❌ {name}: Failed to switch to '{branch_name}'", err=True)
         if result.stderr:
