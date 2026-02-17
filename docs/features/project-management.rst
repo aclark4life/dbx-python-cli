@@ -71,13 +71,19 @@ A generated project includes:
    ├── justfile
    ├── myproject/
    │   ├── __init__.py
+   │   ├── apps.py  (custom app configs with auto-field detection)
    │   ├── settings/
    │   │   ├── __init__.py
-   │   │   ├── base.py
-   │   │   └── myproject.py  (includes commented QE configuration)
+   │   │   ├── base.py  (common settings)
+   │   │   ├── mongodb.py  (MongoDB-specific settings)
+   │   │   ├── postgresql.py  (PostgreSQL-specific settings)
+   │   │   └── myproject.py  (main settings, imports from mongodb.py or postgresql.py)
    │   ├── urls.py
    │   ├── wsgi.py
    │   └── migrations/
+   │       ├── admin/  (MongoDB-compatible migrations)
+   │       ├── auth/  (MongoDB-compatible migrations)
+   │       └── contenttypes/  (MongoDB-compatible migrations)
    └── frontend/  (if --add-frontend)
        ├── package.json
        ├── webpack/
@@ -99,6 +105,71 @@ This will:
 2. Automatically detect and install frontend npm dependencies if a ``frontend/`` directory with ``package.json`` exists
 
 The ``dbx install`` command now supports frontend installation for both projects and regular repositories. If a ``frontend/`` directory is detected with a ``package.json`` file, npm dependencies will be installed automatically after the Python package installation completes.
+
+Switching Between MongoDB and PostgreSQL
+-----------------------------------------
+
+Projects are designed to support both MongoDB and PostgreSQL databases with minimal configuration changes. The database backend is controlled by a single import statement in your project's settings file.
+
+Database-Specific Settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Each project includes three settings files in the ``settings/`` directory:
+
+- ``base.py`` - Common Django settings shared by all databases
+- ``mongodb.py`` - MongoDB-specific configuration (uses ``ObjectIdAutoField``)
+- ``postgresql.py`` - PostgreSQL-specific configuration (uses ``BigAutoField``)
+- ``<project_name>.py`` - Main settings file that imports from either ``mongodb.py`` or ``postgresql.py``
+
+Switching Databases
+~~~~~~~~~~~~~~~~~~~
+
+To switch between databases, edit ``<project_name>/settings/<project_name>.py``:
+
+**For MongoDB (default):**
+
+.. code-block:: python
+
+   # Database Configuration
+   # ----------------------
+   # To use MongoDB (default):
+   from .mongodb import *  # noqa
+
+   # To use PostgreSQL (uncomment the line below and comment out the MongoDB import above):
+   # from .postgresql import *  # noqa
+
+**For PostgreSQL:**
+
+.. code-block:: python
+
+   # Database Configuration
+   # ----------------------
+   # To use MongoDB (default):
+   # from .mongodb import *  # noqa
+
+   # To use PostgreSQL (uncomment the line below and comment out the MongoDB import above):
+   from .postgresql import *  # noqa
+
+After switching the import:
+
+1. **Install PostgreSQL dependencies** (if switching to PostgreSQL):
+
+   .. code-block:: bash
+
+      pip install -e ".[postgres]"
+
+2. **Run migrations**:
+
+   .. code-block:: bash
+
+      dbx project migrate <project_name>
+
+The custom app configurations in ``apps.py`` automatically detect which database backend is configured and use the appropriate ``default_auto_field``:
+
+- **MongoDB**: Uses ``django_mongodb_backend.fields.ObjectIdAutoField``
+- **PostgreSQL**: Uses ``django.db.models.BigAutoField``
+
+This allows you to switch between databases without modifying any model code or app configurations.
 
 Just Recipes
 ------------
