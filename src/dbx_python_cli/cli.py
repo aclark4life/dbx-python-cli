@@ -7,6 +7,7 @@ from dbx_python_cli.commands import (
     clone,
     config,
     env,
+    fetch,
     install,
     just,
     log,
@@ -30,6 +31,7 @@ app.add_typer(branch.app, name="branch")
 app.add_typer(clone.app, name="clone")
 app.add_typer(config.app, name="config")
 app.add_typer(env.app, name="env")
+app.add_typer(fetch.app, name="fetch")
 app.add_typer(install.app, name="install")
 app.add_typer(just.app, name="just")
 app.add_typer(log.app, name="log")

@@ -35,6 +35,14 @@ dbx_python_cli.commands.env module
    :undoc-members:
    :show-inheritance:
 
+dbx_python_cli.commands.fetch module
+-------------------------------------
+
+.. automodule:: dbx_python_cli.commands.fetch
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 dbx_python_cli.commands.install module
 ---------------------------------------
 
