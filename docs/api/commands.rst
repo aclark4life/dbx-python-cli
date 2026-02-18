@@ -27,6 +27,14 @@ dbx_python_cli.commands.config module
    :undoc-members:
    :show-inheritance:
 
+dbx_python_cli.commands.edit module
+------------------------------------
+
+.. automodule:: dbx_python_cli.commands.edit
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 dbx_python_cli.commands.env module
 -----------------------------------
 
