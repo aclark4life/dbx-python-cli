@@ -61,7 +61,7 @@ Top-Level Commands (Preferred)
    dbx sync mongo-python-driver
 
    # List repositories
-   dbx -l
+   dbx list
 
 Command Groups (When Appropriate)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,7 +97,7 @@ This decision was implemented in a refactoring that moved ``clone`` and ``sync``
 
    dbx clone -g pymongo
    dbx sync mongo-python-driver
-   dbx -l
+   dbx list
 
 The ``repo.py`` module was converted from a command module to a helper functions module, containing only utility functions like ``get_config()``, ``get_base_dir()``, and ``get_repo_groups()``.
 

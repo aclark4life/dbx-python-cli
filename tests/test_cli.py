@@ -70,32 +70,29 @@ def test_verbose_flag_with_install_command():
             assert "[verbose]" in result.stdout
 
 
-def test_list_flag_no_repos():
-    """Test that the -l flag shows message when no repos are cloned."""
+def test_list_command_no_repos():
+    """Test that the list command shows message when no repos are cloned."""
     from unittest.mock import patch
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+    with patch("dbx_python_cli.commands.list.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.list.list_repos") as mock_list:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
-            mock_find.return_value = []
-            result = runner.invoke(app, ["-l"])
+            mock_list.return_value = ""
+            result = runner.invoke(app, ["list"])
             assert result.exit_code == 0
             assert "No repositories found" in result.stdout
             assert "Base directory:" in result.stdout
 
 
-def test_list_flag_with_repos():
-    """Test that the -l flag lists all cloned repositories."""
+def test_list_command_with_repos():
+    """Test that the list command lists all cloned repositories."""
     from unittest.mock import patch
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+    with patch("dbx_python_cli.commands.list.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.list.list_repos") as mock_list:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
-            mock_find.return_value = [
-                {"group": "django", "name": "django"},
-                {"group": "pymongo", "name": "mongo-python-driver"},
-            ]
-            result = runner.invoke(app, ["-l"])
+            mock_list.return_value = "├── django/\n│   └── ✓ django\n└── pymongo/\n    └── ✓ mongo-python-driver"
+            result = runner.invoke(app, ["list"])
             assert result.exit_code == 0
             assert "Repository status:" in result.stdout
             # Check for tree format
@@ -108,24 +105,10 @@ def test_list_flag_with_repos():
             assert "Legend:" in result.stdout
 
 
-def test_list_flag_short_form():
-    """Test that the -l short form works."""
-    from unittest.mock import patch
-
-    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
-            mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
-            mock_find.return_value = []
-            result = runner.invoke(app, ["-l"])
-            assert result.exit_code == 0
-            assert "No repositories found" in result.stdout
-
-
-def test_list_flag_in_help():
-    """Test that the -l flag appears in help."""
+def test_list_command_in_help():
+    """Test that the list command appears in help."""
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
     output = strip_ansi(result.stdout)
-    assert "--list" in output
-    assert "-l" in output
-    assert "Show repository status" in output
+    assert "list" in output.lower()
+    assert "List repositories" in output

@@ -11,6 +11,7 @@ from dbx_python_cli.commands import (
     fetch,
     install,
     just,
+    list,
     log,
     open,
     project,
@@ -37,6 +38,7 @@ app.add_typer(env.app, name="env")
 app.add_typer(fetch.app, name="fetch")
 app.add_typer(install.app, name="install")
 app.add_typer(just.app, name="just")
+app.add_typer(list.app, name="list")
 app.add_typer(log.app, name="log")
 app.add_typer(open.app, name="open")
 app.add_typer(project.app, name="project")
@@ -71,41 +73,10 @@ def main(
         "-v",
         help="Show more detailed output.",
     ),
-    list_repos: bool = typer.Option(
-        False,
-        "--list",
-        "-l",
-        help="Show repository status (cloned vs available)",
-    ),
 ):
     """A command line tool for DBX Python development tasks. AI first. De-siloing happens here."""
-    from dbx_python_cli.commands import repo_utils as repo
-
     # Store verbose flag in context for subcommands to access
     ctx.obj = {"verbose": verbose}
-
-    # Handle list repos flag
-    if list_repos:
-        from dbx_python_cli.commands.repo_utils import list_repos as format_repos
-
-        config = repo.get_config()
-        base_dir = repo.get_base_dir(config)
-
-        formatted_output = format_repos(base_dir, config=config)
-
-        if not formatted_output:
-            typer.echo(f"Base directory: {base_dir}\n")
-            typer.echo("No repositories found.")
-            typer.echo("\nClone repositories using: dbx clone -g <group>")
-            raise typer.Exit(0)
-
-        typer.echo(f"Base directory: {base_dir}\n")
-        typer.echo("Repository status:\n")
-        typer.echo(formatted_output)
-        typer.echo(
-            "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
-        )
-        raise typer.Exit(0)
 
 
 if __name__ == "__main__":

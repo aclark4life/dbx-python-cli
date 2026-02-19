@@ -67,6 +67,14 @@ dbx_python_cli.commands.just module
    :undoc-members:
    :show-inheritance:
 
+dbx_python_cli.commands.list module
+------------------------------------
+
+.. automodule:: dbx_python_cli.commands.list
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 dbx_python_cli.commands.log module
 -----------------------------------
 

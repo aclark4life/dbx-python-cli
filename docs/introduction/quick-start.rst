@@ -136,7 +136,7 @@ See what's available:
 .. code-block:: bash
 
    # List all cloned repositories
-   dbx -l
+   dbx list
 
    # List all virtual environments
    dbx env list
