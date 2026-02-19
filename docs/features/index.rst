@@ -12,6 +12,7 @@ This section provides detailed documentation for all dbx-python-cli features.
    installation
    testing
    just-commands
+   status
 
 Global Options
 --------------
@@ -42,3 +43,8 @@ Just Commands
 -------------
 
 Run `just <https://github.com/casey/just>`_ commands in any cloned repository. See :doc:`just-commands` for details.
+
+Status
+------
+
+Show git status of repositories to check working tree state. See :doc:`status` for details.

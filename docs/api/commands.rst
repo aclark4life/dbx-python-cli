@@ -115,6 +115,14 @@ dbx_python_cli.commands.repo_utils module
    :undoc-members:
    :show-inheritance:
 
+dbx_python_cli.commands.status module
+--------------------------------------
+
+.. automodule:: dbx_python_cli.commands.status
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 dbx_python_cli.commands.switch module
 --------------------------------------
 
