@@ -1,10 +1,94 @@
 """Clone command for cloning repositories."""
 
 import subprocess
+from pathlib import Path
 
 import typer
 
 from dbx_python_cli.commands import repo_utils as repo
+
+
+def auto_install_repo(
+    repo_path: Path, repo_name: str, group_name: str, verbose: bool = False
+):
+    """
+    Automatically install a cloned repository.
+
+    Args:
+        repo_path: Path to the cloned repository
+        repo_name: Name of the repository
+        group_name: Name of the group the repo belongs to
+        verbose: Whether to show verbose output
+    """
+    from dbx_python_cli.commands.install import install_package, run_build_commands
+    from dbx_python_cli.commands.repo_utils import get_build_commands, get_install_dirs
+    from dbx_python_cli.commands.venv_utils import get_venv_info
+
+    try:
+        config = repo.get_config()
+
+        # Get venv info for the group
+        venv_info = get_venv_info(repo_path.parent)
+        if not venv_info["exists"]:
+            if verbose:
+                typer.echo(
+                    f"  [verbose] No virtual environment found for group '{group_name}', skipping install"
+                )
+            return False
+
+        python_path = venv_info["python_path"]
+
+        # Check if this repo needs build commands
+        build_commands = get_build_commands(config, group_name, repo_name)
+        if build_commands:
+            if verbose:
+                typer.echo(f"  [verbose] Running build commands for {repo_name}")
+            if not run_build_commands(repo_path, build_commands, verbose=verbose):
+                typer.echo(
+                    f"  ⚠️  Build failed for {repo_name}, skipping install", err=True
+                )
+                return False
+
+        # Check if this repo has install_dirs (multiple packages in subdirectories)
+        install_dirs = get_install_dirs(config, group_name, repo_name)
+
+        if install_dirs:
+            # Install from subdirectories
+            if verbose:
+                typer.echo(
+                    f"  [verbose] Installing {len(install_dirs)} package(s) from subdirectories"
+                )
+
+            for install_dir in install_dirs:
+                result = install_package(
+                    repo_path,
+                    python_path,
+                    install_dir=install_dir,
+                    extras=None,
+                    groups=None,
+                    verbose=verbose,
+                )
+                if result != "success":
+                    return False
+        else:
+            # Regular repo: install from root
+            result = install_package(
+                repo_path,
+                python_path,
+                install_dir=None,
+                extras=None,
+                groups=None,
+                verbose=verbose,
+            )
+            if result != "success":
+                return False
+
+        return True
+    except Exception as e:
+        if verbose:
+            typer.echo(f"  [verbose] Auto-install failed: {e}", err=True)
+        return False
+
 
 app = typer.Typer(
     help="Clone repositories",
@@ -45,6 +129,11 @@ def clone_callback(
         None,
         "--fork-user",
         help="GitHub username for fork (overrides --fork and config fork_user)",
+    ),
+    no_install: bool = typer.Option(
+        False,
+        "--no-install",
+        help="Skip automatic installation after cloning",
     ),
 ):
     """Clone a repository by name or all repositories from one or more groups."""
@@ -166,6 +255,9 @@ def clone_callback(
                 f"[verbose] Using fork workflow with user: {effective_fork_user}\n"
             )
 
+        # Track successfully cloned repos for auto-install
+        cloned_repos = []
+
         # Process each group
         for group_name, repos in repos_to_clone.items():
             # Create group directory under base directory
@@ -232,6 +324,7 @@ def clone_callback(
                         typer.echo(f"  [verbose] Upstream URL: {upstream_url}")
                     typer.echo(f"  [verbose] Destination: {repo_path}")
 
+                clone_success = False
                 try:
                     # Clone the repository
                     subprocess.run(
@@ -240,6 +333,7 @@ def clone_callback(
                         capture_output=not verbose,
                         text=True,
                     )
+                    clone_success = True
 
                     # If using fork workflow, add upstream remote
                     if effective_fork_user:
@@ -322,6 +416,16 @@ def clone_callback(
                     else:
                         typer.echo(f"  ✅ {repo_name} cloned successfully")
 
+                    # Track successful clone for auto-install
+                    if clone_success:
+                        cloned_repos.append(
+                            {
+                                "name": repo_name,
+                                "path": repo_path,
+                                "group": group_name,
+                            }
+                        )
+
                 except subprocess.CalledProcessError as e:
                     # If fork clone failed, try falling back to upstream
                     if effective_fork_user and upstream_url:
@@ -338,6 +442,14 @@ def clone_callback(
                             )
                             typer.echo(
                                 f"  ✅ {repo_name} cloned from upstream (fork not found)"
+                            )
+                            # Track successful clone from upstream fallback
+                            cloned_repos.append(
+                                {
+                                    "name": repo_name,
+                                    "path": repo_path,
+                                    "group": group_name,
+                                }
                             )
                         except subprocess.CalledProcessError as upstream_error:
                             typer.echo(
@@ -358,6 +470,44 @@ def clone_callback(
             typer.echo(
                 f"\n🎉 All done! Cloned repositories from {total_groups} groups."
             )
+
+        # Auto-install cloned repositories unless --no-install is specified
+        if not no_install and cloned_repos:
+            typer.echo("\n📦 Installing cloned repositories...")
+
+            installed_count = 0
+            skipped_count = 0
+
+            for repo_info in cloned_repos:
+                if verbose:
+                    typer.echo(f"\n  Installing {repo_info['name']}...")
+                else:
+                    typer.echo(f"  📦 Installing {repo_info['name']}...")
+
+                success = auto_install_repo(
+                    repo_info["path"],
+                    repo_info["name"],
+                    repo_info["group"],
+                    verbose=verbose,
+                )
+
+                if success:
+                    typer.echo(f"  ✅ {repo_info['name']} installed successfully")
+                    installed_count += 1
+                else:
+                    if verbose:
+                        typer.echo(
+                            f"  ⏭️  {repo_info['name']} skipped (no venv or install failed)"
+                        )
+                    skipped_count += 1
+
+            if installed_count > 0:
+                typer.echo(f"\n✨ Installed {installed_count} repository(ies)")
+            if skipped_count > 0:
+                typer.echo(f"⏭️  Skipped {skipped_count} repository(ies)")
+                typer.echo(
+                    "\nTip: Create a virtual environment with 'dbx env init -g <group>' and run 'dbx install <repo>' to install manually"
+                )
 
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
