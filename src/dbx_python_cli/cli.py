@@ -18,6 +18,7 @@ from dbx_python_cli.commands import (
     pull,
     remote,
     remove,
+    reset,
     status,
     switch,
     sync,
@@ -46,6 +47,7 @@ app.add_typer(project.app, name="project")
 app.add_typer(pull.app, name="pull")
 app.add_typer(remote.app, name="remote")
 app.add_typer(remove.app, name="remove")
+app.add_typer(reset.app, name="reset")
 app.add_typer(status.app, name="status")
 app.add_typer(switch.app, name="switch")
 app.add_typer(sync.app, name="sync")

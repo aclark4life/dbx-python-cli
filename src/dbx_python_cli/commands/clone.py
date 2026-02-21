@@ -245,9 +245,25 @@ def clone_callback(
         elif fork:
             # --fork flag uses config, falls back to upstream if not set
             effective_fork_user = config.get("repo", {}).get("fork_user")
-            if not effective_fork_user and verbose:
+            if not effective_fork_user:
                 typer.echo(
-                    "[verbose] --fork specified but fork_user not in config, cloning from upstream\n"
+                    "⚠️  Warning: --fork is enabled but fork_user is not set in config",
+                    err=True,
+                )
+                typer.echo(
+                    "   Cloning from upstream instead. To use fork workflow, either:",
+                    err=True,
+                )
+                typer.echo(
+                    "   1. Set fork_user in config: dbx config set repo.fork_user <your-github-username>",
+                    err=True,
+                )
+                typer.echo(
+                    "   2. Use --fork-user flag: dbx clone -g <group> --fork-user <your-github-username>",
+                    err=True,
+                )
+                typer.echo(
+                    "   3. Disable fork: dbx clone -g <group> --no-fork\n", err=True
                 )
 
         if effective_fork_user and verbose:

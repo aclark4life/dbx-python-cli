@@ -723,8 +723,8 @@ repos = [
             assert "aclark4life's fork" in result.stdout
 
 
-def test_repo_clone_fork_without_config_shows_error(tmp_path, temp_repos_dir):
-    """Test that --fork without config fork_user falls back to upstream clone."""
+def test_repo_clone_fork_without_config_shows_warning(tmp_path, temp_repos_dir):
+    """Test that --fork without config fork_user shows warning and falls back to upstream clone."""
     config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     repos_dir_str = str(temp_repos_dir).replace("\\", "/")
@@ -746,6 +746,13 @@ repos = [
 
             result = runner.invoke(app, ["clone", "-g", "test", "--fork"])
             assert result.exit_code == 0
+
+            # Verify warning message is shown (in stderr or combined output)
+            combined_output = result.stdout + result.stderr
+            assert (
+                "Warning: --fork is enabled but fork_user is not set in config"
+                in combined_output
+            )
 
             # Verify git clone was called with upstream URL (not a fork)
             clone_calls = [

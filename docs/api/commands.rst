@@ -115,6 +115,14 @@ dbx_python_cli.commands.remove module
    :undoc-members:
    :show-inheritance:
 
+dbx_python_cli.commands.reset module
+-------------------------------------
+
+.. automodule:: dbx_python_cli.commands.reset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 dbx_python_cli.commands.repo_utils module
 ------------------------------------------
 
