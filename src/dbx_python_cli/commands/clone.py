@@ -27,16 +27,11 @@ def auto_install_repo(
     try:
         config = repo.get_config()
 
-        # Get venv info for the group
-        venv_info = get_venv_info(repo_path.parent)
-        if not venv_info["exists"]:
-            if verbose:
-                typer.echo(
-                    f"  [verbose] No virtual environment found for group '{group_name}', skipping install"
-                )
-            return False
+        # Get venv info - will use group venv if exists, otherwise any active venv
+        python_path, venv_type = get_venv_info(repo_path, repo_path.parent)
 
-        python_path = venv_info["python_path"]
+        if verbose:
+            typer.echo(f"  [verbose] Venv type: {venv_type}, Python: {python_path}")
 
         # Check if this repo needs build commands
         build_commands = get_build_commands(config, group_name, repo_name)
