@@ -25,12 +25,6 @@ app = typer.Typer(
 def open_callback(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None, help="Repository name to open in browser"),
-    list_repos: bool = typer.Option(
-        False,
-        "--list",
-        "-l",
-        help="Show repository status (cloned vs available)",
-    ),
     group: str = typer.Option(
         None,
         "--group",
@@ -59,20 +53,6 @@ def open_callback(
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}")
             typer.echo(f"[verbose] Config: {config}\n")
-
-        # Handle --list option
-        if list_repos:
-            from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
-
-            repos_list = list_repos_func(base_dir, format_style="tree", config=config)
-            if repos_list:
-                typer.echo(f"Base directory: {base_dir}\n")
-                typer.echo(repos_list)
-            else:
-                typer.echo(f"Base directory: {base_dir}\n")
-                typer.echo("No repositories found.")
-                typer.echo("\nClone repositories using: dbx clone -g <group>")
-            return
 
         # Handle group option
         if group:
@@ -136,12 +116,11 @@ def open_callback(
             typer.echo(f"\n✨ Opened {len(repo_urls)} repository(ies) in your browser")
             return
 
-        # Require repo_name if not listing and not using group
+        # Require repo_name if not using group
         if not repo_name:
             typer.echo("❌ Error: Repository name or group is required", err=True)
             typer.echo("\nUsage: dbx open <repo_name>")
             typer.echo("   or: dbx open -g <group>")
-            typer.echo("   or: dbx open --list")
             raise typer.Exit(1)
 
         # Find the repository

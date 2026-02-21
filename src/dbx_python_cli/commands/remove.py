@@ -37,12 +37,6 @@ def remove_callback(
         "-G",
         help="Specify which group to use when repo exists in multiple groups",
     ),
-    list_repos: bool = typer.Option(
-        False,
-        "--list",
-        "-l",
-        help="List available repositories",
-    ),
     force: bool = typer.Option(
         False,
         "--force",
@@ -59,7 +53,6 @@ def remove_callback(
         dbx remove mongo-python-driver -G langchain # Remove from specific group
         dbx remove -g pymongo                       # Remove all repos in group
         dbx remove -g pymongo -f                    # Remove without confirmation
-        dbx remove --list                           # List available repos
     """
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
@@ -76,22 +69,6 @@ def remove_callback(
 
     # Import repo utilities
     from dbx_python_cli.commands.repo_utils import find_all_repos
-
-    # Handle --list flag
-    if list_repos:
-        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
-
-        output = list_repos_func(base_dir, config=config)
-        if output:
-            typer.echo(f"Base directory: {base_dir}\n")
-            typer.echo(output)
-            typer.echo(
-                "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
-            )
-        else:
-            typer.echo(f"Base directory: {base_dir}\n")
-            typer.echo("No repositories found.")
-        return
 
     # Get all repos
     all_repos = find_all_repos(base_dir)
@@ -112,7 +89,7 @@ def remove_callback(
 
         if not group_repos:
             typer.echo(f"❌ Error: No repositories found in group '{group}'", err=True)
-            typer.echo("\nRun 'dbx remove --list' to see available repositories")
+            typer.echo("\nRun 'dbx list' to see available repositories")
             raise typer.Exit(1)
 
         repos_to_remove = group_repos
@@ -132,9 +109,7 @@ def remove_callback(
                         f"❌ Error: Repository '{repo_name}' not found in group '{repo_group}'",
                         err=True,
                     )
-                    typer.echo(
-                        "\nRun 'dbx remove --list' to see available repositories"
-                    )
+                    typer.echo("\nRun 'dbx list' to see available repositories")
                     raise typer.Exit(1)
                 repos_to_remove.append(matching_repos[0])
             else:
@@ -145,9 +120,7 @@ def remove_callback(
                     typer.echo(
                         f"❌ Error: Repository '{repo_name}' not found", err=True
                     )
-                    typer.echo(
-                        "\nRun 'dbx remove --list' to see available repositories"
-                    )
+                    typer.echo("\nRun 'dbx list' to see available repositories")
                     raise typer.Exit(1)
 
                 # If repo exists in multiple groups, warn and use first match

@@ -33,12 +33,6 @@ def just_callback(
         None,
         help="Just command and arguments to run (e.g., 'lint', 'test -v'). If not provided, runs 'just' without arguments to show available commands.",
     ),
-    list_repos: bool = typer.Option(
-        False,
-        "--list",
-        "-l",
-        help="Show repository status (cloned vs available)",
-    ),
 ):
     """Run just commands in a cloned repository.
 
@@ -72,35 +66,17 @@ def just_callback(
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
 
-    # Handle --list flag
-    if list_repos:
-        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
-
-        output = list_repos_func(base_dir, config=config)
-        if output:
-            typer.echo(f"Base directory: {base_dir}\n")
-            typer.echo(output)
-            typer.echo(
-                "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
-            )
-        else:
-            typer.echo(f"Base directory: {base_dir}\n")
-            typer.echo("No repositories found.")
-            typer.echo("\nClone repositories using: dbx clone -g <group>")
-        return
-
-    # Require repo_name if not listing
+    # Require repo_name
     if not repo_name:
         typer.echo("❌ Error: Repository name is required", err=True)
         typer.echo("\nUsage: dbx just <repo_name> [just_command]")
-        typer.echo("       dbx just --list")
         raise typer.Exit(1)
 
     # Find the repository
     repo = find_repo_by_name(repo_name, base_dir)
     if not repo:
         typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
-        typer.echo("\nRun 'dbx just --list' to see available repositories")
+        typer.echo("\nRun 'dbx list' to see available repositories")
         raise typer.Exit(1)
 
     repo_path = Path(repo["path"])

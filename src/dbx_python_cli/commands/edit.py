@@ -28,12 +28,6 @@ app = typer.Typer(
 def edit_callback(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None, help="Repository name to open in editor"),
-    list_repos: bool = typer.Option(
-        False,
-        "--list",
-        "-l",
-        help="Show repository status (cloned vs available)",
-    ),
 ):
     """Open a repository in your editor.
 
@@ -59,32 +53,17 @@ def edit_callback(
             typer.echo(f"[verbose] Using base directory: {base_dir}")
             typer.echo(f"[verbose] Config: {config}\n")
 
-        # Handle --list option
-        if list_repos:
-            from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
-
-            repos_list = list_repos_func(base_dir, format_style="tree", config=config)
-            if repos_list:
-                typer.echo(f"Base directory: {base_dir}\n")
-                typer.echo(repos_list)
-            else:
-                typer.echo(f"Base directory: {base_dir}\n")
-                typer.echo("No repositories found.")
-                typer.echo("\nClone repositories using: dbx clone -g <group>")
-            return
-
-        # Require repo_name if not listing
+        # Require repo_name
         if not repo_name:
             typer.echo("❌ Error: Repository name is required", err=True)
             typer.echo("\nUsage: dbx edit <repo_name>")
-            typer.echo("   or: dbx edit --list")
             raise typer.Exit(1)
 
         # Find the repository
         repo = find_repo_by_name(repo_name, base_dir)
         if not repo:
             typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
-            typer.echo("\nRun 'dbx edit --list' to see available repositories")
+            typer.echo("\nRun 'dbx list' to see available repositories")
             raise typer.Exit(1)
 
         repo_path = Path(repo["path"])

@@ -37,12 +37,6 @@ def test_callback(
         None,
         help="Additional arguments to pass to the test runner (e.g., '--verbose', '-k test_name'). For pytest, these are passed directly. For custom test runners, all args are forwarded.",
     ),
-    list_repos: bool = typer.Option(
-        False,
-        "--list",
-        "-l",
-        help="Show repository status (cloned vs available)",
-    ),
     keyword: str = typer.Option(
         None,
         "--keyword",
@@ -89,35 +83,17 @@ def test_callback(
             typer.echo(f"[verbose] Using base directory: {base_dir}")
             typer.echo(f"[verbose] Config: {config}\n")
 
-        # List repos if requested
-        if list_repos:
-            from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
-
-            output = list_repos_func(base_dir, config=config)
-            if output:
-                typer.echo(f"Base directory: {base_dir}\n")
-                typer.echo(output)
-                typer.echo(
-                    "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
-                )
-            else:
-                typer.echo(f"Base directory: {base_dir}\n")
-                typer.echo("No repositories found.")
-                typer.echo("Run 'dbx clone -g <group>' to clone repositories first.")
-            raise typer.Exit(0)
-
-        # Require repo_name if not listing
+        # Require repo_name
         if not repo_name:
             typer.echo("❌ Error: Repository name is required", err=True)
             typer.echo("\nUsage: dbx test <repo_name> [OPTIONS]")
-            typer.echo("   or: dbx test --list")
             raise typer.Exit(1)
 
         # Find the repository
         repo = find_repo_by_name(repo_name, base_dir)
         if not repo:
             typer.echo(f"Error: Repository '{repo_name}' not found.", err=True)
-            typer.echo("Run 'dbx test --list' to see available repositories.", err=True)
+            typer.echo("Run 'dbx list' to see available repositories.", err=True)
             raise typer.Exit(1)
 
         repo_path = repo["path"]

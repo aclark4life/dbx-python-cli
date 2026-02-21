@@ -29,12 +29,6 @@ def log_callback(
         None,
         help="Git log arguments to run (e.g., '-n 5', '--oneline', '--graph'). If not provided, runs 'git log -n 10'.",
     ),
-    list_repos: bool = typer.Option(
-        False,
-        "--list",
-        "-l",
-        help="Show repository status (cloned vs available)",
-    ),
     group: str = typer.Option(
         None,
         "--group",
@@ -92,23 +86,6 @@ def log_callback(
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
 
-    # Handle --list flag
-    if list_repos:
-        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
-
-        output = list_repos_func(base_dir, config=config)
-        if output:
-            typer.echo(f"Base directory: {base_dir}\n")
-            typer.echo(output)
-            typer.echo(
-                "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
-            )
-        else:
-            typer.echo(f"Base directory: {base_dir}\n")
-            typer.echo("No repositories found.")
-            typer.echo("\nClone repositories using: dbx clone -g <group>")
-        return
-
     # Handle group option
     if group:
         groups = get_repo_groups(config)
@@ -154,20 +131,19 @@ def log_callback(
         _run_git_log(project_path, project, git_args, verbose)
         return
 
-    # Require repo_name if not listing, not using group, and not using project
+    # Require repo_name if not using group and not using project
     if not repo_name:
         typer.echo("❌ Error: Repository name, group, or project is required", err=True)
         typer.echo("\nUsage: dbx log <repo_name> [git_args...]")
         typer.echo("   or: dbx log -g <group> [git_args...]")
         typer.echo("   or: dbx log -p <project> [git_args...]")
-        typer.echo("   or: dbx log --list")
         raise typer.Exit(1)
 
     # Find the repository
     repo = find_repo_by_name(repo_name, base_dir)
     if not repo:
         typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
-        typer.echo("\nRun 'dbx log --list' to see available repositories")
+        typer.echo("\nRun 'dbx list' to see available repositories")
         raise typer.Exit(1)
 
     repo_path = Path(repo["path"])
