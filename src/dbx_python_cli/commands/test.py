@@ -239,6 +239,14 @@ def test_callback(
                     test_env[var] = value
                     typer.echo(f"🔧 Using {var} from config: {value}")
 
+        # Print runtime values of encryption library paths
+        typer.echo(
+            f"🔍 Runtime PYMONGOCRYPT_LIB: {test_env.get('PYMONGOCRYPT_LIB', 'Not set')}"
+        )
+        typer.echo(
+            f"🔍 Runtime CRYPT_SHARED_LIB_PATH: {test_env.get('CRYPT_SHARED_LIB_PATH', 'Not set')}"
+        )
+
         if verbose:
             typer.echo(f"[verbose] Running command: {' '.join(test_cmd)}")
             typer.echo(f"[verbose] Working directory: {repo_path}\n")

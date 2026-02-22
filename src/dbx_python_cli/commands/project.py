@@ -658,6 +658,12 @@ def run_project(
                 env[var] = value
                 typer.echo(f"🔧 Using {var} from config: {value}")
 
+    # Print runtime values of encryption library paths
+    typer.echo(f"🔍 Runtime PYMONGOCRYPT_LIB: {env.get('PYMONGOCRYPT_LIB', 'Not set')}")
+    typer.echo(
+        f"🔍 Runtime CRYPT_SHARED_LIB_PATH: {env.get('CRYPT_SHARED_LIB_PATH', 'Not set')}"
+    )
+
     # Default to project_name.py settings if not specified
     settings_module = settings if settings else name
     env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
@@ -849,6 +855,12 @@ def manage(
                 env[var] = value
                 typer.echo(f"🔧 Using {var} from config: {value}")
 
+    # Print runtime values of encryption library paths
+    typer.echo(f"🔍 Runtime PYMONGOCRYPT_LIB: {env.get('PYMONGOCRYPT_LIB', 'Not set')}")
+    typer.echo(
+        f"🔍 Runtime CRYPT_SHARED_LIB_PATH: {env.get('CRYPT_SHARED_LIB_PATH', 'Not set')}"
+    )
+
     # Default to project_name.py settings if not specified
     settings_module = settings if settings else name
     env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
@@ -996,6 +1008,12 @@ def create_superuser(
                 env[var] = value
                 typer.echo(f"🔧 Using {var} from config: {value}")
 
+    # Print runtime values of encryption library paths
+    typer.echo(f"🔍 Runtime PYMONGOCRYPT_LIB: {env.get('PYMONGOCRYPT_LIB', 'Not set')}")
+    typer.echo(
+        f"🔍 Runtime CRYPT_SHARED_LIB_PATH: {env.get('CRYPT_SHARED_LIB_PATH', 'Not set')}"
+    )
+
     env["DJANGO_SUPERUSER_PASSWORD"] = password
 
     # Default to project_name.py settings if not specified
@@ -1127,6 +1145,12 @@ def migrate_project(
                 # For library directory paths, set them even if directory doesn't exist yet
                 env[var] = value
                 typer.echo(f"🔧 Using {var} from config: {value}")
+
+    # Print runtime values of encryption library paths
+    typer.echo(f"🔍 Runtime PYMONGOCRYPT_LIB: {env.get('PYMONGOCRYPT_LIB', 'Not set')}")
+    typer.echo(
+        f"🔍 Runtime CRYPT_SHARED_LIB_PATH: {env.get('CRYPT_SHARED_LIB_PATH', 'Not set')}"
+    )
 
     # Default to project_name.py settings if not specified
     settings_module = settings if settings else name
