@@ -263,6 +263,85 @@ base_dir = "{base_dir_str}"
         assert "does not exist" in result.stdout or "does not exist" in result.stderr
 
 
+def test_project_remove_last_project_removes_projects_dir(tmp_path):
+    """Test that removing the last project also removes the projects/ directory."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+
+    base_dir = tmp_path / "repos"
+    base_dir_str = str(base_dir).replace("\\", "/")
+
+    config_content = f"""[repo]
+base_dir = "{base_dir_str}"
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        # Create a single project
+        result = runner.invoke(app, ["project", "add", "--no-install", "onlyproject"])
+        assert result.exit_code == 0
+
+        projects_dir = base_dir / "projects"
+        project_path = projects_dir / "onlyproject"
+        assert project_path.exists()
+        assert projects_dir.exists()
+
+        # Remove the only project
+        result = runner.invoke(app, ["project", "remove", "onlyproject"])
+        assert result.exit_code == 0
+        assert "Removed project onlyproject" in result.stdout
+        assert "Removed empty projects directory" in result.stdout
+
+        # Verify both project and projects directory are gone
+        assert not project_path.exists()
+        assert not projects_dir.exists()
+
+
+def test_project_remove_one_of_many_keeps_projects_dir(tmp_path):
+    """Test that removing one project when multiple exist keeps the projects/ directory."""
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+
+    base_dir = tmp_path / "repos"
+    base_dir_str = str(base_dir).replace("\\", "/")
+
+    config_content = f"""[repo]
+base_dir = "{base_dir_str}"
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        # Create two projects
+        result = runner.invoke(app, ["project", "add", "--no-install", "project1"])
+        assert result.exit_code == 0
+        result = runner.invoke(app, ["project", "add", "--no-install", "project2"])
+        assert result.exit_code == 0
+
+        projects_dir = base_dir / "projects"
+        project1_path = projects_dir / "project1"
+        project2_path = projects_dir / "project2"
+        assert project1_path.exists()
+        assert project2_path.exists()
+        assert projects_dir.exists()
+
+        # Remove one project
+        result = runner.invoke(app, ["project", "remove", "project1"])
+        assert result.exit_code == 0
+        assert "Removed project project1" in result.stdout
+        assert "Removed empty projects directory" not in result.stdout
+
+        # Verify only project1 is gone, projects directory still exists
+        assert not project1_path.exists()
+        assert project2_path.exists()
+        assert projects_dir.exists()
+
+
 def test_project_install_with_dbx_install(tmp_path):
     """Test that projects can be installed with dbx install command."""
     config_dir = tmp_path / ".config" / "dbx-python-cli"

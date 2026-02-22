@@ -551,6 +551,23 @@ def remove_project(
     shutil.rmtree(target)
     typer.echo(f"🗑️ Removed project {name}")
 
+    # If using default projects directory, check if it's now empty and remove it
+    if directory is None:
+        # Check if projects_dir is empty (no directories with pyproject.toml)
+        remaining_projects = []
+        if projects_dir.exists():
+            for item in projects_dir.iterdir():
+                if item.is_dir() and (item / "pyproject.toml").exists():
+                    remaining_projects.append(item)
+
+        # If no projects remain, remove the projects directory
+        if not remaining_projects and projects_dir.exists():
+            # Check if directory is completely empty or only has hidden files
+            all_items = list(projects_dir.iterdir())
+            if not all_items:
+                shutil.rmtree(projects_dir)
+                typer.echo(f"🗑️ Removed empty projects directory: {projects_dir}")
+
 
 @app.command("run")
 def run_project(
