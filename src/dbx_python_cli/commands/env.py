@@ -16,11 +16,15 @@ app = typer.Typer(
 @app.command()
 def init(
     ctx: typer.Context,
+    repo: str = typer.Argument(
+        None,
+        help="Repository name to create venv for (optional, creates venv in repo directory)",
+    ),
     group: str = typer.Option(
         None,
         "--group",
         "-g",
-        help="Repository group to create venv for (e.g., pymongo, langchain, django)",
+        help="Repository group to create venv for (creates venv in group directory)",
     ),
     python: str = typer.Option(
         None,
@@ -35,7 +39,12 @@ def init(
         help="List all available groups",
     ),
 ):
-    """Create a virtual environment for a repository group."""
+    """Create a virtual environment.
+
+    By default, creates a venv in the base directory (shared across all repos).
+    Use --group to create a venv in a specific group directory.
+    Use a positional repo argument to create a venv in an individual repo directory.
+    """
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
 
@@ -64,29 +73,54 @@ def init(
                     typer.echo(f"  • {group_name} (no venv)")
             return
 
-        # Require group if not listing
-        if not group:
-            typer.echo("❌ Error: Group name required", err=True)
-            typer.echo("\nUsage: dbx env init -g <group>")
-            typer.echo("   or: dbx env init --list")
+        # Determine what type of venv to create
+        if repo and group:
+            typer.echo("❌ Error: Cannot specify both repo and --group", err=True)
+            typer.echo("\nUsage: dbx env init              (base dir venv)")
+            typer.echo("   or: dbx env init --group <group>  (group venv)")
+            typer.echo("   or: dbx env init <repo>           (repo venv)")
             raise typer.Exit(1)
 
-        if group not in groups:
-            typer.echo(f"Error: Group '{group}' not found in configuration.", err=True)
-            typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
-            raise typer.Exit(1)
+        if repo:
+            # Create venv in individual repo directory
+            from dbx_python_cli.commands.repo_utils import find_repo_by_name
 
-        # Group directory
-        group_dir = base_dir / group
-        if not group_dir.exists():
-            typer.echo(
-                f"Error: Group directory '{group_dir}' does not exist.", err=True
-            )
-            typer.echo(f"Clone the group first with: dbx clone -g {group}", err=True)
-            raise typer.Exit(1)
+            repo_info = find_repo_by_name(repo, base_dir)
+            if not repo_info:
+                typer.echo(f"❌ Error: Repository '{repo}' not found", err=True)
+                typer.echo("\nClone the repository first with: dbx clone <repo>", err=True)
+                raise typer.Exit(1)
 
-        # Venv path
-        venv_path = group_dir / ".venv"
+            venv_path = repo_info["path"] / ".venv"
+            location_desc = f"repository '{repo}'"
+            working_dir = repo_info["path"]
+
+        elif group:
+            # Create venv in group directory
+            if group not in groups:
+                typer.echo(f"❌ Error: Group '{group}' not found in configuration.", err=True)
+                typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
+                raise typer.Exit(1)
+
+            group_dir = base_dir / group
+            if not group_dir.exists():
+                typer.echo(
+                    f"❌ Error: Group directory '{group_dir}' does not exist.", err=True
+                )
+                typer.echo(f"Clone the group first with: dbx clone -g {group}", err=True)
+                raise typer.Exit(1)
+
+            venv_path = group_dir / ".venv"
+            location_desc = f"group '{group}'"
+            working_dir = group_dir
+
+        else:
+            # Create venv in base directory (default)
+            venv_path = base_dir / ".venv"
+            location_desc = "base directory"
+            working_dir = base_dir
+
+        # Check if venv already exists
         if venv_path.exists():
             typer.echo(f"Virtual environment already exists at {venv_path}")
             overwrite = typer.confirm("Do you want to recreate it?")
@@ -100,7 +134,7 @@ def init(
 
         # Create venv using uv
         typer.echo(
-            f"Creating virtual environment for group '{group}' at {venv_path}...\n"
+            f"Creating virtual environment for {location_desc} at {venv_path}...\n"
         )
 
         venv_cmd = ["uv", "venv", str(venv_path)]
@@ -109,11 +143,11 @@ def init(
 
         if verbose:
             typer.echo(f"[verbose] Running command: {' '.join(venv_cmd)}")
-            typer.echo(f"[verbose] Working directory: {group_dir}\n")
+            typer.echo(f"[verbose] Working directory: {working_dir}\n")
 
         result = subprocess.run(
             venv_cmd,
-            cwd=str(group_dir),
+            cwd=str(working_dir),
             check=False,
             capture_output=not verbose,
             text=True,
@@ -138,7 +172,7 @@ def init(
 
 @app.command()
 def list(ctx: typer.Context):
-    """List virtual environments for all groups."""
+    """List all virtual environments (base, group, and repo level)."""
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
 
@@ -146,6 +180,7 @@ def list(ctx: typer.Context):
         config = get_config()
         base_dir = get_base_dir(config)
         groups = get_repo_groups(config)
+        from dbx_python_cli.commands.repo_utils import find_all_repos
 
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}\n")
@@ -153,7 +188,31 @@ def list(ctx: typer.Context):
         typer.echo("Virtual environments:\n")
 
         found_any = False
-        for group_name in groups.keys():
+
+        # Check base directory venv
+        base_venv_path = base_dir / ".venv"
+        if base_venv_path.exists():
+            found_any = True
+            python_path = base_venv_path / "bin" / "python"
+            if python_path.exists():
+                # Get Python version
+                result = subprocess.run(
+                    [str(python_path), "--version"],
+                    capture_output=True,
+                    text=True,
+                )
+                version = (
+                    result.stdout.strip() if result.returncode == 0 else "unknown"
+                )
+                typer.echo(f"  ✅ [BASE]: {base_venv_path} ({version})")
+            else:
+                typer.echo(f"  ⚠️  [BASE]: {base_venv_path} (invalid)")
+        else:
+            typer.echo(f"  ❌ [BASE]: No venv (create with: dbx env init)")
+
+        # Check group-level venvs
+        typer.echo("\n  Group venvs:")
+        for group_name in sorted(groups.keys()):
             group_dir = base_dir / group_name
             venv_path = group_dir / ".venv"
 
@@ -170,17 +229,47 @@ def list(ctx: typer.Context):
                     version = (
                         result.stdout.strip() if result.returncode == 0 else "unknown"
                     )
-                    typer.echo(f"  ✅ {group_name}: {venv_path} ({version})")
+                    typer.echo(f"    ✅ {group_name}: {venv_path} ({version})")
                 else:
-                    typer.echo(f"  ⚠️  {group_name}: {venv_path} (invalid)")
+                    typer.echo(f"    ⚠️  {group_name}: {venv_path} (invalid)")
             else:
                 typer.echo(
-                    f"  ❌ {group_name}: No venv (create with: dbx env init -g {group_name})"
+                    f"    ❌ {group_name}: No venv (create with: dbx env init -g {group_name})"
                 )
 
+        # Check repo-level venvs
+        all_repos = find_all_repos(base_dir)
+        repo_venvs = []
+        for repo in all_repos:
+            repo_venv_path = repo["path"] / ".venv"
+            if repo_venv_path.exists():
+                repo_venvs.append((repo["name"], repo["group"], repo_venv_path))
+                found_any = True
+
+        if repo_venvs:
+            typer.echo("\n  Repository venvs:")
+            for repo_name, group_name, venv_path in sorted(repo_venvs):
+                python_path = venv_path / "bin" / "python"
+                if python_path.exists():
+                    # Get Python version
+                    result = subprocess.run(
+                        [str(python_path), "--version"],
+                        capture_output=True,
+                        text=True,
+                    )
+                    version = (
+                        result.stdout.strip() if result.returncode == 0 else "unknown"
+                    )
+                    typer.echo(f"    ✅ {repo_name} ({group_name}): {venv_path} ({version})")
+                else:
+                    typer.echo(f"    ⚠️  {repo_name} ({group_name}): {venv_path} (invalid)")
+
         if not found_any:
-            typer.echo("  No virtual environments found.")
-            typer.echo("\nCreate one with: dbx env init -g <group>")
+            typer.echo("\n  No virtual environments found.")
+            typer.echo("\nCreate one with:")
+            typer.echo("  dbx env init              (base dir)")
+            typer.echo("  dbx env init -g <group>   (group)")
+            typer.echo("  dbx env init <repo>       (individual repo)")
 
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
@@ -190,11 +279,15 @@ def list(ctx: typer.Context):
 @app.command()
 def remove(
     ctx: typer.Context,
+    repo: str = typer.Argument(
+        None,
+        help="Repository name to remove venv for (optional, removes venv from repo directory)",
+    ),
     group: str = typer.Option(
         None,
         "--group",
         "-g",
-        help="Repository group to remove venv for (e.g., pymongo, langchain, django)",
+        help="Repository group to remove venv for (removes venv from group directory)",
     ),
     list_groups: bool = typer.Option(
         False,
@@ -209,7 +302,12 @@ def remove(
         help="Skip confirmation prompt",
     ),
 ):
-    """Remove a virtual environment for a repository group."""
+    """Remove a virtual environment.
+
+    By default, removes the venv from the base directory.
+    Use --group to remove a venv from a specific group directory.
+    Use a positional repo argument to remove a venv from an individual repo directory.
+    """
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
 
@@ -238,31 +336,55 @@ def remove(
                     typer.echo(f"  • {group_name} (no venv)")
             return
 
-        # Require group if not listing
-        if not group:
-            typer.echo("❌ Error: Group name required", err=True)
-            typer.echo("\nUsage: dbx env remove -g <group>")
-            typer.echo("   or: dbx env remove --list")
+        # Determine what type of venv to remove
+        if repo and group:
+            typer.echo("❌ Error: Cannot specify both repo and --group", err=True)
+            typer.echo("\nUsage: dbx env remove              (base dir venv)")
+            typer.echo("   or: dbx env remove --group <group>  (group venv)")
+            typer.echo("   or: dbx env remove <repo>           (repo venv)")
             raise typer.Exit(1)
 
-        if group not in groups:
-            typer.echo(f"Error: Group '{group}' not found in configuration.", err=True)
-            typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
-            raise typer.Exit(1)
+        if repo:
+            # Remove venv from individual repo directory
+            from dbx_python_cli.commands.repo_utils import find_repo_by_name
 
-        # Group directory
-        group_dir = base_dir / group
-        if not group_dir.exists():
-            typer.echo(
-                f"Error: Group directory '{group_dir}' does not exist.", err=True
-            )
-            raise typer.Exit(1)
+            repo_info = find_repo_by_name(repo, base_dir)
+            if not repo_info:
+                typer.echo(f"❌ Error: Repository '{repo}' not found", err=True)
+                raise typer.Exit(1)
 
-        # Venv path
-        venv_path = group_dir / ".venv"
+            venv_path = repo_info["path"] / ".venv"
+            location_desc = f"repository '{repo}'"
+            recreate_cmd = f"dbx env init {repo}"
+
+        elif group:
+            # Remove venv from group directory
+            if group not in groups:
+                typer.echo(f"❌ Error: Group '{group}' not found in configuration.", err=True)
+                typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
+                raise typer.Exit(1)
+
+            group_dir = base_dir / group
+            if not group_dir.exists():
+                typer.echo(
+                    f"❌ Error: Group directory '{group_dir}' does not exist.", err=True
+                )
+                raise typer.Exit(1)
+
+            venv_path = group_dir / ".venv"
+            location_desc = f"group '{group}'"
+            recreate_cmd = f"dbx env init -g {group}"
+
+        else:
+            # Remove venv from base directory (default)
+            venv_path = base_dir / ".venv"
+            location_desc = "base directory"
+            recreate_cmd = "dbx env init"
+
+        # Check if venv exists
         if not venv_path.exists():
             typer.echo(f"No virtual environment found at {venv_path}")
-            typer.echo(f"Nothing to remove for group '{group}'.")
+            typer.echo(f"Nothing to remove for {location_desc}.")
             raise typer.Exit(0)
 
         # Confirm removal unless --force is used
@@ -281,7 +403,7 @@ def remove(
 
         shutil.rmtree(venv_path)
         typer.echo(f"✅ Virtual environment removed: {venv_path}")
-        typer.echo(f"\nTo recreate: dbx env init -g {group}")
+        typer.echo(f"\nTo recreate: {recreate_cmd}")
 
     except typer.Exit:
         raise

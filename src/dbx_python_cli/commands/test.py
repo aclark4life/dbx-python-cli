@@ -112,7 +112,7 @@ def test_callback(
             group_path = repo_path.parent
 
         # Detect venv
-        python_path, venv_type = get_venv_info(repo_path, group_path)
+        python_path, venv_type = get_venv_info(repo_path, group_path, base_path=base_dir)
 
         if verbose:
             typer.echo(f"[verbose] Venv type: {venv_type}")

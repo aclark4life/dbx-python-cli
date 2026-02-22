@@ -89,15 +89,17 @@ def test_env_init_list_groups_short_form(mock_config):
         assert "langchain" in result.stdout
 
 
-def test_env_init_no_group_shows_error(mock_config):
-    """Test that env init without -g or -l shows error."""
+def test_env_init_no_group_shows_error(mock_config, temp_repos_dir):
+    """Test that env init without arguments creates base dir venv."""
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        mock_get_path.return_value = mock_config
+        with patch("subprocess.run") as mock_run:
+            mock_get_path.return_value = mock_config
+            mock_run.return_value.returncode = 0
 
-        result = runner.invoke(app, ["env", "init"])
-        assert result.exit_code == 1
-        output = result.stdout + result.stderr
-        assert "Group name required" in output
+            result = runner.invoke(app, ["env", "init"])
+            assert result.exit_code == 0
+            assert "Creating virtual environment" in result.stdout
+            assert "Virtual environment created" in result.stdout
 
 
 def test_env_init_invalid_group(mock_config):
@@ -317,15 +319,20 @@ def test_env_remove_list_groups(mock_config, temp_repos_dir):
         assert "langchain" in result.stdout
 
 
-def test_env_remove_no_group_shows_error(mock_config):
-    """Test env remove without group shows error."""
+def test_env_remove_no_group_shows_error(mock_config, temp_repos_dir):
+    """Test env remove without arguments removes base dir venv."""
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
-        result = runner.invoke(app, ["env", "remove"])
-        assert result.exit_code == 1
-        output = result.stdout + result.stderr
-        assert "Group name required" in output
+        # Create base dir venv
+        venv_dir = temp_repos_dir / ".venv"
+        venv_dir.mkdir()
+
+        # Simulate user saying "yes" to remove
+        result = runner.invoke(app, ["env", "remove"], input="y\n")
+        assert result.exit_code == 0
+        assert "Virtual environment removed" in result.stdout
+        assert not venv_dir.exists()
 
 
 def test_env_remove_invalid_group(mock_config):

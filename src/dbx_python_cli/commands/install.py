@@ -571,14 +571,18 @@ def install_callback(
                 typer.echo(f"{'=' * 60}\n")
 
                 # Detect venv
-                python_path, venv_type = get_venv_info(repo_path, group_path)
+                python_path, venv_type = get_venv_info(repo_path, group_path, base_path=base_dir)
 
                 if verbose:
                     typer.echo(f"[verbose] Venv type: {venv_type}")
                     typer.echo(f"[verbose] Python: {python_path}\n")
 
                 # Show venv info
-                if venv_type == "group":
+                if venv_type == "base":
+                    typer.echo(f"Using base venv: {base_dir}/.venv\n")
+                elif venv_type == "repo":
+                    typer.echo(f"Using repo venv: {repo_path}/.venv\n")
+                elif venv_type == "group":
                     typer.echo(f"Using group venv: {group_path}/.venv\n")
                 elif venv_type == "venv":
                     typer.echo(f"Using venv: {python_path}\n")
@@ -738,14 +742,18 @@ def install_callback(
         group_path = repo_path.parent
 
     # Detect venv
-    python_path, venv_type = get_venv_info(repo_path, group_path)
+    python_path, venv_type = get_venv_info(repo_path, group_path, base_path=base_dir)
 
     if verbose:
         typer.echo(f"[verbose] Venv type: {venv_type}")
         typer.echo(f"[verbose] Python: {python_path}\n")
 
     # Show venv info
-    if venv_type == "group":
+    if venv_type == "base":
+        typer.echo(f"Using base venv: {base_dir}/.venv\n")
+    elif venv_type == "repo":
+        typer.echo(f"Using repo venv: {repo_path}/.venv\n")
+    elif venv_type == "group":
         typer.echo(f"Using group venv: {group_path}/.venv\n")
     elif venv_type == "venv":
         typer.echo(f"Using venv: {python_path}\n")

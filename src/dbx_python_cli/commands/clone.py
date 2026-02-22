@@ -9,7 +9,7 @@ from dbx_python_cli.commands import repo_utils as repo
 
 
 def auto_install_repo(
-    repo_path: Path, repo_name: str, group_name: str, verbose: bool = False
+    repo_path: Path, repo_name: str, group_name: str, base_dir: Path, verbose: bool = False
 ):
     """
     Automatically install a cloned repository.
@@ -18,6 +18,7 @@ def auto_install_repo(
         repo_path: Path to the cloned repository
         repo_name: Name of the repository
         group_name: Name of the group the repo belongs to
+        base_dir: Path to the base directory
         verbose: Whether to show verbose output
     """
     from dbx_python_cli.commands.install import install_package, run_build_commands
@@ -27,8 +28,8 @@ def auto_install_repo(
     try:
         config = repo.get_config()
 
-        # Get venv info - will use group venv if exists, otherwise any active venv
-        python_path, venv_type = get_venv_info(repo_path, repo_path.parent)
+        # Get venv info - will use base venv if exists, then repo venv, then group venv, otherwise any active venv
+        python_path, venv_type = get_venv_info(repo_path, repo_path.parent, base_path=base_dir)
 
         if verbose:
             typer.echo(f"  [verbose] Venv type: {venv_type}, Python: {python_path}")
@@ -499,6 +500,7 @@ def clone_callback(
                     repo_info["path"],
                     repo_info["name"],
                     repo_info["group"],
+                    base_dir,
                     verbose=verbose,
                 )
 

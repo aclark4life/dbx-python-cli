@@ -348,9 +348,14 @@ def add_project(
     if auto_install:
         typer.echo(f"\n📦 Installing project '{name}'...")
         try:
+            # Get the repos base directory for venv detection
+            from dbx_python_cli.commands.repo_utils import get_config, get_base_dir as get_repos_base_dir
+            config = get_config()
+            repos_base_dir = get_repos_base_dir(config)
+
             # Get the virtual environment info
             # This will raise an error if no venv is found
-            python_path, venv_type = get_venv_info(project_path, None)
+            python_path, venv_type = get_venv_info(project_path, None, base_path=repos_base_dir)
 
             # Install the Python package
             result = install_package(
