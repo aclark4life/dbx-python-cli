@@ -349,9 +349,8 @@ def add_project(
         typer.echo(f"\n📦 Installing project '{name}'...")
         try:
             # Get the repos base directory for venv detection
-            from dbx_python_cli.commands.repo_utils import get_config, get_base_dir as get_repos_base_dir
-            config = get_config()
-            repos_base_dir = get_repos_base_dir(config)
+            repos_config = get_config()
+            repos_base_dir = get_base_dir(repos_config)
 
             # Get the virtual environment info
             # This will raise an error if no venv is found
