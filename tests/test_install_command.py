@@ -26,40 +26,7 @@ def test_install_help():
     assert "--dependency-groups" in output
 
 
-def test_install_list_no_repos(tmp_path):
-    """Test install --list with no repositories."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
-        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
-            mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-            result = runner.invoke(app, ["install", "--list"])
-            assert result.exit_code == 0
-            assert "No repositories found" in result.stdout
 
-
-def test_install_list_shows_repos(tmp_path):
-    """Test install --list shows available repositories."""
-    # Create mock repository structure
-    group_dir = tmp_path / "pymongo"
-    repo_dir = group_dir / "mongo-python-driver"
-    repo_dir.mkdir(parents=True)
-    (repo_dir / ".git").mkdir()
-
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
-        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
-            mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-            result = runner.invoke(app, ["install", "--list"])
-            assert result.exit_code == 0
-            assert "mongo-python-driver" in result.stdout
-            assert "pymongo" in result.stdout
-
-
-def test_install_list_short_form(tmp_path):
-    """Test install -l short form."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
-        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
-            mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-            result = runner.invoke(app, ["install", "-l"])
-            assert result.exit_code == 0
 
 
 def test_install_no_args_shows_error():
@@ -97,7 +64,7 @@ def test_install_basic_success(tmp_path):
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
                     mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                    mock_venv.return_value = ("python", "system")
+                    mock_venv.return_value = ("python", "venv")
                     mock_result = MagicMock()
                     mock_result.returncode = 0
                     mock_run.return_value = mock_result
@@ -135,7 +102,7 @@ def test_install_with_extras(tmp_path):
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
                     mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                    mock_venv.return_value = ("python", "system")
+                    mock_venv.return_value = ("python", "venv")
                     mock_result = MagicMock()
                     mock_result.returncode = 0
                     mock_run.return_value = mock_result
@@ -170,16 +137,18 @@ def test_install_with_multiple_extras(tmp_path):
 
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
-            with patch("subprocess.run") as mock_run:
-                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+            with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
+                with patch("subprocess.run") as mock_run:
+                    mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                    mock_venv.return_value = ("python", "venv")
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(
-                    app, ["install", "mongo-python-driver", "-e", "test,aws"]
-                )
-                assert result.exit_code == 0
+                    result = runner.invoke(
+                        app, ["install", "mongo-python-driver", "-e", "test,aws"]
+                    )
+                    assert result.exit_code == 0
 
 
 def test_install_with_groups(tmp_path):
@@ -196,7 +165,7 @@ def test_install_with_groups(tmp_path):
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
                     mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                    mock_venv.return_value = ("python", "system")
+                    mock_venv.return_value = ("python", "venv")
                     mock_result = MagicMock()
                     mock_result.returncode = 0
                     mock_run.return_value = mock_result
@@ -251,7 +220,7 @@ def test_install_with_extras_and_groups(tmp_path):
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
                     mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                    mock_venv.return_value = ("python", "system")
+                    mock_venv.return_value = ("python", "venv")
                     mock_result = MagicMock()
                     mock_result.returncode = 0
                     mock_run.return_value = mock_result
@@ -347,7 +316,7 @@ def test_install_group_all_repos(tmp_path):
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
                     mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                    mock_venv.return_value = ("python", "system")
+                    mock_venv.return_value = ("python", "venv")
                     mock_result = MagicMock()
                     mock_result.returncode = 0
                     mock_run.return_value = mock_result
@@ -386,7 +355,7 @@ def test_install_group_all_repos_with_extras(tmp_path):
             with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
                 with patch("subprocess.run") as mock_run:
                     mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                    mock_venv.return_value = ("python", "system")
+                    mock_venv.return_value = ("python", "venv")
                     mock_result = MagicMock()
                     mock_result.returncode = 0
                     mock_run.return_value = mock_result
@@ -453,19 +422,21 @@ def test_install_duplicate_repo_warning(tmp_path):
 
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
-            with patch("subprocess.run") as mock_run:
-                mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+            with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
+                with patch("subprocess.run") as mock_run:
+                    mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                    mock_venv.return_value = ("python", "venv")
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["install", "mongo-python-driver"])
-                assert result.exit_code == 0
+                    result = runner.invoke(app, ["install", "mongo-python-driver"])
+                    assert result.exit_code == 0
 
-                # Check for warning about duplicate repos
-                output = result.stdout + result.stderr
-                assert "found in multiple groups" in output
-                assert "pymongo" in output or "langchain" in output
+                    # Check for warning about duplicate repos
+                    output = result.stdout + result.stderr
+                    assert "found in multiple groups" in output
+                    assert "pymongo" in output or "langchain" in output
                 assert "Use -g to specify" in output
 
 

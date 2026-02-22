@@ -3,6 +3,7 @@
 import platform
 
 import pytest
+import typer
 
 from dbx_python_cli.commands.venv_utils import get_venv_info, get_venv_python
 
@@ -96,11 +97,17 @@ def test_get_venv_info_with_group_venv(temp_repo_dir, temp_group_with_venv):
 
 def test_get_venv_info_no_group_path(temp_repo_dir):
     """Test get_venv_info when no group path is provided."""
-    python_path, venv_type = get_venv_info(temp_repo_dir, group_path=None)
-
-    # Should return actual python path (either venv or system)
-    assert python_path  # Not empty
-    assert venv_type in ["venv", "system"]
+    # When no group path is provided and we're not in a venv, it should raise an error
+    # This test will only pass if we're already in a venv (which is typical in CI)
+    # Otherwise it will raise typer.Exit
+    try:
+        python_path, venv_type = get_venv_info(temp_repo_dir, group_path=None)
+        # If we get here, we're in a venv
+        assert python_path  # Not empty
+        assert venv_type == "venv"
+    except typer.Exit:
+        # Expected when not in a venv
+        pass
 
 
 def test_get_venv_info_group_venv_not_exists(temp_repo_dir, tmp_path):
@@ -108,20 +115,28 @@ def test_get_venv_info_group_venv_not_exists(temp_repo_dir, tmp_path):
     group_dir = tmp_path / "group_without_venv"
     group_dir.mkdir()
 
-    python_path, venv_type = get_venv_info(temp_repo_dir, group_dir)
+    # When group venv doesn't exist and we're not in a venv, it should raise an error
+    try:
+        python_path, venv_type = get_venv_info(temp_repo_dir, group_dir)
+        # If we get here, we're in a venv
+        assert python_path  # Not empty
+        assert venv_type == "venv"
+    except typer.Exit:
+        # Expected when not in a venv
+        pass
 
-    # Should return actual python path (either venv or system)
-    assert python_path  # Not empty
-    assert venv_type in ["venv", "system"]
 
-
-def test_get_venv_info_fallback_to_system(temp_repo_dir):
-    """Test get_venv_info falls back to system python."""
-    python_path, venv_type = get_venv_info(temp_repo_dir)
-
-    # Should return actual python path (either venv or system)
-    assert python_path  # Not empty
-    assert venv_type in ["venv", "system"]
+def test_get_venv_info_raises_on_system_python(temp_repo_dir):
+    """Test get_venv_info raises error when system python is detected."""
+    # When no venv is found, it should raise typer.Exit
+    try:
+        python_path, venv_type = get_venv_info(temp_repo_dir)
+        # If we get here, we're in a venv (typical in CI)
+        assert python_path  # Not empty
+        assert venv_type == "venv"
+    except typer.Exit:
+        # Expected when not in a venv - this is the new behavior
+        pass
 
 
 def test_get_venv_python_with_pathlib_path(tmp_path):

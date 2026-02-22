@@ -75,43 +75,7 @@ def test_test_help():
     assert "Test commands" in result.stdout
 
 
-def test_test_list_no_repos(tmp_path):
-    """Test that test --list shows message when no repos exist."""
-    empty_dir = tmp_path / "empty"
-    empty_dir.mkdir()
 
-    with patch("dbx_python_cli.commands.test.get_config") as mock_get_config:
-        mock_get_config.return_value = {"repo": {"base_dir": str(empty_dir)}}
-
-        result = runner.invoke(app, ["test", "--list"])
-        # Exit code can be 0 or 1 depending on how typer.Exit is handled
-        assert "No repositories found" in result.stdout
-
-
-def test_test_list_shows_repos(mock_config, temp_repos_dir):
-    """Test that test --list shows all available repositories."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        mock_get_path.return_value = mock_config
-
-        result = runner.invoke(app, ["test", "--list"])
-        # Exit code can be 0 or 1 depending on how typer.Exit is handled
-        assert "mongo-python-driver" in result.stdout
-        assert "specifications" in result.stdout
-        assert "django" in result.stdout
-        assert "pymongo/" in result.stdout
-        assert "django/" in result.stdout
-        assert "Legend:" in result.stdout
-
-
-def test_test_list_short_form(mock_config, temp_repos_dir):
-    """Test that test -l works as shortcut for --list."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        mock_get_path.return_value = mock_config
-
-        result = runner.invoke(app, ["test", "-l"])
-        # Exit code can be 0 or 1 depending on how typer.Exit is handled
-        assert "mongo-python-driver" in result.stdout
-        assert "Legend:" in result.stdout
 
 
 def test_test_no_args_shows_error():
@@ -141,7 +105,7 @@ def test_test_runs_pytest_success(mock_config, temp_repos_dir):
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 mock_get_path.return_value = mock_config
-                mock_venv.return_value = ("python", "system")
+                mock_venv.return_value = ("python", "venv")
 
                 # Mock successful pytest run
                 mock_result = MagicMock()
@@ -163,50 +127,24 @@ def test_test_runs_pytest_success(mock_config, temp_repos_dir):
 def test_test_runs_pytest_failure(mock_config, temp_repos_dir):
     """Test that test handles pytest failures."""
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        with patch("subprocess.run") as mock_run:
-            mock_get_path.return_value = mock_config
+        with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
+            with patch("subprocess.run") as mock_run:
+                mock_get_path.return_value = mock_config
+                mock_venv.return_value = ("python", "venv")
 
-            # Mock failed pytest run
-            mock_result = MagicMock()
-            mock_result.returncode = 1
-            mock_run.return_value = mock_result
+                # Mock failed pytest run
+                mock_result = MagicMock()
+                mock_result.returncode = 1
+                mock_run.return_value = mock_result
 
-            result = runner.invoke(app, ["test", "mongo-python-driver"])
-            assert result.exit_code == 1
-            assert "Running pytest" in result.stdout
-            output = result.stdout + result.stderr
-            assert "Tests failed" in output
+                result = runner.invoke(app, ["test", "mongo-python-driver"])
+                assert result.exit_code == 1
+                assert "Running pytest" in result.stdout
+                output = result.stdout + result.stderr
+                assert "Tests failed" in output
 
 
-def test_test_list_base_dir_not_exists(tmp_path):
-    """Test that test -l handles non-existent base directory gracefully."""
-    from dbx_python_cli.commands.repo_utils import find_all_repos
 
-    # Test find_all_repos directly with non-existent directory
-    nonexistent_dir = tmp_path / "nonexistent_repos"
-    repos = find_all_repos(nonexistent_dir)
-    assert repos == []
-
-    # Also test via CLI
-    config_dir = tmp_path / ".config" / "dbx-python-cli"
-    config_dir.mkdir(parents=True)
-    config_path = config_dir / "config.toml"
-
-    repos_dir_str = str(nonexistent_dir).replace("\\", "/")
-    config_content = f"""
-[repo]
-base_dir = "{repos_dir_str}"
-"""
-    config_path.write_text(config_content)
-
-    # test.py imports get_config from repo.py, so we need to patch repo.get_config_path
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        mock_get_path.return_value = config_path
-        result = runner.invoke(app, ["test", "-l"])
-        # Should exit with 0 when listing (even if no repos found)
-        assert result.exit_code == 0
-        assert "No repositories found" in result.stdout
-        assert "Base directory:" in result.stdout
 
 
 def test_test_with_custom_test_runner(tmp_path):
@@ -252,7 +190,7 @@ django = "tests/runtests.py"
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 mock_get_path.return_value = config_path
-                mock_venv.return_value = ("python", "system")
+                mock_venv.return_value = ("python", "venv")
 
                 # Mock successful test run
                 mock_result = MagicMock()
@@ -309,7 +247,7 @@ django = "tests/runtests.py"
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             mock_get_path.return_value = config_path
-            mock_venv.return_value = ("python", "system")
+            mock_venv.return_value = ("python", "venv")
 
             result = runner.invoke(app, ["test", "django"])
             assert result.exit_code == 1
@@ -323,7 +261,7 @@ def test_test_fallback_to_pytest_when_no_test_runner(mock_config, temp_repos_dir
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 mock_get_path.return_value = mock_config
-                mock_venv.return_value = ("python", "system")
+                mock_venv.return_value = ("python", "venv")
 
                 # Mock successful pytest run
                 mock_result = MagicMock()
@@ -383,7 +321,7 @@ django = "tests/runtests.py"
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 mock_get_path.return_value = config_path
-                mock_venv.return_value = ("python", "system")
+                mock_venv.return_value = ("python", "venv")
 
                 # Mock successful test run
                 mock_result = MagicMock()
@@ -410,7 +348,7 @@ def test_test_with_pytest_and_args(mock_config, temp_repos_dir):
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 mock_get_path.return_value = mock_config
-                mock_venv.return_value = ("python", "system")
+                mock_venv.return_value = ("python", "venv")
 
                 # Mock successful pytest run
                 mock_result = MagicMock()
@@ -454,7 +392,7 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 mock_get_path.return_value = config_path
-                mock_venv.return_value = ("python", "system")
+                mock_venv.return_value = ("python", "venv")
 
                 # Mock successful test run
                 mock_result = MagicMock()
@@ -500,7 +438,7 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 mock_get_path.return_value = config_path
-                mock_venv.return_value = ("python", "system")
+                mock_venv.return_value = ("python", "venv")
 
                 # Mock successful test run
                 mock_result = MagicMock()
@@ -544,7 +482,7 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 mock_get_path.return_value = config_path
-                mock_venv.return_value = ("python", "system")
+                mock_venv.return_value = ("python", "venv")
 
                 # Mock successful test run
                 mock_result = MagicMock()

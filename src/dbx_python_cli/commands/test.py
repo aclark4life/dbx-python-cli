@@ -171,8 +171,6 @@ def test_callback(
             typer.echo(f"Using group venv: {group_path}/.venv\n")
         elif venv_type == "venv":
             typer.echo(f"Using venv: {python_path}\n")
-        else:
-            typer.echo(f"⚠️  No venv found, using system Python: {python_path}\n")
 
         # Get environment variables for test run
         test_env = os.environ.copy()

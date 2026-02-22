@@ -582,10 +582,6 @@ def install_callback(
                     typer.echo(f"Using group venv: {group_path}/.venv\n")
                 elif venv_type == "venv":
                     typer.echo(f"Using venv: {python_path}\n")
-                else:
-                    typer.echo(
-                        f"⚠️  No venv found, using system Python: {python_path}\n"
-                    )
 
                 # Check if this repo needs build commands (e.g., cmake)
                 build_commands = get_build_commands(config, grp, repo["name"])
@@ -753,8 +749,6 @@ def install_callback(
         typer.echo(f"Using group venv: {group_path}/.venv\n")
     elif venv_type == "venv":
         typer.echo(f"Using venv: {python_path}\n")
-    else:
-        typer.echo(f"⚠️  No venv found, using system Python: {python_path}\n")
 
     # Check if this repo needs build commands (e.g., cmake)
     build_commands = get_build_commands(config, repo["group"], repo["name"])

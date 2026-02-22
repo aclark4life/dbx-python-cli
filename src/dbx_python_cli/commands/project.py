@@ -349,13 +349,8 @@ def add_project(
         typer.echo(f"\n📦 Installing project '{name}'...")
         try:
             # Get the virtual environment info
+            # This will raise an error if no venv is found
             python_path, venv_type = get_venv_info(project_path, None)
-
-            if venv_type == "system":
-                typer.echo(
-                    "⚠️  Warning: No virtual environment detected. Installing to system Python.",
-                    err=True,
-                )
 
             # Install the Python package
             result = install_package(

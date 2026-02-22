@@ -139,7 +139,10 @@ Venv Detection Example
        Get information about which venv will be used.
 
        Returns:
-           tuple: (python_path, venv_type) where venv_type is "group", "venv", or "system"
+           tuple: (python_path, venv_type) where venv_type is "group" or "venv"
+
+       Raises:
+           typer.Exit: If no virtual environment is found (system Python detected)
        """
        # Check group-level venv if group_path provided
        if group_path:
@@ -152,5 +155,12 @@ Venv Detection Example
        if _is_venv(python_path):  # Checks sys.base_prefix != sys.prefix
            return python_path, "venv"
 
-       # Fallback to system Python
-       return python_path, "system"
+       # System Python detected - error out
+       typer.echo("❌ Error: No virtual environment found. Installation to system Python is not allowed.", err=True)
+       typer.echo("\nTo fix this, create a virtual environment:", err=True)
+       if group_path:
+           typer.echo(f"  dbx env init -g {group_path.name}", err=True)
+       else:
+           typer.echo("  dbx env init -g <group-name>", err=True)
+       typer.echo("\nOr activate an existing virtual environment before running dbx install.", err=True)
+       raise typer.Exit(1)
