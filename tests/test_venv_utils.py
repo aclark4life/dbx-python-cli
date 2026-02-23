@@ -190,3 +190,194 @@ def test_get_venv_info_with_pathlib_path(tmp_path):
     assert isinstance(python_result, str)
     assert python_result == str(python_path)
     assert venv_type == "group"
+
+
+def test_venv_priority_repo_over_group(tmp_path):
+    """Test that repo-level venv takes priority over group-level venv."""
+    # Create group directory with venv
+    group_dir = tmp_path / "test_group"
+    group_dir.mkdir()
+
+    if platform.system() == "Windows":
+        group_venv = group_dir / ".venv" / "Scripts"
+        group_venv.mkdir(parents=True)
+        group_python = group_venv / "python.exe"
+    else:
+        group_venv = group_dir / ".venv" / "bin"
+        group_venv.mkdir(parents=True)
+        group_python = group_venv / "python"
+
+    group_python.write_text("#!/usr/bin/env python3\n")
+
+    # Create repo directory with venv
+    repo_dir = group_dir / "test_repo"
+    repo_dir.mkdir()
+
+    if platform.system() == "Windows":
+        repo_venv = repo_dir / ".venv" / "Scripts"
+        repo_venv.mkdir(parents=True)
+        repo_python = repo_venv / "python.exe"
+    else:
+        repo_venv = repo_dir / ".venv" / "bin"
+        repo_venv.mkdir(parents=True)
+        repo_python = repo_venv / "python"
+
+    repo_python.write_text("#!/usr/bin/env python3\n")
+
+    # Test get_venv_python
+    python_path = get_venv_python(repo_dir, group_dir)
+    assert python_path == str(repo_python)
+
+    # Test get_venv_info
+    python_path, venv_type = get_venv_info(repo_dir, group_dir)
+    assert python_path == str(repo_python)
+    assert venv_type == "repo"
+
+
+def test_venv_priority_repo_over_base(tmp_path):
+    """Test that repo-level venv takes priority over base-level venv."""
+    # Create base directory with venv
+    base_dir = tmp_path / "base"
+    base_dir.mkdir()
+
+    if platform.system() == "Windows":
+        base_venv = base_dir / ".venv" / "Scripts"
+        base_venv.mkdir(parents=True)
+        base_python = base_venv / "python.exe"
+    else:
+        base_venv = base_dir / ".venv" / "bin"
+        base_venv.mkdir(parents=True)
+        base_python = base_venv / "python"
+
+    base_python.write_text("#!/usr/bin/env python3\n")
+
+    # Create group directory (no venv)
+    group_dir = base_dir / "test_group"
+    group_dir.mkdir()
+
+    # Create repo directory with venv
+    repo_dir = group_dir / "test_repo"
+    repo_dir.mkdir()
+
+    if platform.system() == "Windows":
+        repo_venv = repo_dir / ".venv" / "Scripts"
+        repo_venv.mkdir(parents=True)
+        repo_python = repo_venv / "python.exe"
+    else:
+        repo_venv = repo_dir / ".venv" / "bin"
+        repo_venv.mkdir(parents=True)
+        repo_python = repo_venv / "python"
+
+    repo_python.write_text("#!/usr/bin/env python3\n")
+
+    # Test get_venv_python
+    python_path = get_venv_python(repo_dir, group_dir, base_dir)
+    assert python_path == str(repo_python)
+
+    # Test get_venv_info
+    python_path, venv_type = get_venv_info(repo_dir, group_dir, base_dir)
+    assert python_path == str(repo_python)
+    assert venv_type == "repo"
+
+
+def test_venv_priority_group_over_base(tmp_path):
+    """Test that group-level venv takes priority over base-level venv."""
+    # Create base directory with venv
+    base_dir = tmp_path / "base"
+    base_dir.mkdir()
+
+    if platform.system() == "Windows":
+        base_venv = base_dir / ".venv" / "Scripts"
+        base_venv.mkdir(parents=True)
+        base_python = base_venv / "python.exe"
+    else:
+        base_venv = base_dir / ".venv" / "bin"
+        base_venv.mkdir(parents=True)
+        base_python = base_venv / "python"
+
+    base_python.write_text("#!/usr/bin/env python3\n")
+
+    # Create group directory with venv
+    group_dir = base_dir / "test_group"
+    group_dir.mkdir()
+
+    if platform.system() == "Windows":
+        group_venv = group_dir / ".venv" / "Scripts"
+        group_venv.mkdir(parents=True)
+        group_python = group_venv / "python.exe"
+    else:
+        group_venv = group_dir / ".venv" / "bin"
+        group_venv.mkdir(parents=True)
+        group_python = group_venv / "python"
+
+    group_python.write_text("#!/usr/bin/env python3\n")
+
+    # Create repo directory (no venv)
+    repo_dir = group_dir / "test_repo"
+    repo_dir.mkdir()
+
+    # Test get_venv_python
+    python_path = get_venv_python(repo_dir, group_dir, base_dir)
+    assert python_path == str(group_python)
+
+    # Test get_venv_info
+    python_path, venv_type = get_venv_info(repo_dir, group_dir, base_dir)
+    assert python_path == str(group_python)
+    assert venv_type == "group"
+
+
+def test_venv_priority_all_three_levels(tmp_path):
+    """Test priority when all three levels (repo, group, base) have venvs."""
+    # Create base directory with venv
+    base_dir = tmp_path / "base"
+    base_dir.mkdir()
+
+    if platform.system() == "Windows":
+        base_venv = base_dir / ".venv" / "Scripts"
+        base_venv.mkdir(parents=True)
+        base_python = base_venv / "python.exe"
+    else:
+        base_venv = base_dir / ".venv" / "bin"
+        base_venv.mkdir(parents=True)
+        base_python = base_venv / "python"
+
+    base_python.write_text("#!/usr/bin/env python3\n")
+
+    # Create group directory with venv
+    group_dir = base_dir / "test_group"
+    group_dir.mkdir()
+
+    if platform.system() == "Windows":
+        group_venv = group_dir / ".venv" / "Scripts"
+        group_venv.mkdir(parents=True)
+        group_python = group_venv / "python.exe"
+    else:
+        group_venv = group_dir / ".venv" / "bin"
+        group_venv.mkdir(parents=True)
+        group_python = group_venv / "python"
+
+    group_python.write_text("#!/usr/bin/env python3\n")
+
+    # Create repo directory with venv
+    repo_dir = group_dir / "test_repo"
+    repo_dir.mkdir()
+
+    if platform.system() == "Windows":
+        repo_venv = repo_dir / ".venv" / "Scripts"
+        repo_venv.mkdir(parents=True)
+        repo_python = repo_venv / "python.exe"
+    else:
+        repo_venv = repo_dir / ".venv" / "bin"
+        repo_venv.mkdir(parents=True)
+        repo_python = repo_venv / "python"
+
+    repo_python.write_text("#!/usr/bin/env python3\n")
+
+    # Test get_venv_python - should use repo-level (most specific)
+    python_path = get_venv_python(repo_dir, group_dir, base_dir)
+    assert python_path == str(repo_python)
+
+    # Test get_venv_info - should use repo-level (most specific)
+    python_path, venv_type = get_venv_info(repo_dir, group_dir, base_dir)
+    assert python_path == str(repo_python)
+    assert venv_type == "repo"

@@ -61,10 +61,10 @@ def get_venv_python(repo_path, group_path=None, base_path=None):
     """
     Get the Python executable from a venv.
 
-    Checks in priority order:
-    1. Base directory venv: <base_path>/.venv/bin/python (if base_path provided)
-    2. Repository-level venv: <repo_path>/.venv/bin/python
-    3. Group-level venv: <group_path>/.venv/bin/python (if group_path provided)
+    Checks in priority order (most specific to least specific):
+    1. Repository-level venv: <repo_path>/.venv/bin/python
+    2. Group-level venv: <group_path>/.venv/bin/python (if group_path provided)
+    3. Base directory venv: <base_path>/.venv/bin/python (if base_path provided)
     4. System Python: "python" (fallback)
 
     Args:
@@ -81,13 +81,7 @@ def get_venv_python(repo_path, group_path=None, base_path=None):
     else:
         python_subpath = "bin/python"
 
-    # Check base directory venv if base_path provided
-    if base_path:
-        base_venv_python = base_path / ".venv" / python_subpath
-        if base_venv_python.exists():
-            return str(base_venv_python)
-
-    # Check repository-level venv
+    # Check repository-level venv (most specific)
     if repo_path:
         repo_venv_python = repo_path / ".venv" / python_subpath
         if repo_venv_python.exists():
@@ -99,6 +93,12 @@ def get_venv_python(repo_path, group_path=None, base_path=None):
         if group_venv_python.exists():
             return str(group_venv_python)
 
+    # Check base directory venv if base_path provided (least specific)
+    if base_path:
+        base_venv_python = base_path / ".venv" / python_subpath
+        if base_venv_python.exists():
+            return str(base_venv_python)
+
     # Fallback to system Python
     return "python"
 
@@ -107,10 +107,10 @@ def get_venv_info(repo_path, group_path=None, base_path=None):
     """
     Get information about which venv will be used.
 
-    Checks in priority order:
-    1. Base directory venv
-    2. Repository-level venv
-    3. Group-level venv
+    Checks in priority order (most specific to least specific):
+    1. Repository-level venv
+    2. Group-level venv
+    3. Base directory venv
     4. Activated venv
 
     Returns:
@@ -125,13 +125,7 @@ def get_venv_info(repo_path, group_path=None, base_path=None):
     else:
         python_subpath = "bin/python"
 
-    # Check base directory venv if base_path provided
-    if base_path:
-        base_venv_python = base_path / ".venv" / python_subpath
-        if base_venv_python.exists():
-            return str(base_venv_python), "base"
-
-    # Check repository-level venv
+    # Check repository-level venv (most specific)
     if repo_path:
         repo_venv_python = repo_path / ".venv" / python_subpath
         if repo_venv_python.exists():
@@ -142,6 +136,12 @@ def get_venv_info(repo_path, group_path=None, base_path=None):
         group_venv_python = group_path / ".venv" / python_subpath
         if group_venv_python.exists():
             return str(group_venv_python), "group"
+
+    # Check base directory venv if base_path provided (least specific)
+    if base_path:
+        base_venv_python = base_path / ".venv" / python_subpath
+        if base_venv_python.exists():
+            return str(base_venv_python), "base"
 
     # Check if the default Python is in a venv
     python_path = _get_python_path()

@@ -295,22 +295,22 @@ def install_callback(
     repo_name: str = typer.Argument(
         None, help="Repository name to install dependencies for"
     ),
-    extras: Optional[str] = typer.Option(
+    extras: Optional[list[str]] = typer.Option(
         None,
         "--extras",
         "-e",
-        help="Comma-separated list of extras to install (e.g., 'test', 'dev', 'aws')",
+        help="Extras to install (e.g., 'test', 'dev', 'aws'). Can be specified multiple times.",
     ),
     dependency_groups: Optional[str] = typer.Option(
         None,
         "--dependency-groups",
         help="Comma-separated list of dependency groups to install (e.g., 'dev', 'test')",
     ),
-    group: Optional[str] = typer.Option(
+    group: Optional[list[str]] = typer.Option(
         None,
         "--group",
         "-g",
-        help="Group name: use group's venv, or install all repos in group if no repo specified. Can be comma-separated for multiple groups.",
+        help="First -g specifies group name (venv/repos to use). Additional -g flags specify dependency groups to install.",
     ),
     show_options: bool = typer.Option(
         False,
@@ -331,6 +331,46 @@ def install_callback(
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
 
+    # Parse -g flags based on context:
+    # - If repo_name is provided: all -g flags are dependency groups
+    # - If repo_name is NOT provided: first -g is venv_group, rest are dependency groups
+    venv_group = None
+    group_dependency_groups = []
+
+    if repo_name:
+        # When installing a specific repo, all -g flags are dependency groups
+        if group:
+            group_dependency_groups = group
+    else:
+        # When installing a group of repos, first -g is venv_group, rest are dependency groups
+        if group:
+            if len(group) > 0:
+                venv_group = group[0]
+            if len(group) > 1:
+                group_dependency_groups = group[1:]
+
+    # Parse -e flags: convert list to comma-separated string for backwards compatibility
+    extras_str = None
+    if extras:
+        extras_str = ",".join(extras)
+
+    # Combine dependency groups from -g flags and --dependency-groups
+    combined_dependency_groups = []
+    if group_dependency_groups:
+        combined_dependency_groups.extend(group_dependency_groups)
+    if dependency_groups:
+        combined_dependency_groups.extend([g.strip() for g in dependency_groups.split(",") if g.strip()])
+
+    # Convert back to comma-separated string for backwards compatibility with existing code
+    dependency_groups_str = ",".join(combined_dependency_groups) if combined_dependency_groups else None
+
+    if verbose:
+        typer.echo(f"[verbose] repo_name: {repo_name}")
+        typer.echo(f"[verbose] venv_group: {venv_group}")
+        typer.echo(f"[verbose] dependency_groups from -g: {group_dependency_groups}")
+        typer.echo(f"[verbose] combined dependency_groups: {dependency_groups_str}")
+        typer.echo(f"[verbose] extras: {extras_str}\n")
+
     try:
         config = get_config()
         base_dir = get_base_dir(config)
@@ -344,13 +384,9 @@ def install_callback(
     # Handle --show-options flag
     if show_options:
         # Case 1: Show options for all repos in a group (-g <group>)
-        if group and not repo_name:
-            # Parse comma-separated groups
-            groups = [name.strip() for name in group.split(",") if name.strip()]
-
-            if not groups:
-                typer.echo("❌ Error: No valid groups specified", err=True)
-                raise typer.Exit(1)
+        if venv_group and not repo_name:
+            # For --show-options with -g, only use the first -g (venv_group)
+            groups = [venv_group]
 
             # Validate all groups exist
             all_repos = find_all_repos(base_dir)
@@ -371,14 +407,9 @@ def install_callback(
                     raise typer.Exit(1)
 
             # Display header
-            if len(groups) == 1:
-                typer.echo(
-                    f"📦 Showing options for all repositories in group '{groups[0]}':\n"
-                )
-            else:
-                typer.echo(
-                    f"📦 Showing options for all repositories in groups: {', '.join(groups)}\n"
-                )
+            typer.echo(
+                f"📦 Showing options for all repositories in group '{groups[0]}':\n"
+            )
 
             # Show options for all groups
             for grp in groups:
@@ -518,13 +549,9 @@ def install_callback(
         return
 
     # Handle installing all repos in a group when only -g is provided
-    if not repo_name and group:
-        # Parse comma-separated groups
-        groups = [name.strip() for name in group.split(",") if name.strip()]
-
-        if not groups:
-            typer.echo("❌ Error: No valid groups specified", err=True)
-            raise typer.Exit(1)
+    if not repo_name and venv_group:
+        # Only use the first -g (venv_group) for determining which repos to install
+        groups = [venv_group]
 
         # Validate all groups exist before installing
         all_repos = find_all_repos(base_dir)
@@ -543,12 +570,9 @@ def install_callback(
                 raise typer.Exit(1)
 
         # Display which groups we're installing
-        if len(groups) == 1:
-            typer.echo(f"Installing all repositories in group '{groups[0]}'...\n")
-        else:
-            typer.echo(
-                f"Installing all repositories in groups: {', '.join(groups)}...\n"
-            )
+        typer.echo(f"Installing all repositories in group '{groups[0]}'...\n")
+        if dependency_groups_str:
+            typer.echo(f"With dependency groups: {dependency_groups_str}\n")
 
         # Install repos in all groups
         failed_items = []
@@ -613,8 +637,8 @@ def install_callback(
                             repo_path,
                             python_path,
                             install_dir=install_dir,
-                            extras=extras,
-                            groups=dependency_groups,
+                            extras=extras_str,
+                            groups=dependency_groups_str,
                             verbose=verbose,
                         )
 
@@ -632,8 +656,8 @@ def install_callback(
                         repo_path,
                         python_path,
                         install_dir=None,
-                        extras=extras,
-                        groups=dependency_groups,
+                        extras=extras_str,
+                        groups=dependency_groups_str,
                         verbose=verbose,
                     )
 
@@ -692,18 +716,18 @@ def install_callback(
         raise typer.Exit(1)
 
     # Determine which group to use
-    if group:
+    if venv_group:
         # Use specified group
-        group_path = base_dir / group
+        group_path = base_dir / venv_group
         if not group_path.exists():
-            typer.echo(f"❌ Error: Group '{group}' not found in {base_dir}", err=True)
+            typer.echo(f"❌ Error: Group '{venv_group}' not found in {base_dir}", err=True)
             raise typer.Exit(1)
 
         # Look for the repo in the specified group
         repo_path = group_path / repo_name
         if not repo_path.exists() or not (repo_path / ".git").exists():
             typer.echo(
-                f"❌ Error: Repository '{repo_name}' not found in group '{group}'",
+                f"❌ Error: Repository '{repo_name}' not found in group '{venv_group}'",
                 err=True,
             )
             typer.echo("\nRun 'dbx install --list' to see available repositories")
@@ -713,7 +737,7 @@ def install_callback(
         repo = {
             "name": repo_name,
             "path": repo_path,
-            "group": group,
+            "group": venv_group,
         }
     else:
         # Find the repository (will return first match if multiple exist)
@@ -783,8 +807,8 @@ def install_callback(
                 repo_path,
                 python_path,
                 install_dir=install_dir,
-                extras=extras,
-                groups=dependency_groups,
+                extras=extras_str,
+                groups=dependency_groups_str,
                 verbose=verbose,
             )
 
@@ -818,8 +842,8 @@ def install_callback(
             repo_path,
             python_path,
             install_dir=None,
-            extras=extras,
-            groups=dependency_groups,
+            extras=extras_str,
+            groups=dependency_groups_str,
             verbose=verbose,
         )
 

@@ -1297,7 +1297,7 @@ repos = [
 
 
 def test_install_multiple_groups_csv(tmp_path):
-    """Test installing multiple groups using comma-separated values."""
+    """Test installing group with dependency groups using multiple -g flags."""
     config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -1314,17 +1314,10 @@ def test_install_multiple_groups_csv(tmp_path):
     (django_repo / "pyproject.toml").write_text("""
 [project]
 name = "django"
-""")
 
-    # Create pymongo group with a repo
-    pymongo_dir = base_dir / "pymongo"
-    pymongo_dir.mkdir()
-    pymongo_repo = pymongo_dir / "mongo-python-driver"
-    pymongo_repo.mkdir()
-    (pymongo_repo / ".git").mkdir()
-    (pymongo_repo / "pyproject.toml").write_text("""
-[project]
-name = "pymongo"
+[dependency-groups]
+dev = ["pytest>=7.0"]
+test = ["coverage>=6.0"]
 """)
 
     # Create config
@@ -1337,40 +1330,46 @@ base_dir = "{base_dir_str}"
 repos = [
     "https://github.com/django/django.git",
 ]
-
-[repo.groups.pymongo]
-repos = [
-    "https://github.com/mongodb/mongo-python-driver.git",
-]
 """
     config_path.write_text(config_content)
 
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.commands.install.subprocess.run") as mock_run:
-            mock_get_path.return_value = config_path
-            # Mock successful installation
-            mock_run.return_value = type(
-                "obj", (object,), {"returncode": 0, "stdout": "", "stderr": ""}
-            )()
+        with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
+            with patch("dbx_python_cli.commands.install.subprocess.run") as mock_run:
+                mock_get_path.return_value = config_path
+                mock_venv.return_value = ("python", "venv")
+                # Mock successful installation
+                mock_run.return_value = type(
+                    "obj", (object,), {"returncode": 0, "stdout": "", "stderr": ""}
+                )()
 
-            # Test CSV format: -g django,pymongo
-            result = runner.invoke(app, ["install", "-g", "django,pymongo"])
-            assert result.exit_code == 0
+                # Test new format: -g django -g dev (first -g is group, second -g is dependency group)
+                result = runner.invoke(app, ["install", "-g", "django", "-g", "dev"])
+                if result.exit_code != 0:
+                    print(f"STDOUT: {result.stdout}")
+                    print(f"STDERR: {result.stderr}")
+                assert result.exit_code == 0
 
-            # Check that both groups are mentioned in output
-            assert "django" in result.stdout.lower()
-            assert (
-                "pymongo" in result.stdout.lower()
-                or "mongo-python-driver" in result.stdout.lower()
-            )
+                # Check that django group is mentioned in output
+                assert "django" in result.stdout.lower()
 
-            # Check for success message mentioning multiple groups
-            assert "installed successfully" in result.stdout.lower()
+                # Check for success message
+                assert "installed successfully" in result.stdout.lower()
 
-            # Verify uv pip install was called for both repos
-            install_calls = [
-                call
-                for call in mock_run.call_args_list
-                if len(call[0]) > 0 and "uv" in call[0][0]
-            ]
-            assert len(install_calls) >= 2
+                # Verify uv pip install was called for the repo
+                install_calls = [
+                    call
+                    for call in mock_run.call_args_list
+                    if len(call[0]) > 0 and "uv" in call[0][0] and "pip" in call[0][0]
+                ]
+                assert len(install_calls) >= 1
+
+                # Verify that dependency group was installed
+                group_calls = [
+                    call
+                    for call in mock_run.call_args_list
+                    if len(call[0]) > 0 and "--group" in call[0][0]
+                ]
+                assert len(group_calls) >= 1
+                # Check that 'dev' group was specified
+                assert any("dev" in str(call) for call in group_calls)
