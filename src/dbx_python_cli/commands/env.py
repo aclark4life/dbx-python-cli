@@ -136,7 +136,7 @@ def init(
             f"Creating virtual environment for {location_desc} at {venv_path}...\n"
         )
 
-        venv_cmd = ["uv", "venv", str(venv_path)]
+        venv_cmd = ["uv", "venv", str(venv_path), "--no-python-downloads"]
         if python:
             venv_cmd.extend(["--python", python])
 
