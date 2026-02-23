@@ -41,12 +41,6 @@ def branch_callback(
         "-p",
         help="Run git branch in a specific project",
     ),
-    all_branches: bool = typer.Option(
-        False,
-        "--all",
-        "-a",
-        help="Show all branches (local and remote)",
-    ),
 ):
     """Run git branch in a cloned repository, group of repositories, or project.
 
@@ -58,12 +52,12 @@ def branch_callback(
 
     Examples::
 
-        dbx branch mongo-python-driver                 # Show branches
-        dbx branch mongo-python-driver -a              # Show all branches
+        dbx branch mongo-python-driver                 # Show local branches
+        dbx -v branch mongo-python-driver              # Show all branches (local and remote)
         dbx branch mongo-python-driver -d feature      # Delete branch 'feature'
         dbx branch mongo-python-driver -D feature      # Force delete branch 'feature'
         dbx branch -g pymongo                          # Show branches for all repos in group
-        dbx branch -g pymongo -a                       # Show all branches for all repos in group
+        dbx -v branch -g pymongo                       # Show all branches for all repos in group
         dbx branch -g pymongo -d old-feature           # Delete 'old-feature' in all repos
         dbx branch -p myproject                        # Show branches for a project
     """
@@ -80,8 +74,8 @@ def branch_callback(
         git_args.insert(0, repo_name)
         repo_name = None
 
-    # Add -a flag if --all option is specified
-    if all_branches and "-a" not in git_args:
+    # Add -a flag when verbose mode is active to show all branches
+    if verbose and "-a" not in git_args:
         git_args.insert(0, "-a")
 
     try:

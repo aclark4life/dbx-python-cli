@@ -228,7 +228,7 @@ def test_branch_with_nonexistent_group(tmp_path, temp_repos_dir, mock_config):
 
 
 def test_verbose_flag_with_branch_command(tmp_path, temp_repos_dir, mock_config):
-    """Test that verbose flag shows detailed output."""
+    """Test that verbose flag shows detailed output and all branches."""
     with patch(
         "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
     ):
@@ -240,6 +240,9 @@ def test_verbose_flag_with_branch_command(tmp_path, temp_repos_dir, mock_config)
                 output = strip_ansi(result.stdout)
                 assert "[verbose]" in output
                 assert "Running command:" in output
+                assert "git branch -a" in output
+                args = mock_run.call_args[0][0]
+                assert args == ["git", "--no-pager", "branch", "-a"]
 
 
 def test_branch_with_all_flag(tmp_path, temp_repos_dir, mock_config):
@@ -258,16 +261,15 @@ def test_branch_with_all_flag(tmp_path, temp_repos_dir, mock_config):
                 assert args == ["git", "--no-pager", "branch", "-a"]
 
 
-def test_branch_with_all_flag_long_form(tmp_path, temp_repos_dir, mock_config):
-    """Test running branch with --all flag (as option, not git arg)."""
+def test_verbose_flag_shows_all_branches(tmp_path, temp_repos_dir, mock_config):
+    """Test that dbx -v branch shows all branches (local and remote) via -a flag."""
     with patch(
         "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
     ):
         with patch("dbx_python_cli.commands.branch.get_config", return_value={}):
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0)
-                # --all as an option (before repo name) gets converted to -a
-                result = runner.invoke(app, ["branch", "--all", "mongo-python-driver"])
+                result = runner.invoke(app, ["-v", "branch", "mongo-python-driver"])
                 assert result.exit_code == 0
                 assert "git branch -a" in result.stdout
                 mock_run.assert_called_once()
