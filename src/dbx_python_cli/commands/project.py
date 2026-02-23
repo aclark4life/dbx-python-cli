@@ -248,6 +248,33 @@ def add_project(
         )
         raise typer.Exit(code=1)
 
+    # Check for virtual environment before running django-admin
+    # For project creation, check parent directories only (project doesn't exist yet)
+    # Check in order: projects group-level → base-level → activated venv
+    try:
+        if directory is None and not use_base_dir_override:
+            # Using config-based base_dir/projects/name
+            # Check: projects_dir/.venv → base_dir/.venv → activated
+            python_path, venv_type = get_venv_info(
+                None, projects_dir, base_path=base_dir
+            )
+        else:
+            # Using custom --directory or --base-dir override
+            # Check: activated venv only
+            python_path, venv_type = get_venv_info(None, None, base_path=None)
+
+        # Show which venv is being used
+        if venv_type == "group":
+            typer.echo(f"✅ Using projects group venv: {projects_dir}/.venv\n")
+        elif venv_type == "base":
+            typer.echo(f"✅ Using base venv: {base_dir}/.venv\n")
+        elif venv_type == "venv":
+            typer.echo(f"✅ Using activated venv: {python_path}\n")
+    except typer.Exit:
+        # get_venv_info raises typer.Exit if no venv found
+        # Re-raise with more context for project creation
+        raise
+
     with resources.path(
         "dbx_python_cli.templates", "project_template"
     ) as template_path:
