@@ -103,6 +103,40 @@ def get_venv_python(repo_path, group_path=None, base_path=None):
     return "python"
 
 
+def _find_existing_venvs(base_path):
+    """
+    Find all existing virtual environments in the base directory.
+
+    Args:
+        base_path: Path to the base directory
+
+    Returns:
+        list: List of tuples (venv_name, venv_path) for existing venvs
+    """
+    from pathlib import Path
+
+    existing_venvs = []
+
+    if not base_path or not Path(base_path).exists():
+        return existing_venvs
+
+    base_dir = Path(base_path)
+
+    # Check base venv
+    base_venv = base_dir / ".venv"
+    if base_venv.exists():
+        existing_venvs.append(("base", base_venv))
+
+    # Check group venvs
+    for item in base_dir.iterdir():
+        if item.is_dir():
+            group_venv = item / ".venv"
+            if group_venv.exists():
+                existing_venvs.append((f"{item.name} group", group_venv))
+
+    return existing_venvs
+
+
 def get_venv_info(repo_path, group_path=None, base_path=None):
     """
     Get information about which venv will be used.
@@ -164,5 +198,13 @@ def get_venv_info(repo_path, group_path=None, base_path=None):
         repo_name = repo_path.name
         typer.echo(f"  dbx env init {repo_name}      (repo level)", err=True)
 
-    typer.echo("\nOr activate an existing virtual environment before running dbx install.", err=True)
+    # Find and suggest existing venvs to activate
+    existing_venvs = _find_existing_venvs(base_path)
+    if existing_venvs:
+        typer.echo("\nOr activate an existing virtual environment:", err=True)
+        for venv_name, venv_path in existing_venvs:
+            typer.echo(f"  source {venv_path}/bin/activate  # {venv_name}", err=True)
+    else:
+        typer.echo("\nOr activate an existing virtual environment before running dbx install.", err=True)
+
     raise typer.Exit(1)
