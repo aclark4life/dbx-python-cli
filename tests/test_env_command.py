@@ -114,15 +114,23 @@ def test_env_init_invalid_group(mock_config):
 
 
 def test_env_init_group_dir_not_exists(mock_config, temp_repos_dir):
-    """Test that env init shows error when group directory doesn't exist."""
+    """Test that env init creates group directory if it doesn't exist."""
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        mock_get_path.return_value = mock_config
+        with patch("subprocess.run") as mock_run:
+            mock_get_path.return_value = mock_config
+            mock_run.return_value.returncode = 0
 
-        result = runner.invoke(app, ["env", "init", "-g", "pymongo"])
-        assert result.exit_code == 1
-        output = result.stdout + result.stderr
-        assert "does not exist" in output
-        assert "Clone the group first" in output
+            # Group directory doesn't exist yet
+            pymongo_dir = temp_repos_dir / "pymongo"
+            assert not pymongo_dir.exists()
+
+            result = runner.invoke(app, ["env", "init", "-g", "pymongo"])
+            assert result.exit_code == 0
+            assert "Creating virtual environment" in result.stdout
+            assert "Virtual environment created" in result.stdout
+
+            # Verify directory was created
+            assert pymongo_dir.exists()
 
 
 def test_env_init_creates_venv(mock_config, temp_repos_dir):

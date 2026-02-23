@@ -103,13 +103,6 @@ def init(
                 raise typer.Exit(1)
 
             group_dir = base_dir / group
-            if not group_dir.exists():
-                typer.echo(
-                    f"❌ Error: Group directory '{group_dir}' does not exist.", err=True
-                )
-                typer.echo(f"Clone the group first with: dbx clone -g {group}", err=True)
-                raise typer.Exit(1)
-
             venv_path = group_dir / ".venv"
             location_desc = f"group '{group}'"
             working_dir = group_dir
