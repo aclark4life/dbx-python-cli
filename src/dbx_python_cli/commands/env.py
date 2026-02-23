@@ -132,6 +132,12 @@ def init(
 
             shutil.rmtree(venv_path)
 
+        # Ensure working directory exists
+        if not working_dir.exists():
+            if verbose:
+                typer.echo(f"[verbose] Creating directory: {working_dir}\n")
+            working_dir.mkdir(parents=True, exist_ok=True)
+
         # Create venv using uv
         typer.echo(
             f"Creating virtual environment for {location_desc} at {venv_path}...\n"
