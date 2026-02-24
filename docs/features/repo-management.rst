@@ -129,7 +129,7 @@ This command will:
 .. code-block:: bash
 
    # Clone your fork with upstream configured
-   dbx clone -g pymongo --fork aclark4life
+   dbx clone -g pymongo --fork-user aclark4life
 
    # Make some changes in your fork
    cd ~/Developer/mongodb/pymongo/mongo-python-driver
@@ -305,9 +305,6 @@ The ``dbx branch`` command allows you to run ``git branch`` in one or more repos
    # Show branches in a project
    dbx branch -p myproject
 
-   # List available repositories
-   dbx branch --list
-
 This command will:
 
 1. Find the repository, group, or project by name
@@ -364,7 +361,7 @@ This command will:
 - The ``-a`` or ``--all`` flag shows all branches (local and remote) for all repositories
 - When using with a group, the command runs in all repositories in that group
 - Projects without a ``.git`` directory will be skipped with a warning
-- Use the ``--list`` flag to see all available repositories and projects
+- Run ``dbx list`` to see all available repositories
 
 Switch Git Branches
 -------------------
@@ -420,7 +417,7 @@ This command will:
 - When using with a group, the command runs in all repositories in that group
 - The ``--create`` flag creates a new branch if it doesn't exist
 - Projects without a ``.git`` directory will be skipped with a warning
-- Use the ``--list`` flag to see all available repositories and projects
+- Run ``dbx list`` to see all available repositories
 
 View Git Commit Logs
 ---------------------
@@ -446,9 +443,6 @@ The ``dbx log`` command allows you to view git commit logs from one or more repo
 
    # Show logs from a project
    dbx log -p myproject
-
-   # List available repositories
-   dbx log --list
 
 This command will:
 
@@ -491,7 +485,7 @@ This command will:
 - Use ``--oneline`` for a compact one-line-per-commit format
 - When using with a group, the command runs in all repositories in that group
 - Projects without a ``.git`` directory will be skipped with a warning
-- Use the ``--list`` flag to see all available repositories and projects
+- Run ``dbx list`` to see all available repositories
 
 View Git Remotes
 ----------------
@@ -504,24 +498,21 @@ The ``dbx remote`` command allows you to view git remotes from one or more repos
    dbx remote mongo-python-driver
 
    # Show remotes with URLs (verbose)
-   dbx remote --verbose-remotes mongo-python-driver
+   dbx -v remote mongo-python-driver
 
    # Show remotes in all repositories in a group
    dbx remote -g pymongo
 
    # Show remotes in all repositories in a group with URLs
-   dbx remote --verbose-remotes -g pymongo
+   dbx -v remote -g pymongo
 
    # Show remotes in a project
    dbx remote -p myproject
 
-   # List available repositories
-   dbx remote --list
-
 This command will:
 
 1. Find the repository, group, or project by name
-2. Run ``git remote`` (or ``git remote -v`` with ``--verbose-remotes``)
+2. Run ``git remote`` (or ``git remote -v`` with the global ``-v``/``--verbose`` flag)
 3. Display the remotes for each repository
 
 **Examples:**
@@ -535,7 +526,7 @@ This command will:
    upstream
 
    # View remotes with URLs
-   $ dbx remote --verbose-remotes mongo-python-driver
+   $ dbx -v remote mongo-python-driver
    🔗 mongo-python-driver: Remotes (verbose)
    origin    git@github.com:aclark4life/mongo-python-driver.git (fetch)
    origin    git@github.com:aclark4life/mongo-python-driver.git (push)
@@ -555,11 +546,11 @@ This command will:
 **Notes:**
 
 - The command works with any repository that has been cloned using ``dbx clone``
-- Use ``--verbose-remotes`` to show remote URLs (equivalent to ``git remote -v``)
+- Use the global ``-v``/``--verbose`` flag to show remote URLs (equivalent to ``git remote -v``)
 - When using with a group, the command runs in all repositories in that group
 - Projects without a ``.git`` directory will be skipped with a warning
 - Repositories with no remotes configured will show "(no remotes configured)"
-- Use the ``--list`` flag to see all available repositories and projects
+- Run ``dbx list`` to see all available repositories
 
 Open Repositories in Browser
 -----------------------------
@@ -573,9 +564,6 @@ The ``dbx open`` command allows you to open repositories in your web browser:
 
    # Open all repositories in a group
    dbx open -g pymongo
-
-   # List available repositories
-   dbx open --list
 
 This command will:
 
@@ -607,4 +595,4 @@ This command will:
 - Also works with HTTPS git URLs
 - When using with a group, opens all repositories in that group
 - Requires the repository to have an ``origin`` remote configured
-- Use the ``--list`` flag to see all available repositories
+- Run ``dbx list`` to see all available repositories

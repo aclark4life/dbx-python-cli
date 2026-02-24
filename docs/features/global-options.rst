@@ -15,7 +15,7 @@ Use the ``-v`` / ``--verbose`` flag to see more detailed output from any command
    dbx -v test mongo-python-driver
 
    # Show verbose output when cloning repositories
-   dbx -v repo clone -g pymongo
+   dbx -v clone -g pymongo
 
    # Show verbose output when running just commands
    dbx -v just mongo-python-driver lint

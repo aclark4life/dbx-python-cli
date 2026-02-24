@@ -8,9 +8,6 @@ Install dependencies in any cloned repository using ``uv pip install``:
 
 .. code-block:: bash
 
-   # List all available repositories
-   dbx install --list
-
    # Install a repository in editable mode
    dbx install mongo-python-driver
 
@@ -18,19 +15,18 @@ Install dependencies in any cloned repository using ``uv pip install``:
    dbx install mongo-python-driver -e test
 
    # Install with multiple extras
-   dbx install mongo-python-driver -e test,aws
+   dbx install mongo-python-driver -e test -e aws
 
    # Install with dependency groups
    dbx install mongo-python-driver --dependency-groups dev,test
 
    # Combine extras and dependency groups
-   dbx install mongo-python-driver -e test,aws --dependency-groups dev
+   dbx install mongo-python-driver -e test -e aws --dependency-groups dev
 
    # Use -g to specify which group (when repo exists in multiple groups)
    dbx install mongo-python-driver -g pymongo
 
    # Short forms
-   dbx install -l  # list
    dbx install mongo-python-driver -e test  # install with test extras
    dbx install mongo-python-driver -e test --dependency-groups dev  # install with test extras and dev dependency group
 
@@ -46,20 +42,12 @@ Example Output
 
 .. code-block:: bash
 
-   $ dbx install --list
-   Available repositories:
-
-     • mongo-python-driver (pymongo)
-     • specifications (pymongo)
-     • django (django)
-     • django-mongodb-backend (django)
-
    $ dbx install mongo-python-driver -e test
    Installing dependencies in ~/Developer/mongodb/pymongo/mongo-python-driver...
 
    ✅ Package installed successfully
 
-   $ dbx install mongo-python-driver -e test,aws --dependency-groups dev
+   $ dbx install mongo-python-driver -e test -e aws --dependency-groups dev
    Installing dependencies in ~/Developer/mongodb/pymongo/mongo-python-driver...
 
    ✅ Package installed successfully

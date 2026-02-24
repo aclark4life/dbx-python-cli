@@ -26,11 +26,11 @@ See the [full documentation](https://dbx-python-cli.readthedocs.io/) for detaile
 
 ## Installation
 
-### Via uv tool (Recommended)
+### Via pipx (Recommended)
 
 ```bash
 # Install directly from GitHub
-uv tool install git+https://github.com/aclark4life/dbx-python-cli.git
+pipx install git+https://github.com/aclark4life/dbx-python-cli.git
 ```
 
 This will install `dbx-python-cli` globally and make the `dbx` command available in your terminal.
@@ -42,25 +42,25 @@ This will install `dbx-python-cli` globally and make the `dbx` command available
 dbx config init
 
 # Clone repositories by group
-dbx repo clone -g pymongo
+dbx clone -g pymongo
 
 # List available repositories
-dbx test -l
+dbx list
 
 # Install dependencies in a repository
 dbx install mongo-python-driver -e test
 
 # Install with multiple extras
-dbx install mongo-python-driver -e test,aws
+dbx install mongo-python-driver -e test -e aws
 
 # Install with dependency groups
-dbx install mongo-python-driver -e test --groups dev,test
+dbx install mongo-python-driver -e test --dependency-groups dev,test
 
 # Install all repositories in a group
 dbx install -g pymongo
 
 # Install all repos in a group with extras
-dbx install -g pymongo -e test --groups dev
+dbx install -g pymongo -e test --dependency-groups dev
 
 # Use a different group's venv for a single repo
 dbx install mongo-python-driver -g pymongo
@@ -95,7 +95,7 @@ dbx branch -g django -a
 # Use verbose mode for more detailed output
 dbx -v install mongo-python-driver -e test
 dbx -v test mongo-python-driver
-dbx -v repo clone -g pymongo
+dbx -v clone -g pymongo
 dbx -v just mongo-python-driver lint
 dbx -v branch -g pymongo
 ```
@@ -203,19 +203,19 @@ just docs-clean
 
 ```
 dbx-python-cli/
-├── src/dbx/           # Source code
-│   ├── __init__.py    # Package initialization
-│   └── cli.py         # CLI implementation
-├── tests/             # Test suite
-│   ├── conftest.py    # Pytest configuration
-│   ├── test_cli.py    # CLI tests
-│   └── test_version.py # Version tests
-├── docs/              # Sphinx documentation
-│   ├── conf.py        # Sphinx configuration
-│   └── index.rst      # Documentation index
-├── pyproject.toml     # Project configuration
-├── justfile           # Task runner commands
-└── README.md          # This file
+├── src/dbx_python_cli/  # Source code
+│   ├── __init__.py      # Package initialization
+│   └── cli.py           # CLI implementation
+├── tests/               # Test suite
+│   ├── conftest.py      # Pytest configuration
+│   ├── test_cli.py      # CLI tests
+│   └── test_version.py  # Version tests
+├── docs/                # Sphinx documentation
+│   ├── conf.py          # Sphinx configuration
+│   └── index.rst        # Documentation index
+├── pyproject.toml       # Project configuration
+├── justfile             # Task runner commands
+└── README.md            # This file
 ```
 
 ## Contributing

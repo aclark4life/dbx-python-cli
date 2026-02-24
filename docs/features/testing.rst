@@ -8,9 +8,6 @@ Run tests in any cloned repository using pytest (default) or a custom test runne
 
 .. code-block:: bash
 
-   # List all available repositories
-   dbx test --list
-
    # Run tests in a specific repository
    dbx test mongo-python-driver
 
@@ -21,7 +18,6 @@ Run tests in any cloned repository using pytest (default) or a custom test runne
    dbx test mongo-python-driver -x --tb=short
 
    # Short forms
-   dbx test -l  # list
    dbx test mongo-python-driver -k "test_auth"  # filter tests
 
 The ``test`` command will:
@@ -35,14 +31,6 @@ Example Output
 --------------
 
 .. code-block:: bash
-
-   $ dbx test --list
-   Available repositories in ~/Developer/dbx-repos:
-
-     [django] django
-     [django] django-mongodb-backend
-     [pymongo] mongo-python-driver
-     [pymongo] specifications
 
    $ dbx test mongo-python-driver
    Running pytest in ~/Developer/dbx-repos/pymongo/mongo-python-driver...

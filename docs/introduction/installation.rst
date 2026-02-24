@@ -8,40 +8,49 @@ Prerequisites
 
 Before installing dbx-python-cli, you'll need:
 
-- **Python 3.10 or higher**
-- **uv** - Ultra-fast Python package installer and tool manager
+- **Python 3.11 or higher**
+- **pipx** - Install Python applications in isolated environments
 
-Installing uv
-~~~~~~~~~~~~~
+Installing pipx
+~~~~~~~~~~~~~~~
 
-If you don't have uv installed, install it first:
+If you don't have pipx installed, install it first:
 
-**macOS/Linux:**
+**macOS:**
 
 .. code-block:: bash
 
-   curl -LsSf https://astral.sh/uv/install.sh | sh
+   brew install pipx
+   pipx ensurepath
+
+**Linux:**
+
+.. code-block:: bash
+
+   pip install pipx
+   pipx ensurepath
 
 **Windows:**
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+   pip install pipx
+   pipx ensurepath
 
-For more installation options, see the `uv documentation <https://github.com/astral-sh/uv>`_.
+For more installation options, see the `pipx documentation <https://pipx.pypa.io/>`_.
 
 Installing dbx-python-cli
 --------------------------
 
-Via uv tool (Recommended)
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Via pipx (Recommended)
+~~~~~~~~~~~~~~~~~~~~~~~
 
-The recommended way to install dbx-python-cli is using ``uv tool install``:
+The recommended way to install dbx-python-cli is using ``pipx install``:
 
 .. code-block:: bash
 
    # Install directly from GitHub
-   uv tool install git+https://github.com/aclark4life/dbx-python-cli.git
+   pipx install git+https://github.com/aclark4life/dbx-python-cli.git
 
 This will:
 
@@ -67,13 +76,13 @@ To update dbx-python-cli to the latest version:
 
 .. code-block:: bash
 
-   uv tool upgrade dbx-python-cli
+   pipx upgrade dbx-python-cli
 
-Or to install a specific version:
+Or to reinstall a specific version:
 
 .. code-block:: bash
 
-   uv tool install --force git+https://github.com/aclark4life/dbx-python-cli.git@<version>
+   pipx install --force git+https://github.com/aclark4life/dbx-python-cli.git@<version>
 
 Uninstalling
 ------------
@@ -82,7 +91,7 @@ To uninstall dbx-python-cli:
 
 .. code-block:: bash
 
-   uv tool uninstall dbx-python-cli
+   pipx uninstall dbx-python-cli
 
 Optional Dependencies
 ---------------------

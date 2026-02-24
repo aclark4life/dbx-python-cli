@@ -141,12 +141,6 @@ See what's available:
    # List all virtual environments
    dbx env list
 
-   # List repositories for install
-   dbx install --list
-
-   # List repositories for testing
-   dbx test --list
-
 Run Just Commands
 ~~~~~~~~~~~~~~~~~
 

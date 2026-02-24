@@ -20,9 +20,6 @@ Basic Usage
    # Show short-format status
    dbx status --short mongo-python-driver
 
-   # List all available repositories
-   dbx status --list
-
 Command Options
 ---------------
 
@@ -31,7 +28,6 @@ The ``status`` command supports the following options:
 * ``<repo_name>`` - Repository name to show status for
 * ``-g, --group <group_name>`` - Show status for all repositories in a group
 * ``-s, --short`` - Show short-format status output (equivalent to ``git status --short``)
-* ``-l, --list`` - Show repository status (cloned vs available)
 
 Examples
 --------
@@ -79,25 +75,6 @@ The ``--short`` flag provides a compact view of changes:
    📊 mongo-python-driver:
     M src/pymongo/collection.py
    ?? new_file.py
-
-List Available Repositories
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-   $ dbx status --list
-   Base directory: ~/Developer/dbx-repos
-
-   Repository status:
-
-   pymongo
-   ├── ✓ mongo-python-driver
-   └── ✓ specifications
-
-   django
-   └── ✓ django-mongodb-backend
-
-   Legend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config
 
 Verbose Mode
 ------------

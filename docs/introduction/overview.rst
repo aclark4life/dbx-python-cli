@@ -88,13 +88,28 @@ Available for all commands:
 Commands
 ~~~~~~~~
 
-Main command groups:
+Available commands:
 
-- ``repo`` - Repository management (clone, sync, list, init)
-- ``env`` - Virtual environment management (init, list, remove)
+- ``branch`` - Show git branches in repositories
+- ``clone`` - Clone repositories by group
+- ``config`` - Manage configuration
+- ``edit`` - Open repositories in an editor
+- ``env`` - Virtual environment management
+- ``fetch`` - Fetch from remote repositories
 - ``install`` - Dependency installation
-- ``test`` - Run tests
 - ``just`` - Run just commands
+- ``list`` - List available repositories
+- ``log`` - Show git commit logs
+- ``open`` - Open repositories in browser
+- ``project`` - Manage projects
+- ``pull`` - Pull latest changes
+- ``remote`` - View git remotes
+- ``remove`` - Remove repositories
+- ``reset`` - Reset repositories
+- ``status`` - Show git status
+- ``switch`` - Switch git branches
+- ``sync`` - Sync fork with upstream
+- ``test`` - Run tests
 
 See :doc:`../features/global-options` for details on global options.
 
