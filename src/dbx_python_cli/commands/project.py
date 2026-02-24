@@ -661,6 +661,10 @@ def run_project(
     import signal
 
     # Determine project directory
+    # Initialise here so they are in scope for the venv detection below
+    base_dir = None
+    projects_dir = None
+
     if directory is None:
         # Use base_dir/projects/ as default
         config = get_config()
@@ -682,6 +686,15 @@ def run_project(
     if not project_path.exists():
         typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
         raise typer.Exit(code=1)
+
+    # Detect the project venv so we use the right Python for manage.py
+    try:
+        if directory is None:
+            python_path, venv_type = get_venv_info(None, projects_dir, base_path=base_dir)
+        else:
+            python_path, venv_type = get_venv_info(None, None, base_path=None)
+    except typer.Exit:
+        raise
 
     # Check if frontend exists
     frontend_path = project_path / "frontend"
@@ -735,6 +748,10 @@ def run_project(
     env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
     typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
 
+    # Prepend venv bin dir to PATH so the correct manage.py / Django runtime is used
+    venv_bin = str(Path(python_path).parent)
+    env["PATH"] = f"{venv_bin}{os.pathsep}{env.get('PATH', '')}"
+
     if has_frontend:
         # Ensure frontend is installed
         typer.echo("📦 Checking frontend dependencies...")
@@ -764,7 +781,7 @@ def run_project(
         try:
             typer.echo("🌐 Starting Django development server...")
             subprocess.run(
-                [sys.executable, "manage.py", "runserver", f"{host}:{port}"],
+                [python_path, "manage.py", "runserver", f"{host}:{port}"],
                 cwd=project_path,
                 env=env,
                 check=True,
@@ -780,7 +797,7 @@ def run_project(
         try:
             typer.echo("🌐 Starting Django development server...")
             subprocess.run(
-                [sys.executable, "manage.py", "runserver", f"{host}:{port}"],
+                [python_path, "manage.py", "runserver", f"{host}:{port}"],
                 cwd=project_path,
                 env=env,
                 check=True,
