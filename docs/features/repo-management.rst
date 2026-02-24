@@ -31,9 +31,6 @@ Clone repositories from predefined groups:
    # Clone django repositories
    dbx clone -g django
 
-   # List available groups
-   dbx clone -l
-
 Fork-Based Workflow
 ~~~~~~~~~~~~~~~~~~~
 
