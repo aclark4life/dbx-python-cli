@@ -101,8 +101,7 @@ def ensure_group_venv(group_dir: Path, group_name: str, verbose: bool = False) -
     venv_path = group_dir / ".venv"
 
     if venv_path.exists():
-        if verbose:
-            typer.echo(f"  [verbose] Group venv already exists: {venv_path}")
+        typer.echo(f"  🐍 Using existing venv: {venv_path}")
         return True
 
     typer.echo(f"  🐍 Creating virtual environment for group '{group_name}'...")
