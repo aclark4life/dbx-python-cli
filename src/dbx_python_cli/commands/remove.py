@@ -187,3 +187,16 @@ def remove_callback(
     if failed_count > 0:
         typer.echo(f"❌ Failed to remove {failed_count} repository(ies)")
         raise typer.Exit(1)
+
+    # When removing an entire group, also remove the group directory itself
+    if group and failed_count == 0:
+        group_dir = base_dir / group
+        if group_dir.exists():
+            try:
+                if verbose:
+                    typer.echo(f"[verbose] Removing group directory: {group_dir}")
+                shutil.rmtree(group_dir)
+                typer.echo(f"✅ Removed group directory {group_dir}")
+            except Exception as e:
+                typer.echo(f"❌ Failed to remove group directory: {e}", err=True)
+                raise typer.Exit(1)

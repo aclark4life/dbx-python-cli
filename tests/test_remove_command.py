@@ -149,8 +149,9 @@ def test_remove_group_with_confirmation_yes(mock_config, temp_repos_dir):
         assert result.exit_code == 0
         output = strip_ansi(result.stdout)
         assert "Successfully removed 1 repository(ies)" in output
-        # Verify repo was removed
+        # Verify repo and group directory were removed
         assert not (temp_repos_dir / "django" / "django-mongodb-backend").exists()
+        assert not (temp_repos_dir / "django").exists()
 
 
 def test_remove_group_with_force(mock_config, temp_repos_dir):
@@ -162,9 +163,10 @@ def test_remove_group_with_force(mock_config, temp_repos_dir):
         assert result.exit_code == 0
         output = strip_ansi(result.stdout)
         assert "Successfully removed 2 repository(ies)" in output
-        # Verify repos were removed
+        # Verify repos and group directory were removed
         assert not (temp_repos_dir / "pymongo" / "mongo-python-driver").exists()
         assert not (temp_repos_dir / "pymongo" / "specifications").exists()
+        assert not (temp_repos_dir / "pymongo").exists()
 
 
 def test_remove_nonexistent_repo(mock_config):
