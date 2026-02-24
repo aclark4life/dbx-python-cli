@@ -568,7 +568,7 @@ def clone_callback(
                 else:
                     if verbose:
                         typer.echo(
-                            f"  ⏭️  {repo_info['name']} skipped (no venv or install failed)"
+                            f"  ⏭️  {repo_info['name']} skipped (install failed)"
                         )
                     skipped_count += 1
 
@@ -577,7 +577,7 @@ def clone_callback(
             if skipped_count > 0:
                 typer.echo(f"⏭️  Skipped {skipped_count} repository(ies)")
                 typer.echo(
-                    "\nTip: Create a virtual environment with 'dbx env init -g <group>' and run 'dbx install <repo>' to install manually"
+                    "\nTip: Run 'dbx install <repo>' to install skipped repositories manually"
                 )
 
     except Exception as e:
