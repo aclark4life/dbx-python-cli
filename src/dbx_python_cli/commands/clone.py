@@ -86,6 +86,54 @@ def auto_install_repo(
         return False
 
 
+def ensure_group_venv(group_dir: Path, group_name: str, verbose: bool = False) -> bool:
+    """
+    Ensure a group-level virtual environment exists, creating one if needed.
+
+    Args:
+        group_dir: Path to the group directory
+        group_name: Name of the group
+        verbose: Whether to show verbose output
+
+    Returns:
+        True if venv exists or was created successfully, False otherwise
+    """
+    venv_path = group_dir / ".venv"
+
+    if venv_path.exists():
+        if verbose:
+            typer.echo(f"  [verbose] Group venv already exists: {venv_path}")
+        return True
+
+    typer.echo(f"  🐍 Creating virtual environment for group '{group_name}'...")
+
+    venv_cmd = ["uv", "venv", str(venv_path), "--no-python-downloads"]
+
+    if verbose:
+        typer.echo(f"  [verbose] Running command: {' '.join(venv_cmd)}")
+        typer.echo(f"  [verbose] Working directory: {group_dir}")
+
+    result = subprocess.run(
+        venv_cmd,
+        cwd=str(group_dir),
+        check=False,
+        capture_output=not verbose,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        typer.echo(
+            f"  ⚠️  Failed to create virtual environment for group '{group_name}'",
+            err=True,
+        )
+        if not verbose and result.stderr:
+            typer.echo(result.stderr, err=True)
+        return False
+
+    typer.echo(f"  ✅ Virtual environment created at {venv_path}")
+    return True
+
+
 app = typer.Typer(
     help="Clone repositories",
     no_args_is_help=True,
@@ -486,6 +534,16 @@ def clone_callback(
         # Auto-install cloned repositories unless --no-install is specified
         if not no_install and cloned_repos:
             typer.echo("\n📦 Installing cloned repositories...")
+
+            # Ensure each group has a venv before installing
+            unique_groups: dict[str, Path] = {}
+            for repo_info in cloned_repos:
+                gname = repo_info["group"]
+                if gname not in unique_groups:
+                    unique_groups[gname] = base_dir / gname
+
+            for gname, gdir in unique_groups.items():
+                ensure_group_venv(gdir, gname, verbose=verbose)
 
             installed_count = 0
             skipped_count = 0
