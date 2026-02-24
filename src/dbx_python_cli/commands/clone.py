@@ -157,12 +157,6 @@ def clone_callback(
         "-g",
         help="Repository group(s) to clone (e.g., pymongo, langchain, django). Can be specified multiple times or as comma-separated values.",
     ),
-    list_groups: bool = typer.Option(
-        False,
-        "--list",
-        "-l",
-        help="List available groups",
-    ),
     fork: bool = typer.Option(
         True,
         "--fork",
@@ -192,18 +186,6 @@ def clone_callback(
             typer.echo(f"[verbose] Using base directory: {base_dir}")
             typer.echo(f"[verbose] Available groups: {list(groups.keys())}\n")
 
-        # Handle --list flag
-        if list_groups:
-            if not groups:
-                typer.echo("No groups found in configuration.")
-                return
-
-            typer.echo("Available groups:\n")
-            for group_name, group_config in sorted(groups.items()):
-                repo_count = len(group_config.get("repos", []))
-                typer.echo(f"  • {group_name} ({repo_count} repositories)")
-            return
-
         # Handle individual repo clone
         if repo_name:
             # Find the repo in all groups
@@ -227,7 +209,7 @@ def clone_callback(
                     err=True,
                 )
                 typer.echo(
-                    "\nUse 'dbx clone --list' to see available groups and repositories"
+                    "\nUse 'dbx list' to see available groups and repositories"
                 )
                 raise typer.Exit(1)
 
@@ -277,7 +259,6 @@ def clone_callback(
             typer.echo("   or: dbx clone -g <group>")
             typer.echo("   or: dbx clone -g <group1> -g <group2>")
             typer.echo("   or: dbx clone -g <group1>,<group2>")
-            typer.echo("   or: dbx clone --list")
             raise typer.Exit(1)
 
         # Handle fork options

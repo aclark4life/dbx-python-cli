@@ -408,31 +408,8 @@ def test_get_config_fallback_to_default(temp_config_dir):
         assert "pymongo" in config["repo"]["groups"]
 
 
-def test_repo_clone_list_groups(mock_config):
-    """Test that repo clone --list shows available groups."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        mock_get_path.return_value = mock_config
-
-        result = runner.invoke(app, ["clone", "--list"])
-        assert result.exit_code == 0
-        assert "Available groups:" in result.stdout
-        assert "test" in result.stdout
-        assert "2 repositories" in result.stdout
-
-
-def test_repo_clone_list_groups_short_form(mock_config):
-    """Test that repo clone -l works as shortcut for --list."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        mock_get_path.return_value = mock_config
-
-        result = runner.invoke(app, ["clone", "-l"])
-        assert result.exit_code == 0
-        assert "Available groups:" in result.stdout
-        assert "test" in result.stdout
-
-
 def test_repo_clone_no_group_shows_error(mock_config):
-    """Test that repo clone without -g or -l shows help."""
+    """Test that repo clone without -g shows help."""
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
