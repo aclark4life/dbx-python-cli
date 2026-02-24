@@ -182,6 +182,18 @@ def get_venv_info(repo_path, group_path=None, base_path=None):
     if _is_venv(python_path):
         return python_path, "venv"
 
+    # Find existing venvs once — used for both auto-detection and error messages
+    existing_venvs = _find_existing_venvs(base_path)
+
+    # Auto-use if exactly one existing venv is found, so callers don't need an
+    # activated shell environment when the venv location is unambiguous.
+    if len(existing_venvs) == 1:
+        venv_name, venv_path = existing_venvs[0]
+        auto_python = venv_path / python_subpath
+        if auto_python.exists():
+            typer.echo(f"✅ Auto-detected venv ({venv_name}): {venv_path}")
+            return str(auto_python), "venv"
+
     # System Python detected - error out
     typer.echo(
         "❌ Error: No virtual environment found. Installation to system Python is not allowed.",
@@ -198,8 +210,7 @@ def get_venv_info(repo_path, group_path=None, base_path=None):
         repo_name = repo_path.name
         typer.echo(f"  dbx env init {repo_name}      (repo level)", err=True)
 
-    # Find and suggest existing venvs to activate
-    existing_venvs = _find_existing_venvs(base_path)
+    # Suggest existing venvs to activate (already computed above)
     if existing_venvs:
         typer.echo("\nOr activate an existing virtual environment:", err=True)
         for venv_name, venv_path in existing_venvs:

@@ -275,6 +275,13 @@ def add_project(
         # Re-raise with more context for project creation
         raise
 
+    # Build a subprocess environment that sources the venv by prepending its
+    # bin directory to PATH.  This ensures the correct django-admin (and any
+    # other venv-installed scripts) are used even when the venv is not
+    # activated in the calling shell.
+    venv_bin = str(Path(python_path).parent)
+    venv_env = {**os.environ, "PATH": f"{venv_bin}{os.pathsep}{os.environ.get('PATH', '')}"}
+
     with resources.path(
         "dbx_python_cli.templates", "project_template"
     ) as template_path:
@@ -308,6 +315,7 @@ def add_project(
                 capture_output=True,
                 text=True,
                 cwd=cwd,
+                env=venv_env,
             )
         except FileNotFoundError:
             typer.echo(
@@ -363,8 +371,9 @@ def add_project(
         typer.echo(f"🎨 Adding frontend to project '{name}'...")
         try:
             # Call the internal frontend create helper
-            # Pass the parent directory of project_path
-            _add_frontend(name, project_path.parent)
+            # Pass the parent directory of project_path and the venv python so
+            # the helper can also locate the correct django-admin.
+            _add_frontend(name, project_path.parent, python_path=python_path)
         except Exception as e:
             typer.echo(
                 f"⚠️  Project created successfully, but frontend creation failed: {e}",
@@ -478,9 +487,15 @@ packages = ["{project_name}"]
 def _add_frontend(
     project_name: str,
     directory: Path = Path("."),
+    python_path: str = None,
 ):
     """
     Internal helper to create a frontend app inside an existing project.
+
+    ``python_path`` should be the Python executable inside the target venv.
+    When provided the venv's bin directory is prepended to PATH so that the
+    correct ``django-admin`` is used even when the venv is not activated in
+    the calling shell.
     """
     project_path = directory / project_name
     name = "frontend"
@@ -495,6 +510,13 @@ def _add_frontend(
         )
         raise typer.Exit(code=1)
     typer.echo(f"📦 Creating app '{name}' in project '{project_name}'")
+
+    # Build env that sources the venv when a python_path is provided
+    env = None
+    if python_path:
+        venv_bin = str(Path(python_path).parent)
+        env = {**os.environ, "PATH": f"{venv_bin}{os.pathsep}{os.environ.get('PATH', '')}"}
+
     # Locate the Django app template directory in package resources
     with resources.path(
         "dbx_python_cli.templates", "frontend_template"
@@ -507,7 +529,7 @@ def _add_frontend(
             name,
             str(project_path),
         ]
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, env=env)
 
 
 @app.command("remove")

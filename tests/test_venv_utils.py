@@ -326,6 +326,66 @@ def test_venv_priority_group_over_base(tmp_path):
     assert venv_type == "group"
 
 
+def test_get_venv_info_auto_detects_single_existing_venv(tmp_path):
+    """Test that get_venv_info auto-uses a venv found by _find_existing_venvs
+    when no venv is specified via the normal priority chain and exactly one
+    existing venv is present under base_path."""
+    import platform
+    from unittest.mock import patch
+
+    base_dir = tmp_path / "base"
+    base_dir.mkdir()
+
+    # Create a single group-level venv (simulates django/.venv)
+    group_dir = base_dir / "django"
+    group_dir.mkdir()
+    if platform.system() == "Windows":
+        venv_bin = group_dir / ".venv" / "Scripts"
+        venv_bin.mkdir(parents=True)
+        auto_python = venv_bin / "python.exe"
+    else:
+        venv_bin = group_dir / ".venv" / "bin"
+        venv_bin.mkdir(parents=True)
+        auto_python = venv_bin / "python"
+    auto_python.write_text("#!/usr/bin/env python3\n")
+
+    # Patch _is_venv so the currently-running Python is not mistaken for a
+    # venv python (avoids environment-dependent test behaviour).
+    with patch("dbx_python_cli.commands.venv_utils._is_venv", return_value=False):
+        python_result, venv_type = get_venv_info(
+            None, None, base_path=base_dir
+        )
+
+    assert python_result == str(auto_python)
+    assert venv_type == "venv"
+
+
+def test_get_venv_info_no_auto_detect_when_multiple_venvs(tmp_path):
+    """Test that get_venv_info does NOT auto-use when multiple venvs exist."""
+    import platform
+    from unittest.mock import patch
+
+    base_dir = tmp_path / "base"
+    base_dir.mkdir()
+
+    # Create two group-level venvs
+    for group_name in ("django", "flask"):
+        group_dir = base_dir / group_name
+        group_dir.mkdir()
+        if platform.system() == "Windows":
+            venv_bin = group_dir / ".venv" / "Scripts"
+            venv_bin.mkdir(parents=True)
+            (venv_bin / "python.exe").write_text("#!/usr/bin/env python3\n")
+        else:
+            venv_bin = group_dir / ".venv" / "bin"
+            venv_bin.mkdir(parents=True)
+            (venv_bin / "python").write_text("#!/usr/bin/env python3\n")
+
+    with patch("dbx_python_cli.commands.venv_utils._is_venv", return_value=False):
+        with pytest.raises(typer.Exit):
+            get_venv_info(None, None, base_path=base_dir)
+
+
 def test_venv_priority_all_three_levels(tmp_path):
     """Test priority when all three levels (repo, group, base) have venvs."""
     # Create base directory with venv
