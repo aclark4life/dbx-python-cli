@@ -131,7 +131,10 @@ def _run_git_status(
     if short:
         git_cmd.append("--short")
 
+    separator = "─" * 60
+    typer.echo(separator)
     typer.echo(f"📊 {name}:")
+    typer.echo(separator)
 
     if verbose:
         typer.echo(f"[verbose] Running command: {' '.join(git_cmd)}")
