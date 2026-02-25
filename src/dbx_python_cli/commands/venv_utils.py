@@ -177,9 +177,16 @@ def get_venv_info(repo_path, group_path=None, base_path=None):
         if base_venv_python.exists():
             return str(base_venv_python), "base"
 
-    # Check if the default Python is in a venv
+    # Check sys.executable first — it is always the interpreter running the
+    # current process and is the most reliable signal that we are already
+    # inside a venv (e.g. pytest running in CI with an activated .venv).
+    if _is_venv(sys.executable):
+        return sys.executable, "venv"
+
+    # Also check the Python found on PATH in case a different venv is activated
+    # in the shell but sys.executable points elsewhere.
     python_path = _get_python_path()
-    if _is_venv(python_path):
+    if python_path != sys.executable and _is_venv(python_path):
         return python_path, "venv"
 
     # Find existing venvs once — used for both auto-detection and error messages
