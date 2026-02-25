@@ -38,7 +38,6 @@ def log_callback(
     project: str = typer.Option(
         None,
         "--project",
-        "-p",
         help="Show logs for a project",
     ),
 ):
@@ -48,7 +47,7 @@ def log_callback(
 
         dbx log <repo_name> [git_args...]
         dbx log -g <group> [git_args...]
-        dbx log -p <project> [git_args...]
+        dbx log --project <project> [git_args...]
 
     Examples::
 
@@ -58,6 +57,7 @@ def log_callback(
         dbx log mongo-python-driver --graph -n 5       # Show graph with last 5 commits
         dbx log -g pymongo -n 20                       # Show last 20 commits for all repos
         dbx log -g pymongo --oneline -n 5              # Show last 5 commits in oneline format
+        dbx log --project myproject -n 5               # Show last 5 commits for a project
     """
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
@@ -67,7 +67,7 @@ def log_callback(
         git_args = []
 
     # Handle case where repo_name is actually a git argument (starts with -)
-    # This happens when using -g or -p options with git args like -n
+    # This happens when using -g or --project options with git args like -n
     if repo_name and repo_name.startswith("-"):
         git_args.insert(0, repo_name)
         repo_name = None
@@ -136,7 +136,7 @@ def log_callback(
         typer.echo("❌ Error: Repository name, group, or project is required", err=True)
         typer.echo("\nUsage: dbx log <repo_name> [git_args...]")
         typer.echo("   or: dbx log -g <group> [git_args...]")
-        typer.echo("   or: dbx log -p <project> [git_args...]")
+        typer.echo("   or: dbx log --project <project> [git_args...]")
         raise typer.Exit(1)
 
     # Find the repository
