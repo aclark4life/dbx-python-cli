@@ -206,10 +206,10 @@ def test_feature_name(tmp_path, mock_config):
     """Test description of what is being tested."""
     # Arrange
     # ... setup
-    
+
     # Act
     result = runner.invoke(app, ["command", "args"])
-    
+
     # Assert
     assert result.exit_code == 0
     assert "expected output" in result.stdout
@@ -247,4 +247,3 @@ If you have questions or need help, please:
 - Ask in pull request comments
 
 Thank you for contributing to dbx-python-cli! 🎉
-

@@ -26,9 +26,6 @@ def test_install_help():
     assert "--dependency-groups" in output
 
 
-
-
-
 def test_install_no_args_shows_error():
     """Test install with no arguments shows help."""
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:

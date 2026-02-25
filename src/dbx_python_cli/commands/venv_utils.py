@@ -216,6 +216,9 @@ def get_venv_info(repo_path, group_path=None, base_path=None):
         for venv_name, venv_path in existing_venvs:
             typer.echo(f"  source {venv_path}/bin/activate  # {venv_name}", err=True)
     else:
-        typer.echo("\nOr activate an existing virtual environment before running dbx install.", err=True)
+        typer.echo(
+            "\nOr activate an existing virtual environment before running dbx install.",
+            err=True,
+        )
 
     raise typer.Exit(1)

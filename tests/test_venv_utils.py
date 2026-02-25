@@ -352,9 +352,7 @@ def test_get_venv_info_auto_detects_single_existing_venv(tmp_path):
     # Patch _is_venv so the currently-running Python is not mistaken for a
     # venv python (avoids environment-dependent test behaviour).
     with patch("dbx_python_cli.commands.venv_utils._is_venv", return_value=False):
-        python_result, venv_type = get_venv_info(
-            None, None, base_path=base_dir
-        )
+        python_result, venv_type = get_venv_info(None, None, base_path=base_dir)
 
     assert python_result == str(auto_python)
     assert venv_type == "venv"

@@ -88,7 +88,9 @@ def init(
             repo_info = find_repo_by_name(repo, base_dir)
             if not repo_info:
                 typer.echo(f"❌ Error: Repository '{repo}' not found", err=True)
-                typer.echo("\nClone the repository first with: dbx clone <repo>", err=True)
+                typer.echo(
+                    "\nClone the repository first with: dbx clone <repo>", err=True
+                )
                 raise typer.Exit(1)
 
             venv_path = repo_info["path"] / ".venv"
@@ -98,7 +100,9 @@ def init(
         elif group:
             # Create venv in group directory
             if group not in groups:
-                typer.echo(f"❌ Error: Group '{group}' not found in configuration.", err=True)
+                typer.echo(
+                    f"❌ Error: Group '{group}' not found in configuration.", err=True
+                )
                 typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
                 raise typer.Exit(1)
 
@@ -200,14 +204,12 @@ def list(ctx: typer.Context):
                     capture_output=True,
                     text=True,
                 )
-                version = (
-                    result.stdout.strip() if result.returncode == 0 else "unknown"
-                )
+                version = result.stdout.strip() if result.returncode == 0 else "unknown"
                 typer.echo(f"  ✅ [BASE]: {base_venv_path} ({version})")
             else:
                 typer.echo(f"  ⚠️  [BASE]: {base_venv_path} (invalid)")
         else:
-            typer.echo(f"  ❌ [BASE]: No venv (create with: dbx env init)")
+            typer.echo("  ❌ [BASE]: No venv (create with: dbx env init)")
 
         # Check group-level venvs
         typer.echo("\n  Group venvs:")
@@ -259,9 +261,13 @@ def list(ctx: typer.Context):
                     version = (
                         result.stdout.strip() if result.returncode == 0 else "unknown"
                     )
-                    typer.echo(f"    ✅ {repo_name} ({group_name}): {venv_path} ({version})")
+                    typer.echo(
+                        f"    ✅ {repo_name} ({group_name}): {venv_path} ({version})"
+                    )
                 else:
-                    typer.echo(f"    ⚠️  {repo_name} ({group_name}): {venv_path} (invalid)")
+                    typer.echo(
+                        f"    ⚠️  {repo_name} ({group_name}): {venv_path} (invalid)"
+                    )
 
         if not found_any:
             typer.echo("\n  No virtual environments found.")
@@ -359,7 +365,9 @@ def remove(
         elif group:
             # Remove venv from group directory
             if group not in groups:
-                typer.echo(f"❌ Error: Group '{group}' not found in configuration.", err=True)
+                typer.echo(
+                    f"❌ Error: Group '{group}' not found in configuration.", err=True
+                )
                 typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
                 raise typer.Exit(1)
 

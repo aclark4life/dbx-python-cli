@@ -9,7 +9,11 @@ from dbx_python_cli.commands import repo_utils as repo
 
 
 def auto_install_repo(
-    repo_path: Path, repo_name: str, group_name: str, base_dir: Path, verbose: bool = False
+    repo_path: Path,
+    repo_name: str,
+    group_name: str,
+    base_dir: Path,
+    verbose: bool = False,
 ):
     """
     Automatically install a cloned repository.
@@ -29,7 +33,9 @@ def auto_install_repo(
         config = repo.get_config()
 
         # Get venv info - will use base venv if exists, then repo venv, then group venv, otherwise any active venv
-        python_path, venv_type = get_venv_info(repo_path, repo_path.parent, base_path=base_dir)
+        python_path, venv_type = get_venv_info(
+            repo_path, repo_path.parent, base_path=base_dir
+        )
 
         if verbose:
             typer.echo(f"  [verbose] Venv type: {venv_type}, Python: {python_path}")
@@ -208,9 +214,7 @@ def clone_callback(
                     f"❌ Error: Repository '{repo_name}' not found in any group.",
                     err=True,
                 )
-                typer.echo(
-                    "\nUse 'dbx list' to see available groups and repositories"
-                )
+                typer.echo("\nUse 'dbx list' to see available groups and repositories")
                 raise typer.Exit(1)
 
             # Clone single repo
@@ -547,9 +551,7 @@ def clone_callback(
                     installed_count += 1
                 else:
                     if verbose:
-                        typer.echo(
-                            f"  ⏭️  {repo_info['name']} skipped (install failed)"
-                        )
+                        typer.echo(f"  ⏭️  {repo_info['name']} skipped (install failed)")
                     skipped_count += 1
 
             if installed_count > 0:

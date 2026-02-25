@@ -75,9 +75,6 @@ def test_test_help():
     assert "Test commands" in result.stdout
 
 
-
-
-
 def test_test_no_args_shows_error():
     """Test that test without args shows help."""
     result = runner.invoke(app, ["test"])
@@ -142,9 +139,6 @@ def test_test_runs_pytest_failure(mock_config, temp_repos_dir):
                 assert "Running pytest" in result.stdout
                 output = result.stdout + result.stderr
                 assert "Tests failed" in output
-
-
-
 
 
 def test_test_with_custom_test_runner(tmp_path):

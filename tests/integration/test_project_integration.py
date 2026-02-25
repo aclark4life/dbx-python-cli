@@ -521,7 +521,9 @@ base_dir = "{base_dir_str}"
                 result = runner.invoke(
                     app, ["project", "run", "testproject", "--settings", "base"]
                 )
-                assert "DJANGO_SETTINGS_MODULE=testproject.settings.base" in result.stdout
+                assert (
+                    "DJANGO_SETTINGS_MODULE=testproject.settings.base" in result.stdout
+                )
 
 
 def test_project_run_nonexistent(tmp_path):

@@ -144,7 +144,9 @@ def test_callback(
             group_path = repo_path.parent
 
         # Detect venv
-        python_path, venv_type = get_venv_info(repo_path, group_path, base_path=base_dir)
+        python_path, venv_type = get_venv_info(
+            repo_path, group_path, base_path=base_dir
+        )
 
         if verbose:
             typer.echo(f"[verbose] Venv type: {venv_type}")
@@ -298,14 +300,14 @@ def test_callback(
                     )
                 except typer.Exit as e:
                     if e.code != 0:
-                        typer.echo(
-                            "❌ Failed to create django_test project", err=True
-                        )
+                        typer.echo("❌ Failed to create django_test project", err=True)
                         raise typer.Exit(1)
             # Add the project root to PYTHONPATH so Django can import the settings module
             existing = test_env.get("PYTHONPATH", "")
             test_env["PYTHONPATH"] = (
-                f"{django_test_path}{os.pathsep}{existing}" if existing else str(django_test_path)
+                f"{django_test_path}{os.pathsep}{existing}"
+                if existing
+                else str(django_test_path)
             )
 
         # Run test command in the repository

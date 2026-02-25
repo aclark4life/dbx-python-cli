@@ -282,7 +282,10 @@ def add_project(
     # other venv-installed scripts) are used even when the venv is not
     # activated in the calling shell.
     venv_bin = str(Path(python_path).parent)
-    venv_env = {**os.environ, "PATH": f"{venv_bin}{os.pathsep}{os.environ.get('PATH', '')}"}
+    venv_env = {
+        **os.environ,
+        "PATH": f"{venv_bin}{os.pathsep}{os.environ.get('PATH', '')}",
+    }
 
     with resources.path(
         "dbx_python_cli.templates", "project_template"
@@ -392,7 +395,9 @@ def add_project(
 
             # Get the virtual environment info
             # This will raise an error if no venv is found
-            python_path, venv_type = get_venv_info(project_path, None, base_path=repos_base_dir)
+            python_path, venv_type = get_venv_info(
+                project_path, None, base_path=repos_base_dir
+            )
 
             # Install the Python package
             result = install_package(
@@ -517,7 +522,10 @@ def _add_frontend(
     env = None
     if python_path:
         venv_bin = str(Path(python_path).parent)
-        env = {**os.environ, "PATH": f"{venv_bin}{os.pathsep}{os.environ.get('PATH', '')}"}
+        env = {
+            **os.environ,
+            "PATH": f"{venv_bin}{os.pathsep}{os.environ.get('PATH', '')}",
+        }
 
     # Locate the Django app template directory in package resources
     with resources.path(
@@ -692,7 +700,9 @@ def run_project(
     # Detect the project venv so we use the right Python for manage.py
     try:
         if directory is None:
-            python_path, venv_type = get_venv_info(None, projects_dir, base_path=base_dir)
+            python_path, venv_type = get_venv_info(
+                None, projects_dir, base_path=base_dir
+            )
         else:
             python_path, venv_type = get_venv_info(None, None, base_path=None)
     except typer.Exit:

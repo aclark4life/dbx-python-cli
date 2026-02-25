@@ -365,10 +365,14 @@ def install_callback(
     if group_dependency_groups:
         combined_dependency_groups.extend(group_dependency_groups)
     if dependency_groups:
-        combined_dependency_groups.extend([g.strip() for g in dependency_groups.split(",") if g.strip()])
+        combined_dependency_groups.extend(
+            [g.strip() for g in dependency_groups.split(",") if g.strip()]
+        )
 
     # Convert back to comma-separated string for backwards compatibility with existing code
-    dependency_groups_str = ",".join(combined_dependency_groups) if combined_dependency_groups else None
+    dependency_groups_str = (
+        ",".join(combined_dependency_groups) if combined_dependency_groups else None
+    )
 
     if verbose:
         typer.echo(f"[verbose] repo_name: {repo_name}")
@@ -619,7 +623,9 @@ def install_callback(
                 typer.echo(f"{'=' * 60}\n")
 
                 # Detect venv
-                python_path, venv_type = get_venv_info(repo_path, group_path, base_path=base_dir)
+                python_path, venv_type = get_venv_info(
+                    repo_path, group_path, base_path=base_dir
+                )
 
                 if verbose:
                     typer.echo(f"[verbose] Venv type: {venv_type}")
@@ -744,7 +750,9 @@ def install_callback(
         # Use specified group
         group_path = base_dir / venv_group
         if not group_path.exists():
-            typer.echo(f"❌ Error: Group '{venv_group}' not found in {base_dir}", err=True)
+            typer.echo(
+                f"❌ Error: Group '{venv_group}' not found in {base_dir}", err=True
+            )
             raise typer.Exit(1)
 
         # Look for the repo in the specified group
