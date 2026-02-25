@@ -41,6 +41,12 @@ def status_callback(
         "-s",
         help="Show short-format status output",
     ),
+    list_repos: bool = typer.Option(
+        False,
+        "--list",
+        "-l",
+        help="Show repository status (cloned vs available)",
+    ),
 ):
     """Show git status of repositories.
 
@@ -67,6 +73,23 @@ def status_callback(
     except Exception as e:
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
+
+    # Handle --list flag
+    if list_repos:
+        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
+
+        output = list_repos_func(base_dir, config=config)
+        if output:
+            typer.echo(f"Base directory: {base_dir}\n")
+            typer.echo(output)
+            typer.echo(
+                "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
+            )
+        else:
+            typer.echo(f"Base directory: {base_dir}\n")
+            typer.echo("No repositories found.")
+            typer.echo("\nClone repositories using: dbx clone -g <group>")
+        return
 
     # Handle group option
     if group:

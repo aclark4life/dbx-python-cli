@@ -31,6 +31,12 @@ def open_callback(
         "-g",
         help="Open all repositories in a group",
     ),
+    list_repos: bool = typer.Option(
+        False,
+        "--list",
+        "-l",
+        help="Show repository status (cloned vs available)",
+    ),
 ):
     """Open a repository or group of repositories in a web browser.
 
@@ -53,6 +59,23 @@ def open_callback(
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}")
             typer.echo(f"[verbose] Config: {config}\n")
+
+        # Handle --list flag
+        if list_repos:
+            from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
+
+            output = list_repos_func(base_dir, config=config)
+            if output:
+                typer.echo(f"Base directory: {base_dir}\n")
+                typer.echo(output)
+                typer.echo(
+                    "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
+                )
+            else:
+                typer.echo(f"Base directory: {base_dir}\n")
+                typer.echo("No repositories found.")
+                typer.echo("\nClone repositories using: dbx clone -g <group>")
+            return
 
         # Handle group option
         if group:
