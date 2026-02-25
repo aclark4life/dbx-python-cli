@@ -130,8 +130,9 @@ def test_log_basic(tmp_path, temp_repos_dir, mock_config):
                     "git",
                     "--no-pager",
                     "log",
-                    "-n10",
-                ]  # Default 10 commits
+                    "-n",
+                    "1",
+                ]  # Default 1 commit
 
 
 def test_log_with_number(tmp_path, temp_repos_dir, mock_config):
@@ -140,11 +141,11 @@ def test_log_with_number(tmp_path, temp_repos_dir, mock_config):
         with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.log.subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0)
-                result = runner.invoke(app, ["log", "-n", "5", "mongo-python-driver"])
+                result = runner.invoke(app, ["log", "mongo-python-driver", "-n", "5"])
                 assert result.exit_code == 0
-                # Verify git log was called with -n5
+                # Verify git log was called with -n 5
                 call_args = mock_run.call_args
-                assert call_args[0][0] == ["git", "--no-pager", "log", "-n5"]
+                assert call_args[0][0] == ["git", "--no-pager", "log", "-n", "5"]
 
 
 def test_log_with_oneline(tmp_path, temp_repos_dir, mock_config):
@@ -153,7 +154,7 @@ def test_log_with_oneline(tmp_path, temp_repos_dir, mock_config):
         with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.log.subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0)
-                result = runner.invoke(app, ["log", "--oneline", "mongo-python-driver"])
+                result = runner.invoke(app, ["log", "mongo-python-driver", "--oneline"])
                 assert result.exit_code == 0
                 assert "oneline" in result.stdout
                 # Verify git log was called with --oneline
@@ -162,7 +163,6 @@ def test_log_with_oneline(tmp_path, temp_repos_dir, mock_config):
                     "git",
                     "--no-pager",
                     "log",
-                    "-n10",
                     "--oneline",
                 ]
 
@@ -232,7 +232,7 @@ def test_log_with_number_and_oneline(tmp_path, temp_repos_dir, mock_config):
             with patch("dbx_python_cli.commands.log.subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0)
                 result = runner.invoke(
-                    app, ["log", "-n", "20", "--oneline", "mongo-python-driver"]
+                    app, ["log", "mongo-python-driver", "-n", "20", "--oneline"]
                 )
                 assert result.exit_code == 0
                 # Verify git log was called with both options
@@ -241,7 +241,8 @@ def test_log_with_number_and_oneline(tmp_path, temp_repos_dir, mock_config):
                     "git",
                     "--no-pager",
                     "log",
-                    "-n20",
+                    "-n",
+                    "20",
                     "--oneline",
                 ]
 
@@ -257,4 +258,4 @@ def test_log_with_group_and_number(tmp_path, temp_repos_dir, mock_config):
                 # Should call git log twice with -n3
                 assert mock_run.call_count == 2
                 for call in mock_run.call_args_list:
-                    assert call[0][0] == ["git", "--no-pager", "log", "-n3"]
+                    assert call[0][0] == ["git", "--no-pager", "log", "-n", "3"]

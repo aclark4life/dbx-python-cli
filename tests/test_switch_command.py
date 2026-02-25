@@ -158,8 +158,8 @@ def test_switch_basic(tmp_path, temp_repos_dir, mock_config):
                 assert result.exit_code == 0
                 assert "mongo-python-driver" in result.stdout
                 assert "PYTHON-5683" in result.stdout
-                mock_run.assert_called_once()
-                args = mock_run.call_args[0][0]
+                assert mock_run.call_count == 2
+                args = mock_run.call_args_list[0][0][0]
                 assert args == ["git", "switch", "PYTHON-5683"]
 
 
@@ -178,8 +178,8 @@ def test_switch_with_create_flag(tmp_path, temp_repos_dir, mock_config):
                 )
                 assert result.exit_code == 0
                 assert "Creating and switching" in result.stdout
-                mock_run.assert_called_once()
-                args = mock_run.call_args[0][0]
+                assert mock_run.call_count == 2
+                args = mock_run.call_args_list[0][0][0]
                 assert args == ["git", "switch", "-c", "feature-123"]
 
 
@@ -196,8 +196,8 @@ def test_switch_with_group(tmp_path, temp_repos_dir, mock_config):
                 result = runner.invoke(app, ["switch", "-g", "pymongo", "main"])
                 assert result.exit_code == 0
                 assert "pymongo" in result.stdout
-                # Should be called twice (once for each repo in the group)
-                assert mock_run.call_count == 2
+                # Should be called 4 times (2 repos × 2 calls each: git switch + rev-parse)
+                assert mock_run.call_count == 4
 
 
 def test_switch_with_nonexistent_group(tmp_path, temp_repos_dir, mock_config):
@@ -225,7 +225,7 @@ def test_switch_with_project(tmp_path, temp_repos_dir, mock_config):
                 result = runner.invoke(app, ["switch", "-p", "test-project", "feature"])
                 assert result.exit_code == 0
                 assert "test-project" in result.stdout
-                mock_run.assert_called_once()
+                assert mock_run.call_count == 2
 
 
 def test_switch_failure(tmp_path, temp_repos_dir, mock_config):

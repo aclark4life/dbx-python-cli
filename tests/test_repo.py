@@ -1,7 +1,7 @@
 """Tests for the repo command module."""
 
 import subprocess
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -56,27 +56,27 @@ def test_repo_help():
 
 
 def test_repo_list_no_repos():
-    """Test that 'dbx repo -l' shows message when no repos are cloned."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+    """Test that 'dbx list' shows message when no repos are cloned."""
+    with patch("dbx_python_cli.commands.list.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.list.list_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
-            mock_find.return_value = []
-            result = runner.invoke(app, ["-l"])
+            mock_find.return_value = ""
+            result = runner.invoke(app, ["list"])
             assert result.exit_code == 0
             assert "No repositories found" in result.stdout
             assert "Base directory:" in result.stdout
 
 
 def test_repo_list_with_repos():
-    """Test that 'dbx repo -l' lists all cloned repositories."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+    """Test that 'dbx list' lists all cloned repositories."""
+    with patch("dbx_python_cli.commands.list.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.list.list_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
-            mock_find.return_value = [
-                {"group": "django", "name": "django"},
-                {"group": "pymongo", "name": "mongo-python-driver"},
-            ]
-            result = runner.invoke(app, ["-l"])
+            mock_find.return_value = (
+                "├── django/\n│   └── ✓ django\n"
+                "├── pymongo/\n│   └── ✓ mongo-python-driver"
+            )
+            result = runner.invoke(app, ["list"])
             assert result.exit_code == 0
             assert "Repository status:" in result.stdout
             # Check for tree format
@@ -90,12 +90,12 @@ def test_repo_list_with_repos():
 
 
 def test_repo_list_long_form():
-    """Test that 'dbx repo --list' works."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config") as mock_config:
-        with patch("dbx_python_cli.commands.repo_utils.find_all_repos") as mock_find:
+    """Test that 'dbx list' works (long form test)."""
+    with patch("dbx_python_cli.commands.list.get_config") as mock_config:
+        with patch("dbx_python_cli.commands.list.list_repos") as mock_find:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
-            mock_find.return_value = []
-            result = runner.invoke(app, ["--list"])
+            mock_find.return_value = ""
+            result = runner.invoke(app, ["list"])
             assert result.exit_code == 0
             assert "No repositories found" in result.stdout
 
@@ -310,7 +310,7 @@ def test_repo_clone_success(tmp_path, mock_config, temp_repos_dir):
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = mock_config
-            mock_run.return_value = None
+            mock_run.return_value = MagicMock(returncode=0)
 
             result = runner.invoke(app, ["clone", "-g", "test"])
             assert result.exit_code == 0
@@ -323,7 +323,7 @@ def test_repo_clone_creates_group_directory(tmp_path, mock_config, temp_repos_di
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = mock_config
-            mock_run.return_value = None
+            mock_run.return_value = MagicMock(returncode=0)
 
             result = runner.invoke(app, ["clone", "-g", "test"])
             assert result.exit_code == 0
@@ -444,7 +444,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
-            mock_run.return_value = None
+            mock_run.return_value = MagicMock(returncode=0)
 
             result = runner.invoke(app, ["clone", "-g", "django", "-g", "pymongo"])
             assert result.exit_code == 0
@@ -494,7 +494,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
-            mock_run.return_value = None
+            mock_run.return_value = MagicMock(returncode=0)
 
             # Test CSV format: -g django,pymongo
             result = runner.invoke(app, ["clone", "-g", "django,pymongo"])
@@ -546,7 +546,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
-            mock_run.return_value = None
+            mock_run.return_value = MagicMock(returncode=0)
 
             result = runner.invoke(app, ["clone", "django-mongodb-backend"])
             assert result.exit_code == 0
@@ -604,7 +604,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
-            mock_run.return_value = None
+            mock_run.return_value = MagicMock(returncode=0)
 
             # Options must come before positional arguments with allow_interspersed_args=False
             result = runner.invoke(
@@ -646,7 +646,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
-            mock_run.return_value = None
+            mock_run.return_value = MagicMock(returncode=0)
 
             result = runner.invoke(
                 app, ["clone", "-g", "test", "--fork-user", "aclark4life"]
@@ -692,7 +692,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
-            mock_run.return_value = None
+            mock_run.return_value = MagicMock(returncode=0)
 
             # Use --fork to use config default
             result = runner.invoke(app, ["clone", "-g", "test", "--fork"])
@@ -719,7 +719,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
-            mock_run.return_value = None
+            mock_run.return_value = MagicMock(returncode=0)
 
             result = runner.invoke(app, ["clone", "-g", "test", "--fork"])
             assert result.exit_code == 0
@@ -759,7 +759,7 @@ repos = [
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
-            mock_run.return_value = None
+            mock_run.return_value = MagicMock(returncode=0)
 
             result = runner.invoke(
                 app, ["clone", "-g", "test", "--fork-user", "aclark4life"]
@@ -805,9 +805,9 @@ repos = [
                             128, cmd, stderr="Repository not found"
                         )
                     # Upstream clone succeeds
-                    return None
-                # Remote add succeeds
-                return None
+                    return MagicMock(returncode=0)
+                # Other commands (remote add, venv, etc.) succeed
+                return MagicMock(returncode=0)
 
             mock_run.side_effect = run_side_effect
 

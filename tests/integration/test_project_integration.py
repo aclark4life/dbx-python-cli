@@ -1,6 +1,6 @@
 """Integration tests for project commands."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
 
@@ -503,25 +503,25 @@ base_dir = "{base_dir_str}"
     (project_path / "manage.py").write_text("# manage.py")
 
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        with patch("subprocess.Popen") as mock_popen:
-            # Mock the subprocess to prevent actual server start
-            mock_popen.return_value.poll.return_value = None
+        with patch("dbx_python_cli.commands.project.get_venv_info") as mock_venv_info:
+            with patch("dbx_python_cli.commands.project.subprocess.run") as mock_run:
+                mock_get_path.return_value = config_path
+                mock_venv_info.return_value = ("/usr/bin/python", "venv")
+                mock_run.return_value = MagicMock(returncode=0)
 
-            mock_get_path.return_value = config_path
+                # Test default settings (should use project name)
+                result = runner.invoke(app, ["project", "run", "testproject"])
+                # The command will fail because manage.py doesn't work, but we can check the output
+                assert (
+                    "DJANGO_SETTINGS_MODULE=testproject.settings.testproject"
+                    in result.stdout
+                )
 
-            # Test default settings (should use project name)
-            result = runner.invoke(app, ["project", "run", "testproject"])
-            # The command will fail because manage.py doesn't work, but we can check the output
-            assert (
-                "DJANGO_SETTINGS_MODULE=testproject.settings.testproject"
-                in result.stdout
-            )
-
-            # Test with explicit settings
-            result = runner.invoke(
-                app, ["project", "run", "testproject", "--settings", "base"]
-            )
-            assert "DJANGO_SETTINGS_MODULE=testproject.settings.base" in result.stdout
+                # Test with explicit settings
+                result = runner.invoke(
+                    app, ["project", "run", "testproject", "--settings", "base"]
+                )
+                assert "DJANGO_SETTINGS_MODULE=testproject.settings.base" in result.stdout
 
 
 def test_project_run_nonexistent(tmp_path):

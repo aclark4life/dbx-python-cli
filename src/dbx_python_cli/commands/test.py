@@ -50,6 +50,12 @@ def test_callback(
         "-g",
         help="Group name to use for venv (e.g., 'pymongo')",
     ),
+    list_repos: bool = typer.Option(
+        False,
+        "--list",
+        "-l",
+        help="Show repository status (cloned vs available)",
+    ),
 ):
     """Run tests in a cloned repository.
 
@@ -86,7 +92,29 @@ def test_callback(
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}")
             typer.echo(f"[verbose] Config: {config}\n")
+    except Exception as e:
+        typer.echo(f"❌ Error: {e}", err=True)
+        raise typer.Exit(1)
 
+    # Handle --list flag
+    if list_repos:
+        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
+
+        output = list_repos_func(base_dir, config=config)
+        if output:
+            typer.echo(f"Base directory: {base_dir}\n")
+            typer.echo("Repository status:\n")
+            typer.echo(output)
+            typer.echo(
+                "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
+            )
+        else:
+            typer.echo(f"Base directory: {base_dir}\n")
+            typer.echo("No repositories found.")
+            typer.echo("\nClone repositories using: dbx clone -g <group>")
+        return
+
+    try:
         # Require repo_name
         if not repo_name:
             typer.echo("❌ Error: Repository name is required", err=True)
