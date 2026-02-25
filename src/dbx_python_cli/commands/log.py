@@ -40,12 +40,6 @@ def log_callback(
         "--project",
         help="Show logs for a project",
     ),
-    list_repos: bool = typer.Option(
-        False,
-        "--list",
-        "-l",
-        help="Show repository status (cloned vs available)",
-    ),
 ):
     """Show git commit logs from a repository or group of repositories.
 
@@ -91,23 +85,6 @@ def log_callback(
     except Exception as e:
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
-
-    # Handle --list flag
-    if list_repos:
-        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
-
-        output = list_repos_func(base_dir, config=config)
-        if output:
-            typer.echo(f"Base directory: {base_dir}\n")
-            typer.echo(output)
-            typer.echo(
-                "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
-            )
-        else:
-            typer.echo(f"Base directory: {base_dir}\n")
-            typer.echo("No repositories found.")
-            typer.echo("\nClone repositories using: dbx clone -g <group>")
-        return
 
     # Handle group option
     if group:
@@ -165,7 +142,7 @@ def log_callback(
     repo = find_repo_by_name(repo_name, base_dir)
     if not repo:
         typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
-        typer.echo("\nRun 'dbx log --list' to see available repositories")
+        typer.echo("\nRun 'dbx list' to see available repositories")
         raise typer.Exit(1)
 
     repo_path = Path(repo["path"])

@@ -61,36 +61,6 @@ def test_open_help():
     assert "Open repositories in web browser" in result.stdout
 
 
-def test_open_list_no_repos(temp_repos_dir, mock_config):
-    """Test open --list with no repositories."""
-    # Create empty repos dir
-    empty_dir = temp_repos_dir.parent / "empty_repos"
-    empty_dir.mkdir()
-
-    mock_config["repo"]["base_dir"] = str(empty_dir)
-
-    with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
-        with patch("dbx_python_cli.commands.open.get_base_dir", return_value=empty_dir):
-            result = runner.invoke(app, ["open", "--list"])
-            assert result.exit_code == 0
-            # When there are no cloned repos but repos in config, it shows available repos
-            assert "pymongo" in result.stdout or "langchain" in result.stdout
-
-
-def test_open_list_shows_repos(temp_repos_dir, mock_config):
-    """Test open --list shows available repositories."""
-    with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
-        with patch(
-            "dbx_python_cli.commands.open.get_base_dir", return_value=temp_repos_dir
-        ):
-            result = runner.invoke(app, ["open", "--list"])
-            assert result.exit_code == 0
-            assert (
-                "mongo-python-driver" in result.stdout
-                or "specifications" in result.stdout
-            )
-
-
 def test_open_no_repo_name(temp_repos_dir, mock_config):
     """Test open without repo name shows error."""
     with patch("dbx_python_cli.commands.open.get_config", return_value=mock_config):
@@ -111,7 +81,7 @@ def test_open_repo_not_found(temp_repos_dir, mock_config):
             result = runner.invoke(app, ["open", "nonexistent"])
             assert result.exit_code == 1
             # Check that helpful message is shown
-            assert "dbx open --list" in result.stdout
+            assert "dbx list" in result.stdout
 
 
 def test_open_basic(tmp_path, temp_repos_dir, mock_config):

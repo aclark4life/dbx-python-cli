@@ -82,33 +82,6 @@ def test_status_help():
     assert "Show git status of repositories" in output
 
 
-def test_status_list_no_repos(tmp_path):
-    """Test that status --list shows message when no repos exist."""
-    config_dir = tmp_path / ".config" / "dbx-python-cli"
-    config_dir.mkdir(parents=True)
-    config_path = config_dir / "config.toml"
-    repos_dir = tmp_path / "repos"
-    repos_dir.mkdir()
-    repos_dir_str = str(repos_dir).replace("\\", "/")
-    config_content = f"""
-[repo]
-base_dir = "{repos_dir_str}"
-
-[repo.groups.pymongo]
-repos = []
-"""
-    config_path.write_text(config_content)
-
-    with patch("dbx_python_cli.commands.status.get_config") as mock_get_config:
-        mock_get_config.return_value = {
-            "repo": {"base_dir": str(repos_dir), "groups": {}}
-        }
-        result = runner.invoke(app, ["status", "--list"])
-        assert result.exit_code == 0
-        output = strip_ansi(result.stdout)
-        assert "No repositories found" in output
-
-
 def test_status_no_repo_name(tmp_path, temp_repos_dir, mock_config):
     """Test that status without repo name shows help (no_args_is_help=True)."""
     with patch("dbx_python_cli.commands.status.get_config") as mock_get_config:

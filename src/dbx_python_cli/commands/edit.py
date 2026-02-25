@@ -28,12 +28,6 @@ app = typer.Typer(
 def edit_callback(
     ctx: typer.Context,
     repo_name: str = typer.Argument(None, help="Repository name to open in editor"),
-    list_repos: bool = typer.Option(
-        False,
-        "--list",
-        "-l",
-        help="Show repository status (cloned vs available)",
-    ),
 ):
     """Open a repository in your editor.
 
@@ -47,7 +41,6 @@ def edit_callback(
     Examples::
 
         dbx edit mongo-python-driver    # Open repo in editor
-        dbx edit --list                 # List available repos
     """
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
@@ -59,23 +52,6 @@ def edit_callback(
             typer.echo(f"[verbose] Using base directory: {base_dir}")
             typer.echo(f"[verbose] Config: {config}\n")
 
-        # Handle --list flag
-        if list_repos:
-            from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
-
-            output = list_repos_func(base_dir, config=config)
-            if output:
-                typer.echo(f"Base directory: {base_dir}\n")
-                typer.echo(output)
-                typer.echo(
-                    "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
-                )
-            else:
-                typer.echo(f"Base directory: {base_dir}\n")
-                typer.echo("No repositories found.")
-                typer.echo("\nClone repositories using: dbx clone -g <group>")
-            return
-
         # Require repo_name
         if not repo_name:
             typer.echo("❌ Error: Repository name is required", err=True)
@@ -86,7 +62,7 @@ def edit_callback(
         repo = find_repo_by_name(repo_name, base_dir)
         if not repo:
             typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
-            typer.echo("\nRun 'dbx edit --list' to see available repositories")
+            typer.echo("\nRun 'dbx list' to see available repositories")
             raise typer.Exit(1)
 
         repo_path = Path(repo["path"])

@@ -61,36 +61,6 @@ def test_log_help():
     assert "Show git commit logs" in result.stdout
 
 
-def test_log_list_no_repos(temp_repos_dir, mock_config):
-    """Test log --list with no repositories."""
-    # Create empty repos dir
-    empty_dir = temp_repos_dir.parent / "empty_repos"
-    empty_dir.mkdir()
-
-    mock_config["repo"]["base_dir"] = str(empty_dir)
-
-    with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
-        with patch("dbx_python_cli.commands.log.get_base_dir", return_value=empty_dir):
-            result = runner.invoke(app, ["log", "--list"])
-            assert result.exit_code == 0
-            # When there are no cloned repos but repos in config, it shows available repos
-            assert "pymongo" in result.stdout or "langchain" in result.stdout
-
-
-def test_log_list_shows_repos(temp_repos_dir, mock_config):
-    """Test log --list shows available repositories."""
-    with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
-        with patch(
-            "dbx_python_cli.commands.log.get_base_dir", return_value=temp_repos_dir
-        ):
-            result = runner.invoke(app, ["log", "--list"])
-            assert result.exit_code == 0
-            assert (
-                "mongo-python-driver" in result.stdout
-                or "specifications" in result.stdout
-            )
-
-
 def test_log_no_repo_name(temp_repos_dir, mock_config):
     """Test log without repo name shows error."""
     with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
@@ -111,7 +81,7 @@ def test_log_repo_not_found(temp_repos_dir, mock_config):
             result = runner.invoke(app, ["log", "nonexistent"])
             assert result.exit_code == 1
             # Check that helpful message is shown
-            assert "dbx log --list" in result.stdout
+            assert "dbx list" in result.stdout
 
 
 def test_log_basic(tmp_path, temp_repos_dir, mock_config):

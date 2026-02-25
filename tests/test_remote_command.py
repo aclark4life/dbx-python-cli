@@ -16,48 +16,6 @@ def test_remote_help():
     assert "Show git remotes" in result.stdout
 
 
-def test_remote_list_no_repos(tmp_path):
-    """Test remote --list with no repositories."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        mock_get_path.return_value = tmp_path / "config.toml"
-        config_content = f"""[repo]
-base_dir = "{tmp_path.as_posix()}"
-
-[repo.groups.test]
-repos = []
-"""
-        (tmp_path / "config.toml").write_text(config_content)
-
-        result = runner.invoke(app, ["remote", "--list"])
-        assert result.exit_code == 0
-        assert "No repositories found" in result.stdout
-
-
-def test_remote_list_shows_repos(tmp_path):
-    """Test remote --list shows available repositories."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        mock_get_path.return_value = tmp_path / "config.toml"
-
-        # Create a test repo
-        test_group = tmp_path / "test"
-        test_group.mkdir()
-        test_repo = test_group / "test-repo"
-        test_repo.mkdir()
-        (test_repo / ".git").mkdir()
-
-        config_content = f"""[repo]
-base_dir = "{tmp_path.as_posix()}"
-
-[repo.groups.test]
-repos = ["https://github.com/test/test-repo.git"]
-"""
-        (tmp_path / "config.toml").write_text(config_content)
-
-        result = runner.invoke(app, ["remote", "--list"])
-        assert result.exit_code == 0
-        assert "test-repo" in result.stdout
-
-
 def test_remote_no_repo_name(tmp_path):
     """Test remote without repo name shows error."""
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
@@ -90,7 +48,7 @@ repos = []
         result = runner.invoke(app, ["remote", "nonexistent-repo"])
         assert result.exit_code == 1
         # Check that helpful message is shown
-        assert "dbx remote --list" in result.stdout
+        assert "dbx list" in result.stdout
 
 
 def test_remote_basic(tmp_path):

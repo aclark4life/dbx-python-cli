@@ -75,22 +75,6 @@ def mock_config(tmp_path, temp_repos_dir):
     }
 
 
-def test_remove_list_repos(mock_config):
-    """Test listing available repositories."""
-    with patch(
-        "dbx_python_cli.commands.remove.repo.get_config", return_value=mock_config
-    ):
-        result = runner.invoke(app, ["remove", "--list"])
-        assert result.exit_code == 0
-        output = strip_ansi(result.stdout)
-        # Should show repos in tree format
-        assert "pymongo" in output
-        assert "django" in output
-        assert "mongo-python-driver" in output
-        assert "specifications" in output
-        assert "django-mongodb-backend" in output
-
-
 def test_remove_single_repo_with_confirmation_no(mock_config, temp_repos_dir):
     """Test removing a single repo with confirmation declined."""
     with patch(
@@ -179,7 +163,7 @@ def test_remove_nonexistent_repo(mock_config):
         stderr = strip_ansi(result.stderr)
         stdout = strip_ansi(result.stdout)
         assert "Repository 'nonexistent' not found" in stderr
-        assert "dbx remove --list" in stdout
+        assert "dbx list" in stdout
 
 
 def test_remove_nonexistent_group(mock_config):

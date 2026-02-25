@@ -72,32 +72,6 @@ def test_just_help():
     assert "Just commands" in output
 
 
-def test_just_list_no_repos(tmp_path):
-    """Test that just --list shows message when no repos exist."""
-    empty_dir = tmp_path / "empty"
-    empty_dir.mkdir()
-
-    with patch("dbx_python_cli.commands.just.get_base_dir", return_value=empty_dir):
-        with patch("dbx_python_cli.commands.just.get_config", return_value={}):
-            result = runner.invoke(app, ["just", "--list"])
-            assert result.exit_code == 0
-            assert "No repositories found" in result.stdout
-
-
-def test_just_list_shows_repos(tmp_path, temp_repos_dir, mock_config):
-    """Test that just --list shows available repositories."""
-    with patch(
-        "dbx_python_cli.commands.just.get_base_dir", return_value=temp_repos_dir
-    ):
-        with patch("dbx_python_cli.commands.just.get_config", return_value={}):
-            result = runner.invoke(app, ["just", "--list"])
-            assert result.exit_code == 0
-            assert "mongo-python-driver" in result.stdout
-            assert "specifications" in result.stdout
-            assert "pymongo/" in result.stdout
-            assert "Legend:" in result.stdout
-
-
 def test_just_no_repo_name(tmp_path, temp_repos_dir, mock_config):
     """Test that just without repo name shows help."""
     with patch(
