@@ -70,6 +70,8 @@ def project_callback(
     ),
 ):
     """Project management commands."""
+    if not os.getenv("MONGODB_URI"):
+        typer.echo("⚠️  Warning: MONGODB_URI is not set.", err=True)
     if list_projects:
         config = get_config()
         base_dir = get_base_dir(config)

@@ -70,6 +70,9 @@ def test_callback(
     if ctx.invoked_subcommand is not None:
         return
 
+    if not os.getenv("MONGODB_URI"):
+        typer.echo("⚠️  Warning: MONGODB_URI is not set.", err=True)
+
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
 
