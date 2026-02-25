@@ -113,7 +113,6 @@ def log_callback(
 
         for repo_info in group_repos:
             _run_git_log(repo_info["path"], repo_info["name"], git_args, verbose)
-            typer.echo("")  # Add blank line between repos
 
         return
 
@@ -163,10 +162,13 @@ def _run_git_log(
     git_cmd = ["git", "--no-pager", "log"] + git_args
 
     # Display what we're doing
+    separator = "─" * 60
+    typer.echo(separator)
     if git_args:
         typer.echo(f"📜 {name}: git log {' '.join(git_args)}")
     else:
         typer.echo(f"📜 {name}: git log")
+    typer.echo(separator)
 
     if verbose:
         typer.echo(f"[verbose] Running command: {' '.join(git_cmd)}")
