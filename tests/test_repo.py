@@ -1009,36 +1009,6 @@ repos = [
             assert "No 'upstream' remote found" in output
 
 
-def test_repo_sync_list_repos(tmp_path, temp_repos_dir):
-    """Test listing repositories for sync."""
-    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
-    config_content = f"""
-[repo]
-base_dir = "{repos_dir_str}"
-
-[repo.groups.test]
-repos = []
-"""
-    config_path.write_text(config_content)
-
-    # Create mock repository
-    group_dir = temp_repos_dir / "test"
-    repo_dir = group_dir / "mongo-python-driver"
-    repo_dir.mkdir(parents=True)
-    (repo_dir / ".git").mkdir()
-
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        mock_get_path.return_value = config_path
-
-        result = runner.invoke(app, ["sync", "-l"])
-        assert result.exit_code == 0
-        assert "Repository status" in result.stdout
-        assert "mongo-python-driver" in result.stdout
-        assert "Legend:" in result.stdout
-
-
 def test_repo_sync_no_args_shows_error(tmp_path, temp_repos_dir):
     """Test that repo sync without args shows error."""
     config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"

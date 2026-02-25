@@ -31,12 +31,6 @@ def sync_callback(
         "-g",
         help="Sync all repositories in a group",
     ),
-    list_repos: bool = typer.Option(
-        False,
-        "--list",
-        "-l",
-        help="Show repository status (cloned vs available)",
-    ),
     force: bool = typer.Option(
         False,
         "--force",
@@ -65,7 +59,6 @@ def sync_callback(
         dbx sync -g <group>             # Sync all repos in a group
         dbx sync <repo_name> --force    # Force push after rebasing
         dbx sync <repo_name> --dry-run  # Show what would be synced
-        dbx sync --list                 # List available repositories
 
     Examples::
 
@@ -87,23 +80,6 @@ def sync_callback(
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}")
             typer.echo(f"[verbose] Available groups: {list(groups.keys())}\n")
-
-        # Handle --list flag
-        if list_repos:
-            from dbx_python_cli.commands.repo_utils import list_repos as format_repos
-
-            formatted_output = format_repos(base_dir, config=config)
-            if not formatted_output:
-                typer.echo("No repositories found.")
-                typer.echo("\nClone repositories using: dbx clone -g <group>")
-                return
-
-            typer.echo(f"Repository status in {base_dir}:\n")
-            typer.echo(formatted_output)
-            typer.echo(
-                "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
-            )
-            return
 
         # Handle group sync
         if group:
@@ -147,14 +123,13 @@ def sync_callback(
             typer.echo("❌ Error: Repository name or group required", err=True)
             typer.echo("\nUsage: dbx sync <repo-name>")
             typer.echo("   or: dbx sync -g <group>")
-            typer.echo("   or: dbx sync --list")
             raise typer.Exit(1)
 
         # Find the repository
         repo_info = find_repo_by_name(repo_name, base_dir)
         if not repo_info:
             typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
-            typer.echo("\nUse 'dbx sync --list' to see available repositories")
+            typer.echo("\nUse 'dbx list' to see available repositories")
             raise typer.Exit(1)
 
         _sync_repository(repo_info["path"], repo_info["name"], verbose, force, dry_run)
