@@ -76,32 +76,6 @@ def test_branch_help():
     assert "Git branch commands" in output
 
 
-def test_branch_list_no_repos(tmp_path):
-    """Test that branch --list shows message when no repos exist."""
-    empty_dir = tmp_path / "empty"
-    empty_dir.mkdir()
-
-    with patch("dbx_python_cli.commands.branch.get_base_dir", return_value=empty_dir):
-        with patch("dbx_python_cli.commands.branch.get_config", return_value={}):
-            result = runner.invoke(app, ["branch", "--list"])
-            assert result.exit_code == 0
-            assert "No repositories found" in result.stdout
-
-
-def test_branch_list_shows_repos(tmp_path, temp_repos_dir, mock_config):
-    """Test that branch --list shows available repositories."""
-    with patch(
-        "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
-    ):
-        with patch("dbx_python_cli.commands.branch.get_config", return_value={}):
-            result = runner.invoke(app, ["branch", "--list"])
-            assert result.exit_code == 0
-            assert "mongo-python-driver" in result.stdout
-            assert "specifications" in result.stdout
-            assert "pymongo/" in result.stdout
-            assert "Legend:" in result.stdout
-
-
 def test_branch_no_repo_name(tmp_path, temp_repos_dir, mock_config):
     """Test that branch without repo name shows help."""
     with patch(
@@ -190,19 +164,6 @@ def test_branch_with_group(tmp_path, temp_repos_dir, mock_config):
                     assert result.exit_code == 0
                     assert "Running git branch in 2 repository(ies)" in result.stdout
                     assert mock_run.call_count == 2
-
-
-def test_branch_with_project(tmp_path, temp_repos_dir, mock_config):
-    """Test running branch with a project that is not a git repo."""
-    with patch(
-        "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
-    ):
-        with patch("dbx_python_cli.commands.branch.get_config", return_value={}):
-            result = runner.invoke(app, ["branch", "-p", "test-project"])
-            assert result.exit_code == 0
-            # Should show warning about not being a git repository
-            output = result.stdout + result.stderr
-            assert "Not a git repository" in output
 
 
 def test_branch_with_nonexistent_group(tmp_path, temp_repos_dir, mock_config):

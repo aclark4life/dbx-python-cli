@@ -35,20 +35,13 @@ def branch_callback(
         "-g",
         help="Run git branch in all repositories in a group",
     ),
-    project: str = typer.Option(
-        None,
-        "--project",
-        "-p",
-        help="Run git branch in a specific project",
-    ),
 ):
-    """Run git branch in a cloned repository, group of repositories, or project.
+    """Run git branch in a cloned repository or group of repositories.
 
     Usage::
 
         dbx branch <repo_name> [git_args...]
         dbx branch -g <group_name> [git_args...]
-        dbx branch -p <project_name> [git_args...]
 
     Examples::
 
@@ -59,7 +52,6 @@ def branch_callback(
         dbx branch -g pymongo                          # Show branches for all repos in group
         dbx -v branch -g pymongo                       # Show all branches for all repos in group
         dbx branch -g pymongo -d old-feature           # Delete 'old-feature' in all repos
-        dbx branch -p myproject                        # Show branches for a project
     """
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
@@ -69,7 +61,7 @@ def branch_callback(
         git_args = []
 
     # Handle case where repo_name is actually a git argument (starts with -)
-    # This happens when using -g or -p options with git args like -d
+    # This happens when using -g option with git args like -d
     if repo_name and repo_name.startswith("-"):
         git_args.insert(0, repo_name)
         repo_name = None
@@ -118,26 +110,11 @@ def branch_callback(
 
         return
 
-    # Handle project option
-    if project:
-        projects_dir = base_dir / "projects"
-        project_path = projects_dir / project
-
-        if not project_path.exists():
-            typer.echo(
-                f"❌ Error: Project '{project}' not found at {project_path}", err=True
-            )
-            raise typer.Exit(1)
-
-        _run_git_branch(project_path, project, git_args, verbose)
-        return
-
-    # Require repo_name if not using group and not using project
+    # Require repo_name if not using group
     if not repo_name:
-        typer.echo("❌ Error: Repository name, group, or project is required", err=True)
+        typer.echo("❌ Error: Repository name or group is required", err=True)
         typer.echo("\nUsage: dbx branch <repo_name> [git_args...]")
         typer.echo("   or: dbx branch -g <group> [git_args...]")
-        typer.echo("   or: dbx branch -p <project> [git_args...]")
         raise typer.Exit(1)
 
     # Find the repository
