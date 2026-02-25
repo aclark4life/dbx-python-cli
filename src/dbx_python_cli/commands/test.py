@@ -16,6 +16,7 @@ from dbx_python_cli.commands.repo_utils import (
     get_test_runner,
 )
 from dbx_python_cli.commands.venv_utils import get_venv_info
+from dbx_python_cli.commands.project import add_project
 
 app = typer.Typer(
     help="Test commands",
@@ -120,6 +121,16 @@ def test_callback(
 
         # Get test runner configuration
         test_runner = get_test_runner(config, repo["group"], repo_name)
+
+        # For the django repo with a custom test runner: inject default settings
+        if test_runner and repo_name == "django":
+            has_settings = "--settings" in test_args or any(
+                a.startswith("--settings=") for a in test_args
+            )
+            if not has_settings:
+                test_args = ["--settings", "django_test.settings.django_test"] + list(
+                    test_args
+                )
 
         # Build test command
         if test_runner:
@@ -248,6 +259,31 @@ def test_callback(
         if verbose:
             typer.echo(f"[verbose] Running command: {' '.join(test_cmd)}")
             typer.echo(f"[verbose] Working directory: {repo_path}\n")
+
+        # For the django repo: ensure django_test project exists and is importable
+        if test_runner and repo_name == "django":
+            django_test_path = base_dir / "projects" / "django_test"
+            if not (django_test_path / "manage.py").exists():
+                typer.echo("📦 django_test project not found, creating it...")
+                try:
+                    add_project(
+                        "django_test",
+                        directory=None,
+                        base_dir=None,
+                        add_frontend=False,
+                        auto_install=False,
+                    )
+                except typer.Exit as e:
+                    if e.code != 0:
+                        typer.echo(
+                            "❌ Failed to create django_test project", err=True
+                        )
+                        raise typer.Exit(1)
+            # Add the project root to PYTHONPATH so Django can import the settings module
+            existing = test_env.get("PYTHONPATH", "")
+            test_env["PYTHONPATH"] = (
+                f"{django_test_path}{os.pathsep}{existing}" if existing else str(django_test_path)
+            )
 
         # Run test command in the repository
         result = subprocess.run(

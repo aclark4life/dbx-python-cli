@@ -167,6 +167,11 @@ def test_test_with_custom_test_runner(tmp_path):
     test_runner = tests_dir / "runtests.py"
     test_runner.write_text("# Custom test runner")
 
+    # Create django_test project so we don't trigger auto-creation
+    django_test_dir = repos_dir / "projects" / "django_test"
+    django_test_dir.mkdir(parents=True)
+    (django_test_dir / "manage.py").write_text("")
+
     # Create config with custom test runner
     config_dir = tmp_path / ".config" / "dbx-python-cli"
     config_dir.mkdir(parents=True)
@@ -202,10 +207,12 @@ django = "tests/runtests.py"
                 assert "Running tests/runtests.py" in result.stdout
                 assert "Tests passed" in result.stdout
 
-                # Verify custom test runner was called
+                # Verify custom test runner was called with injected --settings
                 mock_run.assert_called_once()
                 call_args = mock_run.call_args
                 assert "runtests.py" in call_args[0][0][1]
+                assert "--settings" in call_args[0][0]
+                assert "django_test.settings.django_test" in call_args[0][0]
                 assert "django" in str(call_args[1]["cwd"])
 
 
@@ -298,6 +305,11 @@ def test_test_with_custom_test_runner_and_args(tmp_path):
     test_runner = tests_dir / "runtests.py"
     test_runner.write_text("# Custom test runner")
 
+    # Create django_test project so we don't trigger auto-creation
+    django_test_dir = repos_dir / "projects" / "django_test"
+    django_test_dir.mkdir(parents=True)
+    (django_test_dir / "manage.py").write_text("")
+
     # Create config with custom test runner
     config_dir = tmp_path / ".config" / "dbx-python-cli"
     config_dir.mkdir(parents=True)
@@ -332,14 +344,89 @@ django = "tests/runtests.py"
                     app, ["test", "django", "--verbose", "--parallel"]
                 )
                 assert result.exit_code == 0
-                assert "Running tests/runtests.py --verbose --parallel" in result.stdout
+                # --settings is prepended before user args
+                assert (
+                    "Running tests/runtests.py --settings django_test.settings.django_test --verbose --parallel"
+                    in result.stdout
+                )
 
                 # Verify custom test runner was called with args
                 mock_run.assert_called_once()
                 call_args = mock_run.call_args
                 assert "runtests.py" in call_args[0][0][1]
+                assert "--settings" in call_args[0][0]
+                assert "django_test.settings.django_test" in call_args[0][0]
                 assert "--verbose" in call_args[0][0]
                 assert "--parallel" in call_args[0][0]
+
+
+def test_test_django_creates_project_if_missing(tmp_path):
+    """Test that dbx test django creates the django_test project if it doesn't exist."""
+    # Create temp repos directory
+    repos_dir = tmp_path / "repos"
+    repos_dir.mkdir(parents=True)
+
+    # Create django group and repo
+    django_dir = repos_dir / "django"
+    django_dir.mkdir()
+
+    django_repo = django_dir / "django"
+    django_repo.mkdir()
+    (django_repo / ".git").mkdir()
+
+    # Create custom test runner script
+    tests_dir = django_repo / "tests"
+    tests_dir.mkdir()
+    (tests_dir / "runtests.py").write_text("# Custom test runner")
+
+    # Note: do NOT create projects/django_test — this is the key condition
+
+    # Create config with custom test runner
+    config_dir = tmp_path / ".config" / "dbx-python-cli"
+    config_dir.mkdir(parents=True)
+    config_path = config_dir / "config.toml"
+    repos_dir_str = str(repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.django]
+repos = [
+    "https://github.com/django/django.git",
+]
+
+[repo.groups.django.test_runner]
+django = "tests/runtests.py"
+"""
+    config_path.write_text(config_content)
+
+    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+        with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
+            with patch("subprocess.run") as mock_run:
+                with patch(
+                    "dbx_python_cli.commands.test.add_project"
+                ) as mock_add_project:
+                    mock_get_path.return_value = config_path
+                    mock_venv.return_value = ("python", "venv")
+
+                    # Mock successful test run
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
+                    mock_add_project.return_value = None  # success, no exception
+
+                    result = runner.invoke(app, ["test", "django"])
+                    assert result.exit_code == 0
+
+                    # Verify add_project was called to create the missing project
+                    mock_add_project.assert_called_once_with(
+                        "django_test",
+                        directory=None,
+                        base_dir=None,
+                        add_frontend=False,
+                        auto_install=False,
+                    )
+                    assert "django_test project not found" in result.stdout
 
 
 def test_test_with_pytest_and_args(mock_config, temp_repos_dir):
