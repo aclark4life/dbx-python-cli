@@ -27,7 +27,7 @@ def log_callback(
     repo_name: str = typer.Argument(None, help="Repository name to show logs for"),
     git_args: list[str] = typer.Argument(
         None,
-        help="Git log arguments to run (e.g., '-n 5', '--oneline', '--graph'). If not provided, runs 'git log -n 10'.",
+        help="Git log arguments to run (e.g., '-n 5', '--oneline', '--graph'). If not provided, runs 'git log -n 1'.",
     ),
     group: str = typer.Option(
         None,
@@ -72,9 +72,9 @@ def log_callback(
         git_args.insert(0, repo_name)
         repo_name = None
 
-    # If no args provided, default to showing last 10 commits
+    # If no args provided, default to showing last 1 commit
     if not git_args:
-        git_args = ["-n", "10"]
+        git_args = ["-n", "1"]
 
     try:
         config = get_config()
