@@ -139,11 +139,14 @@ def _run_git_branch(
 
     # Build git branch command with --no-pager to avoid pager issues
     git_cmd = ["git", "--no-pager", "branch"]
+    separator = "─" * 60
+    typer.echo(separator)
     if git_args:
         git_cmd.extend(git_args)
         typer.echo(f"🌿 {name}: git branch {' '.join(git_args)}")
     else:
         typer.echo(f"🌿 {name}:")
+    typer.echo(separator)
 
     if verbose:
         typer.echo(f"[verbose] Running command: {' '.join(git_cmd)}")
