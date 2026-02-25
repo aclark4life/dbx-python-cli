@@ -4,6 +4,8 @@ import tomllib
 from pathlib import Path
 from collections import defaultdict
 
+import typer
+
 
 def get_config_path():
     """Get the path to the user config file."""
@@ -371,7 +373,8 @@ def list_repos(base_dir, format_style="default", config=None):
         for i, group in enumerate(sorted_groups):
             is_last_group = i == len(sorted_groups) - 1
             group_prefix = "└──" if is_last_group else "├──"
-            lines.append(f"{group_prefix} {group}/")
+            group_label = typer.style(f"{group}/", fg=typer.colors.CYAN, bold=True)
+            lines.append(f"{group_prefix} {group_label}")
 
             # Get all repos for this group (available and cloned)
             available_in_group = set(available_repos.get(group, []))
@@ -388,11 +391,11 @@ def list_repos(base_dir, format_style="default", config=None):
                     is_cloned = repo_name in cloned_in_group
                     is_available = repo_name in available_in_group
                     if is_cloned and is_available:
-                        status = "✓"  # Cloned
+                        status = typer.style("✓", fg=typer.colors.GREEN)
                     elif is_cloned and not is_available:
-                        status = "?"  # Cloned but not in config
+                        status = typer.style("?", fg=typer.colors.MAGENTA)
                     else:
-                        status = "○"  # Available but not cloned
+                        status = typer.style("○", fg=typer.colors.YELLOW)
                     lines.append(f"{continuation}{repo_prefix} {status} {repo_name}")
                 else:
                     lines.append(f"{continuation}{repo_prefix} {repo_name}")

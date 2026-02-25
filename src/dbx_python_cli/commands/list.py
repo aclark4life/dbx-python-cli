@@ -52,9 +52,12 @@ def list_callback(
         typer.echo("\nClone repositories using: dbx clone -g <group>")
         return
 
-    typer.echo(f"Base directory: {base_dir}\n")
-    typer.echo("Repository status:\n")
+    typer.echo(f"{typer.style('Base directory:', bold=True)} {base_dir}\n")
+    typer.echo(f"{typer.style('Repository status:', bold=True)}\n")
     typer.echo(formatted_output)
+    cloned_label = typer.style("✓", fg=typer.colors.GREEN)
+    available_label = typer.style("○", fg=typer.colors.YELLOW)
+    unknown_label = typer.style("?", fg=typer.colors.MAGENTA)
     typer.echo(
-        "\nLegend: ✓ = cloned, ○ = available to clone, ? = cloned but not in config"
+        f"\nLegend: {cloned_label} = cloned, {available_label} = available to clone, {unknown_label} = cloned but not in config"
     )
