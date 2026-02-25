@@ -109,9 +109,7 @@ def remove_callback(
                         f"❌ Error: Repository '{repo_name}' not found in group '{repo_group}'",
                         err=True,
                     )
-                    typer.echo(
-                        "\nRun 'dbx list' to see available repositories"
-                    )
+                    typer.echo("\nRun 'dbx list' to see available repositories")
                     raise typer.Exit(1)
                 repos_to_remove.append(matching_repos[0])
             else:
@@ -122,9 +120,7 @@ def remove_callback(
                     typer.echo(
                         f"❌ Error: Repository '{repo_name}' not found", err=True
                     )
-                    typer.echo(
-                        "\nRun 'dbx list' to see available repositories"
-                    )
+                    typer.echo("\nRun 'dbx list' to see available repositories")
                     raise typer.Exit(1)
 
                 # If repo exists in multiple groups, warn and use first match
