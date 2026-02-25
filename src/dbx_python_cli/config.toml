@@ -79,7 +79,7 @@ libmongocrypt = [
 [repo.groups.django.test_runner]
 django = "tests/runtests.py"
 
-[repo.groups.django-thirdparty]
+[repo.groups.django-3p]
 repos = [
     "git@github.com:pennersr/django-allauth.git",
     "git@github.com:encode/django-rest-framework.git",
