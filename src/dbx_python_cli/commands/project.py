@@ -273,9 +273,15 @@ def add_project(
         elif venv_type == "venv":
             typer.echo(f"✅ Using activated venv: {python_path}\n")
     except typer.Exit:
-        # get_venv_info raises typer.Exit if no venv found
-        # Re-raise with more context for project creation
-        raise
+        if not auto_install:
+            # When --no-install is given we only need django-admin to scaffold
+            # the project — no installation step runs, so a dedicated venv is
+            # not required.  Fall back to the current interpreter; django-admin
+            # will be available as long as Django is installed in this env.
+            python_path = sys.executable
+        else:
+            # Installation requires a proper venv.  Re-raise the error.
+            raise
 
     # Build a subprocess environment that sources the venv by prepending its
     # bin directory to PATH.  This ensures the correct django-admin (and any
