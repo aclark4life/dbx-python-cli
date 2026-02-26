@@ -311,15 +311,35 @@ def list_repos(base_dir, format_style="default", config=None):
 
     # If config is provided, get available repos from config
     available_repos = {}
+    global_group_names = set()
+    global_repo_names = []
     if config:
         groups = config.get("repo", {}).get("groups", {})
+        global_group_names = set(get_global_groups(config))
+
+        # Collect repo names from global groups first
+        for gname in global_group_names:
+            if gname in groups:
+                for url in groups[gname].get("repos", []):
+                    global_repo_names.append(extract_repo_name_from_url(url))
+
+        # Build available_repos for non-global groups only
         for group_name, group_config in groups.items():
+            if group_name in global_group_names:
+                # Global groups are not cloned to their own directory — skip them
+                continue
             repo_urls = group_config.get("repos", [])
             for url in repo_urls:
                 repo_name = extract_repo_name_from_url(url)
                 if group_name not in available_repos:
                     available_repos[group_name] = []
                 available_repos[group_name].append(repo_name)
+
+        # Inject global repos into every non-global group's available list
+        for group_name in available_repos:
+            for repo_name in global_repo_names:
+                if repo_name not in available_repos[group_name]:
+                    available_repos[group_name].append(repo_name)
 
     # If no repos cloned and no config, return None
     if not repos and not available_repos:
@@ -332,8 +352,11 @@ def list_repos(base_dir, format_style="default", config=None):
         for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
             cloned[repo["group"]].append(repo["name"])
 
-        # Merge available and cloned groups
-        all_groups = set(cloned.keys()) | set(available_repos.keys())
+        # Merge available and cloned groups, excluding global groups
+        # (global repos are cloned into target group directories, not their own directory)
+        all_groups = (
+            set(cloned.keys()) | set(available_repos.keys())
+        ) - global_group_names
 
         lines = []
         sorted_groups = sorted(all_groups)
@@ -394,8 +417,11 @@ def list_repos(base_dir, format_style="default", config=None):
         for repo in sorted(repos, key=lambda r: (r["group"], r["name"])):
             cloned[repo["group"]].append(repo["name"])
 
-        # Merge available and cloned groups
-        all_groups = set(cloned.keys()) | set(available_repos.keys())
+        # Merge available and cloned groups, excluding global groups
+        # (global repos are cloned into target group directories, not their own directory)
+        all_groups = (
+            set(cloned.keys()) | set(available_repos.keys())
+        ) - global_group_names
 
         lines = []
         sorted_groups = sorted(all_groups)
