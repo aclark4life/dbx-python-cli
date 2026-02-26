@@ -65,6 +65,7 @@ Key Principles
 
    - `uv <https://github.com/astral-sh/uv>`_ for fast package management
    - `just <https://github.com/casey/just>`_ for task automation
+   - `prek <https://github.com/aclark4life/prek>`_ for pre-commit hook management
    - `ruff <https://github.com/astral-sh/ruff>`_ for linting and formatting
    - `pytest <https://pytest.org/>`_ for testing
 
