@@ -33,11 +33,11 @@ Clone a group of related repositories:
 
 This will clone all repositories in the django group to ``~/Developer/mongodb/django/``.
 
-To see available groups:
+To see available groups and repositories:
 
 .. code-block:: bash
 
-   dbx clone --list
+   dbx list
 
 Step 3: Create a Virtual Environment
 -------------------------------------
