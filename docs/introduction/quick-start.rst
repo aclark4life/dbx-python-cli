@@ -21,25 +21,7 @@ The default configuration includes:
 
 You can edit this file to customize your setup.
 
-Step 2: Clone Repositories
----------------------------
-
-Clone a group of related repositories:
-
-.. code-block:: bash
-
-   # Clone the django group
-   dbx clone -g django
-
-This will clone all repositories in the django group to ``~/Developer/mongodb/django/``.
-
-To see available groups and repositories:
-
-.. code-block:: bash
-
-   dbx list
-
-Step 3: Create a Virtual Environment
+Step 2: Create a Virtual Environment
 -------------------------------------
 
 Create a virtual environment for the group:
@@ -56,6 +38,24 @@ To specify a Python version:
 .. code-block:: bash
 
    dbx env init -g django --python 3.11
+
+Step 3: Clone Repositories
+---------------------------
+
+Clone a group of related repositories:
+
+.. code-block:: bash
+
+   # Clone the django group
+   dbx clone -g django
+
+This will clone all repositories in the django group to ``~/Developer/mongodb/django/``.
+
+To see available groups and repositories:
+
+.. code-block:: bash
+
+   dbx list
 
 Step 4: Install Dependencies
 -----------------------------
