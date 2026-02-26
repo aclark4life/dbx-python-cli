@@ -630,6 +630,26 @@ def clone_callback(
                         typer.echo(f"  ⏭️  {repo_info['name']} skipped (install failed)")
                     skipped_count += 1
 
+                # Run prek install if .pre-commit-config.yaml exists
+                if (repo_info["path"] / ".pre-commit-config.yaml").exists():
+                    typer.echo(f"  🪝 Running prek install for {repo_info['name']}...")
+                    prek_result = subprocess.run(
+                        ["prek", "install"],
+                        cwd=str(repo_info["path"]),
+                        check=False,
+                        capture_output=not verbose,
+                        text=True,
+                    )
+                    if prek_result.returncode == 0:
+                        typer.echo(f"  ✅ Pre-commit hooks installed for {repo_info['name']}")
+                    else:
+                        typer.echo(
+                            f"  ⚠️  prek install failed for {repo_info['name']}",
+                            err=True,
+                        )
+                        if not verbose and prek_result.stderr:
+                            typer.echo(prek_result.stderr, err=True)
+
             if installed_count > 0:
                 typer.echo(f"\n✨ Installed {installed_count} repository(ies)")
             if skipped_count > 0:
