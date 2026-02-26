@@ -33,8 +33,8 @@ Install dbx-python-cli and get started in minutes:
 
 .. code-block:: bash
 
-   # Install via uv tool
-   uv tool install git+https://github.com/aclark4life/dbx-python-cli.git
+   # Install via pipx
+   pipx install git+https://github.com/aclark4life/dbx-python-cli.git
 
    # Initialize configuration
    dbx config init

@@ -58,7 +58,7 @@ Key Principles
 --------------
 
 **Standalone Tool**
-   Installed globally via ``uv tool install``, not tied to any specific repository or workspace.
+   Installed globally via ``pipx install``, not tied to any specific repository or workspace.
 
 **Modern Tooling**
    Uses the latest Python development tools:

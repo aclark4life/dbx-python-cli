@@ -27,8 +27,8 @@ New Approach
 
 .. code-block:: bash
 
-   # Install globally using uv tool
-   uv tool install git+https://github.com/aclark4life/dbx-python-cli.git
+   # Install globally using pipx
+   pipx install git+https://github.com/aclark4life/dbx-python-cli.git
 
    # Use from anywhere
    cd ~/Developer/mongodb/
@@ -53,7 +53,7 @@ Key Differences
 
 .. code-block:: text
 
-   # CLI installed globally via uv tool
+   # CLI installed globally via pipx
    # No CLI repository needed in workspace
 
    ~/Developer/mongodb/              # User's workspace (configurable)
@@ -82,13 +82,13 @@ Benefits
    The user's workspace contains only their actual work repositories, not the CLI tool's code.
 
 **Standard Installation**
-   Uses standard Python packaging tools (``uv tool install``) instead of requiring a git clone.
+   Uses standard Python packaging tools (``pipx install``) instead of requiring a git clone.
 
 **Global Availability**
    The ``dbx`` command is available from anywhere in the terminal, not just within a specific directory.
 
 **Easier Updates**
-   Update the tool with ``uv tool upgrade dbx-python-cli`` without affecting user repositories.
+   Update the tool with ``pipx upgrade dbx-python-cli`` without affecting user repositories.
 
 **Multiple Workspaces**
    Users can easily work with multiple base directories by updating the config, without needing multiple CLI clones.
@@ -155,7 +155,7 @@ Users migrating from ``django-mongodb-cli`` should:
 
    .. code-block:: bash
 
-      uv tool install git+https://github.com/aclark4life/dbx-python-cli.git
+      pipx install git+https://github.com/aclark4life/dbx-python-cli.git
 
 2. Initialize configuration:
 

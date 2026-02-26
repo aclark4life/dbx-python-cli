@@ -6,11 +6,11 @@ Virtual Environment Strategy
 dbx-python-cli Installation
 ----------------------------
 
-``dbx-python-cli`` is expected to be installed via uv tool:
+``dbx-python-cli`` is expected to be installed via pipx:
 
 .. code-block:: bash
 
-   uv tool install git+https://github.com/aclark4life/dbx-python-cli.git
+   pipx install git+https://github.com/aclark4life/dbx-python-cli.git
 
 This keeps the ``dbx`` command available globally, isolated from project dependencies.
 
