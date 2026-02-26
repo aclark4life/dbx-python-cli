@@ -1,12 +1,12 @@
 # Contributing to dbx-python-cli
 
-Thank you for your interest in contributing to dbx-python-cli! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to dbx-python-cli! This project requires that **all contributions are made exclusively through AI coding assistants**. Direct, hand-written code changes are not accepted. Please read this document carefully before contributing.
 
 ## Table of Contents
 
 - [Getting Started](#getting-started)
 - [Development Workflow](#development-workflow)
-- [AI-Assisted Development](#ai-assisted-development)
+- [AI-Only Contributions](#ai-only-contributions)
 - [Code Style and Quality](#code-style-and-quality)
 - [Testing](#testing)
 - [Documentation](#documentation)
@@ -82,17 +82,34 @@ just docs
 just docs-serve
 ```
 
-## AI-Assisted Development
+## AI-Only Contributions
 
-This project embraces AI-assisted development workflows. We recommend using **Augment Agent** or similar AI coding assistants to help with feature development, bug fixes, and code improvements.
+**This project is AI-first and AI-only.** All code, tests, and documentation changes must be authored by an AI coding assistant. Human contributors participate by directing, reviewing, and iterating on AI output — not by writing code directly.
 
-### Using Augment Agent
+### Why AI-Only?
 
-When working with Augment Agent on this project, please reference this file at the start of your session:
+- Ensures consistent code style and quality enforced through AI guidelines
+- Encourages contributors to think at a higher level (intent and requirements) rather than implementation details
+- Makes the contribution process accessible regardless of coding experience
 
-```
-Please read CONTRIBUTING.md for project guidelines and instructions.
-```
+### Recommended AI Tools
+
+- **[Augment Agent](https://www.augmentcode.com/)** *(recommended)* — deeply context-aware, understands the full codebase
+- GitHub Copilot, Cursor, Windsurf, or similar agentic coding assistants
+
+### How to Contribute
+
+1. **Open an issue** describing the feature, bug, or improvement you want
+2. **Start an AI session** with your preferred AI coding assistant
+3. **Point the AI at this file** at the start of your session:
+   ```
+   Please read CONTRIBUTING.md for project guidelines and instructions.
+   ```
+4. **Describe your goal** to the AI and let it plan and implement the changes
+5. **Review the AI's output** — read diffs, run tests, and iterate with the AI until the result is correct
+6. **Open a Pull Request** with the AI-generated changes
+
+> ⚠️ Pull requests containing code that was clearly hand-written without AI assistance will not be accepted.
 
 ### Instructions for AI Assistants
 
@@ -156,21 +173,14 @@ Examples:
 
 <!-- Add new instructions above this line -->
 
-### For Human Developers
+### Tips for Directing Your AI Assistant
 
-We encourage you to use AI assistants like Augment Agent to:
+When prompting an AI assistant to contribute, give it enough context to do the job well:
 
-- **Add new features**: AI can help scaffold new commands and features following existing patterns
-- **Fix bugs**: AI can help identify and fix issues while maintaining code quality
-- **Write tests**: AI can generate comprehensive test cases
-- **Improve documentation**: AI can help write clear documentation and examples
-- **Refactor code**: AI can help improve code structure while preserving functionality
-
-**Tip**: When asking an AI assistant to add a feature, provide context about:
-- Similar existing features to use as reference
-- Expected behavior and edge cases
-- Testing requirements
-- Documentation needs
+- **Reference similar features**: "There's an existing `clone` command in `commands/clone.py` — use it as a pattern"
+- **Describe expected behavior and edge cases**: Be specific about what should happen and what shouldn't
+- **State testing requirements**: "Write tests alongside the implementation and make sure they pass"
+- **Iterate**: If the first attempt isn't right, describe what's wrong and ask the AI to fix it — don't patch it by hand
 
 ## Code Style and Quality
 
