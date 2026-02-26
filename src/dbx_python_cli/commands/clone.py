@@ -397,6 +397,11 @@ def clone_callback(
 
                 if repo_path.exists():
                     typer.echo(f"  ⏭️  {repo_name} already exists, skipping")
+                    default_branch = repo.get_default_branch(
+                        config, group_name, repo_name
+                    )
+                    if default_branch:
+                        _switch_to_branch(repo_path, default_branch, verbose)
                     continue
 
                 # Determine clone URL and upstream URL
