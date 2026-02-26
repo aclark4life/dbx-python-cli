@@ -714,14 +714,21 @@ def run_project(
         typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
         raise typer.Exit(code=1)
 
-    # Detect the project venv so we use the right Python for manage.py
+    # Detect the project venv so we use the right Python for manage.py.
+    # Mirror the same priority order used by `dbx test`:
+    #   1. project-level venv  (project_path/.venv)
+    #   2. group-level venv    (projects_dir/.venv  OR  directory/.venv)
+    #   3. base-level venv     (base_dir/.venv, only when using config path)
+    #   4. activated / PATH venv
     try:
         if directory is None:
             python_path, venv_type = get_venv_info(
-                None, projects_dir, base_path=base_dir
+                project_path, projects_dir, base_path=base_dir
             )
         else:
-            python_path, venv_type = get_venv_info(None, None, base_path=None)
+            python_path, venv_type = get_venv_info(
+                project_path, project_path.parent, base_path=None
+            )
     except typer.Exit:
         raise
 
