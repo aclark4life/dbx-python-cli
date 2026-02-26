@@ -76,9 +76,6 @@ def test_callback(
     if ctx.invoked_subcommand is not None:
         return
 
-    if not os.getenv("MONGODB_URI"):
-        typer.echo("⚠️  Warning: MONGODB_URI is not set.", err=True)
-
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
 
@@ -95,6 +92,18 @@ def test_callback(
     except Exception as e:
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
+
+    if not os.getenv("MONGODB_URI"):
+        default_uri = (
+            config.get("project", {}).get("default_env", {}).get("MONGODB_URI")
+        )
+        if default_uri:
+            typer.echo(
+                f"⚠️  Warning: MONGODB_URI is not set. Using default: {default_uri}",
+                err=True,
+            )
+        else:
+            typer.echo("⚠️  Warning: MONGODB_URI is not set.", err=True)
 
     # Handle --list flag
     if list_repos:
