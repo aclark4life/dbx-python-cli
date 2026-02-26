@@ -1,7 +1,9 @@
 """Configuration management commands."""
 
 import os
+import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import typer
@@ -234,8 +236,10 @@ def show():
         """Yellow sub-section label."""
         return typer.style(text, fg=typer.colors.YELLOW)
 
-    typer.echo(typer.style(f"📋 Configuration ({config_source})", bold=True))
-    typer.echo(f"{key('Location:')} {active_config_path}\n")
+    # Collect all output into a buffer so we can paginate it
+    buf = []
+    buf.append(typer.style(f"📋 Configuration ({config_source})", bold=True))
+    buf.append(f"{key('Location:')} {active_config_path}\n")
 
     # Load and display the config
     try:
@@ -244,73 +248,82 @@ def show():
         # Repository settings
         repo_config = config.get("repo", {})
         if repo_config:
-            typer.echo(h("Repository Settings"))
-            typer.echo(
+            buf.append(h("Repository Settings"))
+            buf.append(
                 f"  {key('base_dir:')}   {val(repo_config.get('base_dir', 'Not set'))}"
             )
             fork_user = repo_config.get("fork_user")
-            typer.echo(
+            buf.append(
                 f"  {key('fork_user:')}  {val(fork_user) if fork_user else dim('Not set')}"
             )
-            typer.echo()
+            buf.append("")
 
         # Repository groups
         groups = repo_config.get("groups", {})
         if groups:
-            typer.echo(h(f"Repository Groups ({len(groups)})"))
+            buf.append(h(f"Repository Groups ({len(groups)})"))
             for group_name, group_config in sorted(groups.items()):
                 repos = group_config.get("repos", [])
                 n = len(repos)
-                typer.echo(
+                buf.append(
                     f"\n  {typer.style('●', fg=typer.colors.CYAN)} "
                     f"{typer.style(group_name, bold=True)}"
                     f"  {dim(f'({n} repo' + ('s' if n != 1 else '') + ')')}"
                 )
                 for repo_url in repos:
                     repo_name = repo_url.split("/")[-1].replace(".git", "")
-                    typer.echo(f"      {dim('─')} {repo_name}")
+                    buf.append(f"      {dim('─')} {repo_name}")
 
                 # Install directories
                 install_dirs = group_config.get("install_dirs", {})
                 if install_dirs:
-                    typer.echo(f"\n    {sub('Install dirs:')}")
+                    buf.append(f"\n    {sub('Install dirs:')}")
                     for rname, dirs in install_dirs.items():
-                        typer.echo(f"      {dim(rname + ':')}")
+                        buf.append(f"      {dim(rname + ':')}")
                         for dir_path in dirs:
-                            typer.echo(f"        {dim('·')} {dir_path}")
+                            buf.append(f"        {dim('·')} {dir_path}")
 
                 # Default branch
                 default_branch = group_config.get("default_branch", {})
                 if default_branch:
-                    typer.echo(f"\n    {sub('Default branch:')}")
+                    buf.append(f"\n    {sub('Default branch:')}")
                     for rname, branch in default_branch.items():
-                        typer.echo(f"      {dim(rname + ':')} {branch}")
+                        buf.append(f"      {dim(rname + ':')} {branch}")
 
                 # Custom test runners
                 test_runner = group_config.get("test_runner", {})
                 if test_runner:
-                    typer.echo(f"\n    {sub('Test runner:')}")
+                    buf.append(f"\n    {sub('Test runner:')}")
                     for rname, runner_path in test_runner.items():
-                        typer.echo(f"      {dim(rname + ':')} {runner_path}")
+                        buf.append(f"      {dim(rname + ':')} {runner_path}")
 
                 # Test environment variables
                 test_env = group_config.get("test_env", {})
                 if test_env:
-                    typer.echo(f"\n    {sub('Test env:')}")
+                    buf.append(f"\n    {sub('Test env:')}")
                     for rname, env_vars in test_env.items():
                         if isinstance(env_vars, dict):
-                            typer.echo(f"      {dim(rname + ':')}")
+                            buf.append(f"      {dim(rname + ':')}")
                             for var_name, var_value in env_vars.items():
-                                typer.echo(
+                                buf.append(
                                     f"        {typer.style(var_name, fg=typer.colors.MAGENTA)}={var_value}"
                                 )
-            typer.echo()
+            buf.append("")
         else:
-            typer.echo(dim("No repository groups configured\n"))
+            buf.append(dim("No repository groups configured\n"))
 
-        typer.echo(dim("  dbx config edit   – open in editor"))
-        typer.echo(dim("  dbx config init   – (re)create from default"))
+        buf.append(dim("  dbx config edit   – open in editor"))
+        buf.append(dim("  dbx config init   – (re)create from default"))
 
     except Exception as e:
         typer.echo(f"❌ Error reading configuration: {e}", err=True)
         raise typer.Exit(1)
+
+    output = "\n".join(buf)
+
+    # Paginate with colors when writing to a terminal; plain-print otherwise
+    # (piped output, CI, tests, etc.) so ANSI codes are never double-escaped.
+    if sys.stdout.isatty() and shutil.which("less"):
+        subprocess.run(["less", "-R"], input=output, text=True)
+    else:
+        typer.echo(output)

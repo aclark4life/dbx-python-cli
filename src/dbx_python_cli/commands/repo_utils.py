@@ -1,5 +1,6 @@
 """Repository utilities and helper functions."""
 
+import subprocess
 import tomllib
 from pathlib import Path
 from collections import defaultdict
@@ -151,6 +152,50 @@ def get_default_branch(config, group_name, repo_name):
 
     default_branch_config = groups[group_name].get("default_branch", {})
     return default_branch_config.get(repo_name)
+
+
+def switch_to_branch(repo_path: Path, branch_name: str, verbose: bool = False) -> bool:
+    """
+    Switch to a branch in a cloned repository.
+
+    Runs ``git switch <branch_name>`` in *repo_path*.  Failures are reported as
+    warnings rather than hard errors so that the caller's workflow is not
+    interrupted.
+
+    Args:
+        repo_path: Path to the repository
+        branch_name: Branch to switch to
+        verbose: Whether to show verbose output
+
+    Returns:
+        True if the switch succeeded, False otherwise
+    """
+    if verbose:
+        typer.echo(f"  [verbose] Switching to branch '{branch_name}'")
+
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_path), "switch", branch_name],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            typer.echo(f"  🔀 Switched to branch '{branch_name}'")
+            return True
+        else:
+            typer.echo(
+                f"  ⚠️  Could not switch to branch '{branch_name}': "
+                f"{result.stderr.strip() or 'unknown error'}",
+                err=True,
+            )
+            return False
+    except Exception as exc:
+        typer.echo(
+            f"  ⚠️  Could not switch to branch '{branch_name}': {exc}",
+            err=True,
+        )
+        return False
 
 
 def get_test_env_vars(config, group_name, repo_name, base_dir):
