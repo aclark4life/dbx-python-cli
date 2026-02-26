@@ -123,28 +123,6 @@ just (Command Runner)
 
 Or download from the `just releases page <https://github.com/casey/just/releases>`_.
 
-Git
-~~~
-
-Git is required for cloning and managing repositories:
-
-**macOS:**
-
-.. code-block:: bash
-
-   brew install git
-
-**Linux:**
-
-.. code-block:: bash
-
-   sudo apt-get install git  # Debian/Ubuntu
-   sudo yum install git      # RHEL/CentOS
-
-**Windows:**
-
-Download from `git-scm.com <https://git-scm.com/download/win>`_.
-
 Next Steps
 ----------
 
