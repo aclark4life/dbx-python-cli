@@ -93,36 +93,6 @@ To uninstall dbx-python-cli:
 
    pipx uninstall dbx-python-cli
 
-Optional Dependencies
----------------------
-
-While not required for dbx-python-cli itself, you may want to install these tools for enhanced functionality:
-
-just (Command Runner)
-~~~~~~~~~~~~~~~~~~~~~
-
-`just <https://github.com/casey/just>`_ is a command runner that many repositories use for task automation:
-
-**macOS:**
-
-.. code-block:: bash
-
-   brew install just
-
-**Linux:**
-
-.. code-block:: bash
-
-   cargo install just
-
-**Windows:**
-
-.. code-block:: bash
-
-   cargo install just
-
-Or download from the `just releases page <https://github.com/casey/just/releases>`_.
-
 Next Steps
 ----------
 
