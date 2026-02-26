@@ -598,7 +598,9 @@ def clone_callback(
                         text=True,
                     )
                     if prek_result.returncode == 0:
-                        typer.echo(f"  ✅ Pre-commit hooks installed for {repo_info['name']}")
+                        typer.echo(
+                            f"  ✅ Pre-commit hooks installed for {repo_info['name']}"
+                        )
                     else:
                         typer.echo(
                             f"  ⚠️  prek install failed for {repo_info['name']}",
