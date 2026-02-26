@@ -1,7 +1,7 @@
 dbx-python-cli Documentation
 ============================
 
-A command line tool for DBX Python development tasks. AI first. De-siloing happens here. Go from zero to hero in just a few minutes.
+A command line tool for DBX Python development tasks. AI first. De-siloing happens here. Go from 'zero to hero' in just a few minutes.
 
 **Get started:** :doc:`introduction/installation` | :doc:`introduction/quick-start` | :doc:`introduction/overview`
 

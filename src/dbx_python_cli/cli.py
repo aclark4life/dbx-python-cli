@@ -80,7 +80,7 @@ def main(
         help="Show more detailed output.",
     ),
 ):
-    """A command line tool for DBX Python development tasks. AI first. De-siloing happens here. Go from zero to hero in just a few minutes."""
+    """A command line tool for DBX Python development tasks. AI first. De-siloing happens here. Go from 'zero to hero' in just a few minutes."""
     # Store verbose flag in context for subcommands to access
     ctx.obj = {"verbose": verbose}
 
