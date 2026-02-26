@@ -47,11 +47,15 @@ This will:
 2. Add an ``upstream`` remote pointing to ``git@github.com:mongodb/mongo-python-driver.git`` (original repo)
 3. Set up your local repository ready for the fork-based contribution workflow
 
+Because ``mongo-python-driver`` is a global repo it is cloned into the target group
+directory (e.g. ``pymongo/mongo-python-driver`` when you clone the ``pymongo`` group).
+
 **Example workflow:**
 
 .. code-block:: bash
 
    # Clone your forks with upstream remotes configured
+   # mongo-python-driver (global) is also cloned into pymongo/
    dbx clone -g pymongo --fork-user aclark4life
 
    # Now you can work with the standard fork workflow
@@ -157,9 +161,49 @@ This command will:
 
 **Available Groups (Default):**
 
-- ``pymongo`` - MongoDB Python driver repositories (PyMongo, Specifications)
+- ``global`` - Repos cloned into every group automatically (e.g. ``mongo-python-driver``)
+- ``pymongo`` - MongoDB Python driver support repositories (Specifications, drivers-evergreen-tools)
 - ``langchain`` - LangChain framework repositories
 - ``django`` - Django web framework repositories (Django, django-mongodb-backend)
+
+Global Groups
+~~~~~~~~~~~~~
+
+A *global group* is a special group whose repositories are automatically cloned into
+**every other group** when you run ``dbx clone -g <group>``.  This is useful for repos
+that every group needs — for example, the MongoDB Python driver is a shared dependency
+for all driver-related groups.
+
+.. code-block:: bash
+
+   # Clones django repos AND mongo-python-driver into ~/Developer/mongodb/django/
+   dbx clone -g django
+
+   # Clones pymongo repos AND mongo-python-driver into ~/Developer/mongodb/pymongo/
+   dbx clone -g pymongo
+
+Global groups are declared with ``global_groups`` under ``[repo]``:
+
+.. code-block:: toml
+
+   [repo]
+   base_dir = "~/Developer/mongodb"
+   global_groups = ["global"]  # these repos are injected into every group clone
+
+   [repo.groups.global]
+   repos = [
+       "git@github.com:mongodb/mongo-python-driver.git",
+   ]
+
+   [repo.groups.pymongo]
+   repos = [
+       "git@github.com:mongodb/specifications.git",
+       "git@github.com:mongodb-labs/drivers-evergreen-tools.git",
+   ]
+
+Because ``mongo-python-driver`` ends up physically inside each group directory
+(e.g. ``pymongo/mongo-python-driver``), ``dbx install -g pymongo`` and
+``dbx test mongo-python-driver`` all work without any extra flags.
 
 **Configuration:**
 
@@ -171,10 +215,15 @@ Repositories are cloned into subdirectories named after their group. For example
 
    [repo]
    base_dir = "~/Developer/dbx-repos"
+   global_groups = ["global"]
+
+   [repo.groups.global]
+   repos = [
+       "https://github.com/mongodb/mongo-python-driver.git",
+   ]
 
    [repo.groups.pymongo]
    repos = [
-       "https://github.com/mongodb/mongo-python-driver.git",
        "https://github.com/mongodb/specifications.git",
    ]
 

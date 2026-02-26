@@ -131,10 +131,15 @@ Example configuration:
    [repo]
    base_dir = "~/Developer/mongodb"
    # fork_user = "your-github-username"  # Optional
+   global_groups = ["global"]  # cloned into every group automatically
+
+   [repo.groups.global]
+   repos = [
+       "git@github.com:mongodb/mongo-python-driver.git",
+   ]
 
    [repo.groups.pymongo]
    repos = [
-       "git@github.com:mongodb/mongo-python-driver.git",
        "git@github.com:mongodb/specifications.git",
    ]
 
@@ -152,6 +157,11 @@ Repositories are organized into groups. Each group:
 - Can have a shared virtual environment
 - Can be cloned, synced, or installed as a unit
 
+Groups listed under ``global_groups`` are special: their repositories are
+automatically injected into every other group when cloning, so a single repo
+(like ``mongo-python-driver``) can be shared across all groups without
+maintaining multiple config entries.
+
 Directory Structure
 -------------------
 
@@ -162,11 +172,12 @@ Typical directory structure after setup:
    ~/Developer/mongodb/              # base_dir
    ├── pymongo/                      # Group directory
    │   ├── .venv/                    # Group-level virtual environment
-   │   ├── mongo-python-driver/     # Repository
+   │   ├── mongo-python-driver/     # Cloned from global group
    │   ├── specifications/          # Repository
    │   └── drivers-evergreen-tools/ # Repository
    └── langchain/                    # Another group
        ├── .venv/                    # Separate venv for this group
+       ├── mongo-python-driver/     # Cloned from global group
        └── langchain-mongodb/       # Repository
 
 Design Philosophy

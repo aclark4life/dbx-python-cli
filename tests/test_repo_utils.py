@@ -8,6 +8,7 @@ from dbx_python_cli.commands.repo_utils import (
     _expand_env_var_value,
     find_all_repos,
     find_repo_by_name,
+    get_global_groups,
     get_test_env_vars,
     list_repos,
 )
@@ -252,3 +253,117 @@ def test_expand_env_var_value_non_string(tmp_path):
     value = 123
     expanded = _expand_env_var_value(value, tmp_path, "pymongo")
     assert expanded == "123"
+
+
+# ---------------------------------------------------------------------------
+# get_global_groups tests
+# ---------------------------------------------------------------------------
+
+
+def test_get_global_groups_returns_list(tmp_path):
+    """Test get_global_groups returns the configured list."""
+    config = {
+        "repo": {
+            "base_dir": str(tmp_path),
+            "global_groups": ["global"],
+            "groups": {},
+        }
+    }
+    assert get_global_groups(config) == ["global"]
+
+
+def test_get_global_groups_multiple(tmp_path):
+    """Test get_global_groups with multiple global groups."""
+    config = {
+        "repo": {
+            "global_groups": ["global", "shared"],
+            "groups": {},
+        }
+    }
+    assert get_global_groups(config) == ["global", "shared"]
+
+
+def test_get_global_groups_not_configured(tmp_path):
+    """Test get_global_groups returns empty list when not configured."""
+    config = {"repo": {"base_dir": str(tmp_path), "groups": {}}}
+    assert get_global_groups(config) == []
+
+
+def test_get_global_groups_empty_config():
+    """Test get_global_groups with an empty config."""
+    assert get_global_groups({}) == []
+
+
+# ---------------------------------------------------------------------------
+# get_test_env_vars global fallback tests
+# ---------------------------------------------------------------------------
+
+
+def test_get_test_env_vars_global_fallback(tmp_path):
+    """Test that get_test_env_vars falls back to global groups when the
+    repo's own group has no test_env entry for the repo."""
+    config = {
+        "repo": {
+            "base_dir": str(tmp_path),
+            "global_groups": ["global"],
+            "groups": {
+                "global": {
+                    "repos": ["git@github.com:mongodb/mongo-python-driver.git"],
+                    "test_env": {
+                        "mongo-python-driver": {
+                            "DRIVERS_TOOLS": "{base_dir}/pymongo/drivers-evergreen-tools",
+                            "USE_ACTIVE_VENV": "1",
+                        }
+                    },
+                },
+                "django": {
+                    "repos": ["git@github.com:mongodb-labs/django-mongodb-backend.git"],
+                },
+            },
+        }
+    }
+
+    # mongo-python-driver was cloned into 'django' group but its test_env
+    # is defined in 'global' — the fallback should find it.
+    env_vars = get_test_env_vars(config, "django", "mongo-python-driver", tmp_path)
+    assert "DRIVERS_TOOLS" in env_vars
+    assert "USE_ACTIVE_VENV" in env_vars
+    expected_path = str(tmp_path / "pymongo" / "drivers-evergreen-tools")
+    assert env_vars["DRIVERS_TOOLS"] == expected_path
+
+
+def test_get_test_env_vars_own_group_takes_priority(tmp_path):
+    """Test that a repo's own group test_env takes priority over global fallback."""
+    config = {
+        "repo": {
+            "global_groups": ["global"],
+            "groups": {
+                "global": {
+                    "test_env": {"mongo-python-driver": {"MY_VAR": "from_global"}}
+                },
+                "pymongo": {
+                    "test_env": {"mongo-python-driver": {"MY_VAR": "from_pymongo"}}
+                },
+            },
+        }
+    }
+
+    env_vars = get_test_env_vars(config, "pymongo", "mongo-python-driver", tmp_path)
+    assert env_vars["MY_VAR"] == "from_pymongo"
+
+
+def test_get_test_env_vars_no_global_groups(tmp_path):
+    """Test get_test_env_vars with no global_groups configured returns empty dict
+    when the group has no test_env."""
+    config = {
+        "repo": {
+            "groups": {
+                "django": {
+                    "repos": ["git@github.com:mongodb-labs/django-mongodb-backend.git"],
+                },
+            },
+        }
+    }
+
+    env_vars = get_test_env_vars(config, "django", "mongo-python-driver", tmp_path)
+    assert env_vars == {}

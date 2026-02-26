@@ -12,10 +12,21 @@ CRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-macos-arm64-enterpris
 [repo]
 base_dir = "~/Developer/mongodb"
 # fork_user = "your-github-username"  # Optional: specify your GitHub username for fork operations
+# Repos in these groups are installed into every other group's venv automatically
+global_groups = ["global"]
+
+[repo.groups.global]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+]
+
+# Environment variables for test runs
+# You can use {base_dir} placeholder; {group} resolves to "global" for repos in this group
+[repo.groups.global.test_env]
+mongo-python-driver = { DRIVERS_TOOLS = "{base_dir}/pymongo/drivers-evergreen-tools", USE_ACTIVE_VENV = "1" }
 
 [repo.groups.pymongo]
 repos = [
-    "git@github.com:mongodb/mongo-python-driver.git",
     "git@github.com:mongodb/specifications.git",
     "git@github.com:mongodb-labs/drivers-evergreen-tools.git",
 ]
@@ -26,11 +37,6 @@ repos = [
 # mongo-python-driver = [
 #     "cd bson/_rbson && maturin build --release",
 # ]
-
-# Environment variables for test runs
-# You can use {base_dir} and {group} placeholders
-[repo.groups.pymongo.test_env]
-mongo-python-driver = { DRIVERS_TOOLS = "{base_dir}/{group}/drivers-evergreen-tools", USE_ACTIVE_VENV = "1" }
 
 [repo.groups.langchain]
 repos = [

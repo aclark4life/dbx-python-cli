@@ -48,6 +48,19 @@ def get_repo_groups(config):
     return config.get("repo", {}).get("groups", {})
 
 
+def get_global_groups(config):
+    """
+    Get the list of global group names from config.
+
+    Repos in global groups are installed into every other group's venv
+    automatically when running ``dbx install -g <group>``.
+
+    Returns:
+        list: Group names listed under ``repo.global_groups``, or an empty list.
+    """
+    return config.get("repo", {}).get("global_groups", [])
+
+
 def get_install_dirs(config, group_name, repo_name):
     """
     Get install directories for a repository.
@@ -123,6 +136,11 @@ def get_test_env_vars(config, group_name, repo_name, base_dir):
     Returns a dictionary of environment variables to set when running tests.
     Supports both group-level and repo-specific environment variables.
 
+    When no repo-specific entry is found in the repo's own group, falls back
+    to checking global groups (listed under ``repo.global_groups``), so that
+    repos cloned from a global group into another group still pick up their
+    test environment configuration.
+
     Args:
         config: Configuration dictionary
         group_name: Name of the group (e.g., 'pymongo')
@@ -133,25 +151,36 @@ def get_test_env_vars(config, group_name, repo_name, base_dir):
         dict: Dictionary of environment variable names to values
     """
     groups = get_repo_groups(config)
-    if group_name not in groups:
-        return {}
 
     env_vars = {}
 
-    # Get group-level environment variables
-    group_env_config = groups[group_name].get("test_env", {})
-    if isinstance(group_env_config, dict):
-        # Check if there are common env vars for the group
-        for key, value in group_env_config.items():
-            if not isinstance(value, dict):
-                # This is a group-level env var
-                env_vars[key] = _expand_env_var_value(value, base_dir, group_name)
+    def _collect_env(grp_name):
+        """Collect group-level and repo-specific env vars for a given group."""
+        if grp_name not in groups:
+            return {}
+        result = {}
+        group_env_config = groups[grp_name].get("test_env", {})
+        if isinstance(group_env_config, dict):
+            for key, value in group_env_config.items():
+                if not isinstance(value, dict):
+                    result[key] = _expand_env_var_value(value, base_dir, grp_name)
+        repo_env_config = group_env_config.get(repo_name, {})
+        if isinstance(repo_env_config, dict):
+            for key, value in repo_env_config.items():
+                result[key] = _expand_env_var_value(value, base_dir, grp_name)
+        return result
 
-    # Get repo-specific environment variables (these override group-level)
-    repo_env_config = groups[group_name].get("test_env", {}).get(repo_name, {})
-    if isinstance(repo_env_config, dict):
-        for key, value in repo_env_config.items():
-            env_vars[key] = _expand_env_var_value(value, base_dir, group_name)
+    # Collect from the repo's own group first
+    env_vars = _collect_env(group_name)
+
+    # If nothing found, fall back to global groups so repos cloned into a
+    # different group still pick up their test_env configuration.
+    if not env_vars:
+        for gname in get_global_groups(config):
+            fallback = _collect_env(gname)
+            if fallback:
+                env_vars = fallback
+                break
 
     return env_vars
 

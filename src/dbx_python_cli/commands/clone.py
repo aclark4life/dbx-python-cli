@@ -257,6 +257,25 @@ def clone_callback(
 
                 repos_to_clone[group_name] = group_repos
 
+            # Append global-group repos to every non-global group being cloned.
+            # This means e.g. `dbx clone -g django` will also clone
+            # mongo-python-driver into the django/ directory.
+            global_group_names = repo.get_global_groups(config)
+            if global_group_names:
+                global_urls = []
+                for gname in global_group_names:
+                    if gname in groups:
+                        global_urls.extend(groups[gname].get("repos", []))
+
+                if global_urls:
+                    for target_group in list(repos_to_clone.keys()):
+                        if target_group not in global_group_names:
+                            existing_urls = set(repos_to_clone[target_group])
+                            for url in global_urls:
+                                if url not in existing_urls:
+                                    repos_to_clone[target_group].append(url)
+                                    existing_urls.add(url)
+
         else:
             typer.echo("❌ Error: Repository name or group required", err=True)
             typer.echo("\nUsage: dbx clone <repo-name>")
