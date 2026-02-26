@@ -206,6 +206,7 @@ dbx-python-cli is built with:
 - **CLI Framework**: `Typer <https://typer.tiangolo.com/>`_ - Modern, intuitive CLI framework
 - **Package Manager**: `uv <https://github.com/astral-sh/uv>`_ - Ultra-fast Python package installer
 - **Task Runner**: `just <https://github.com/casey/just>`_ - Command runner with simple syntax
+- **Pre-commit**: `prek <https://github.com/aclark4life/prek>`_ - Pre-commit hook manager
 - **Linter/Formatter**: `ruff <https://github.com/astral-sh/ruff>`_ - Extremely fast Python linter
 - **Testing**: `pytest <https://pytest.org/>`_ - Feature-rich testing framework
 - **Documentation**: `Sphinx <https://www.sphinx-doc.org/>`_ with `Furo <https://github.com/pradyunsg/furo>`_ theme

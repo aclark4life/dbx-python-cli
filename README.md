@@ -5,7 +5,7 @@
 [![CI](https://github.com/aclark4life/dbx-python-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/aclark4life/dbx-python-cli/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/aclark4life/dbx-python-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/aclark4life/dbx-python-cli)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Documentation Status](https://readthedocs.org/projects/dbx-python-cli/badge/?version=latest)](https://dbx-python-cli.readthedocs.io/en/latest/?badge=latest)
 
 ## About
@@ -234,7 +234,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the Apache 2.0 License - see the LICENSE file for details.
 
 ## Links
 
