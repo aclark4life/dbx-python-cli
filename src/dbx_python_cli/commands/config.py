@@ -273,7 +273,7 @@ def show():
                 # Install directories
                 install_dirs = group_config.get("install_dirs", {})
                 if install_dirs:
-                    typer.echo(f"    {sub('Install dirs:')}")
+                    typer.echo(f"\n    {sub('Install dirs:')}")
                     for rname, dirs in install_dirs.items():
                         typer.echo(f"      {dim(rname + ':')}")
                         for dir_path in dirs:
@@ -282,21 +282,21 @@ def show():
                 # Default branch
                 default_branch = group_config.get("default_branch", {})
                 if default_branch:
-                    typer.echo(f"    {sub('Default branch:')}")
+                    typer.echo(f"\n    {sub('Default branch:')}")
                     for rname, branch in default_branch.items():
                         typer.echo(f"      {dim(rname + ':')} {branch}")
 
                 # Custom test runners
                 test_runner = group_config.get("test_runner", {})
                 if test_runner:
-                    typer.echo(f"    {sub('Test runner:')}")
+                    typer.echo(f"\n    {sub('Test runner:')}")
                     for rname, runner_path in test_runner.items():
                         typer.echo(f"      {dim(rname + ':')} {runner_path}")
 
                 # Test environment variables
                 test_env = group_config.get("test_env", {})
                 if test_env:
-                    typer.echo(f"    {sub('Test env:')}")
+                    typer.echo(f"\n    {sub('Test env:')}")
                     for rname, env_vars in test_env.items():
                         if isinstance(env_vars, dict):
                             typer.echo(f"      {dim(rname + ':')}")
