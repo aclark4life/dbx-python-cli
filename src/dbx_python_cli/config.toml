@@ -80,6 +80,10 @@ libmongocrypt = [
 [repo.groups.django.test_runner]
 django = "tests/runtests.py"
 
+# Default branch to switch to after cloning (runs `git switch <branch>` automatically)
+[repo.groups.django.default_branch]
+django = "mongodb-6.0.x"
+
 [repo.groups.django-3p]
 repos = [
     "git@github.com:pennersr/django-allauth.git",

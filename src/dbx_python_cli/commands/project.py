@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 import typer
 
@@ -190,6 +191,12 @@ def add_project(
         "--install/--no-install",
         help="Automatically install the project after creation (default: True)",
     ),
+    python_path_override: Optional[str] = typer.Option(
+        None,
+        "--python-path",
+        hidden=True,
+        help="Override the Python executable used for django-admin (bypasses venv detection).",
+    ),
 ):
     """
     Create a new Django project using bundled templates.
@@ -253,35 +260,39 @@ def add_project(
     # Check for virtual environment before running django-admin
     # For project creation, check parent directories only (project doesn't exist yet)
     # Check in order: projects group-level → base-level → activated venv
-    try:
-        if directory is None and not use_base_dir_override:
-            # Using config-based base_dir/projects/name
-            # Check: projects_dir/.venv → base_dir/.venv → activated
-            python_path, venv_type = get_venv_info(
-                None, projects_dir, base_path=base_dir
-            )
-        else:
-            # Using custom --directory or --base-dir override
-            # Check: activated venv only
-            python_path, venv_type = get_venv_info(None, None, base_path=None)
+    if python_path_override is not None:
+        # Caller already determined the venv (e.g. from `dbx test django`); use it directly.
+        python_path = python_path_override
+    else:
+        try:
+            if directory is None and not use_base_dir_override:
+                # Using config-based base_dir/projects/name
+                # Check: projects_dir/.venv → base_dir/.venv → activated
+                python_path, venv_type = get_venv_info(
+                    None, projects_dir, base_path=base_dir
+                )
+            else:
+                # Using custom --directory or --base-dir override
+                # Check: activated venv only
+                python_path, venv_type = get_venv_info(None, None, base_path=None)
 
-        # Show which venv is being used
-        if venv_type == "group":
-            typer.echo(f"✅ Using projects group venv: {projects_dir}/.venv\n")
-        elif venv_type == "base":
-            typer.echo(f"✅ Using base venv: {base_dir}/.venv\n")
-        elif venv_type == "venv":
-            typer.echo(f"✅ Using activated venv: {python_path}\n")
-    except typer.Exit:
-        if not auto_install:
-            # When --no-install is given we only need django-admin to scaffold
-            # the project — no installation step runs, so a dedicated venv is
-            # not required.  Fall back to the current interpreter; django-admin
-            # will be available as long as Django is installed in this env.
-            python_path = sys.executable
-        else:
-            # Installation requires a proper venv.  Re-raise the error.
-            raise
+            # Show which venv is being used
+            if venv_type == "group":
+                typer.echo(f"✅ Using projects group venv: {projects_dir}/.venv\n")
+            elif venv_type == "base":
+                typer.echo(f"✅ Using base venv: {base_dir}/.venv\n")
+            elif venv_type == "venv":
+                typer.echo(f"✅ Using activated venv: {python_path}\n")
+        except typer.Exit:
+            if not auto_install:
+                # When --no-install is given we only need django-admin to scaffold
+                # the project — no installation step runs, so a dedicated venv is
+                # not required.  Fall back to the current interpreter; django-admin
+                # will be available as long as Django is installed in this env.
+                python_path = sys.executable
+            else:
+                # Installation requires a proper venv.  Re-raise the error.
+                raise
 
     # Build a subprocess environment that sources the venv by prepending its
     # bin directory to PATH.  This ensures the correct django-admin (and any

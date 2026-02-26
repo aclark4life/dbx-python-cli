@@ -135,6 +135,100 @@ def test_clone_group_no_global_groups_configured(tmp_path):
             assert "specifications" in clone_calls[0].args[0][2]
 
 
+# ---------------------------------------------------------------------------
+# default_branch / post-clone switch tests
+# ---------------------------------------------------------------------------
+
+
+def test_clone_switches_to_default_branch(tmp_path):
+    """After a successful clone, git switch is run when default_branch is configured."""
+    config = {
+        "repo": {
+            "base_dir": str(tmp_path),
+            "groups": {
+                "django": {
+                    "repos": ["git@github.com:mongodb-forks/django.git"],
+                    "default_branch": {"django": "mongodb-6.0.x"},
+                }
+            },
+        }
+    }
+
+    with patch("dbx_python_cli.commands.clone.repo.get_config", return_value=config):
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+
+            result = runner.invoke(app, ["clone", "-g", "django", "--no-install"])
+            assert result.exit_code == 0
+
+            # Verify git switch was called with the correct branch
+            switch_calls = [
+                c for c in mock_run.call_args_list if c.args and "switch" in c.args[0]
+            ]
+            assert len(switch_calls) == 1
+            assert "mongodb-6.0.x" in switch_calls[0].args[0]
+            assert "🔀" in result.stdout or "mongodb-6.0.x" in result.stdout
+
+
+def test_clone_no_switch_when_default_branch_not_configured(tmp_path):
+    """git switch is NOT run when no default_branch is configured for the repo."""
+    config = {
+        "repo": {
+            "base_dir": str(tmp_path),
+            "groups": {
+                "pymongo": {
+                    "repos": ["git@github.com:mongodb/specifications.git"],
+                }
+            },
+        }
+    }
+
+    with patch("dbx_python_cli.commands.clone.repo.get_config", return_value=config):
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+
+            result = runner.invoke(app, ["clone", "-g", "pymongo", "--no-install"])
+            assert result.exit_code == 0
+
+            switch_calls = [
+                c for c in mock_run.call_args_list if c.args and "switch" in c.args[0]
+            ]
+            assert len(switch_calls) == 0
+
+
+def test_clone_branch_switch_failure_is_non_fatal(tmp_path):
+    """A failed git switch emits a warning but does not abort the clone."""
+    config = {
+        "repo": {
+            "base_dir": str(tmp_path),
+            "groups": {
+                "django": {
+                    "repos": ["git@github.com:mongodb-forks/django.git"],
+                    "default_branch": {"django": "mongodb-6.0.x"},
+                }
+            },
+        }
+    }
+
+    def _mock_run(cmd, **kwargs):
+        mock = MagicMock()
+        if "switch" in cmd:
+            mock.returncode = 1
+            mock.stderr = "error: pathspec 'mongodb-6.0.x' did not match any file(s)"
+        else:
+            mock.returncode = 0
+            mock.stderr = ""
+        return mock
+
+    with patch("dbx_python_cli.commands.clone.repo.get_config", return_value=config):
+        with patch("subprocess.run", side_effect=_mock_run):
+            result = runner.invoke(app, ["clone", "-g", "django", "--no-install"])
+            # Clone itself should still succeed
+            assert result.exit_code == 0
+            output = result.stdout + (result.stderr or "")
+            assert "Could not switch" in output or "⚠️" in output
+
+
 def test_clone_global_group_itself_not_doubled(tmp_path):
     """Cloning the global group itself does not duplicate global repos."""
     config = _make_config(

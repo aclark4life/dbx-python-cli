@@ -129,6 +129,30 @@ def get_test_runner(config, group_name, repo_name):
     return test_runner_config.get(repo_name)
 
 
+def get_default_branch(config, group_name, repo_name):
+    """
+    Get the default branch to switch to after cloning a repository.
+
+    When configured, ``dbx clone`` will run ``git switch <branch>`` immediately
+    after a successful clone, so the working tree starts on the right branch
+    without any manual step.
+
+    Args:
+        config: Configuration dictionary
+        group_name: Name of the group (e.g., 'django')
+        repo_name: Name of the repository (e.g., 'django')
+
+    Returns:
+        str: Branch name to switch to, or None if no default branch is configured
+    """
+    groups = get_repo_groups(config)
+    if group_name not in groups:
+        return None
+
+    default_branch_config = groups[group_name].get("default_branch", {})
+    return default_branch_config.get(repo_name)
+
+
 def get_test_env_vars(config, group_name, repo_name, base_dir):
     """
     Get environment variables for test runs.

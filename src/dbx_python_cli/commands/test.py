@@ -297,9 +297,10 @@ def test_callback(
                         base_dir=None,
                         add_frontend=False,
                         auto_install=False,
+                        python_path_override=python_path,
                     )
                 except typer.Exit as e:
-                    if e.code != 0:
+                    if getattr(e, "exit_code", getattr(e, "code", 1)) != 0:
                         typer.echo("❌ Failed to create django_test project", err=True)
                         raise typer.Exit(1)
             # Add the project root to PYTHONPATH so Django can import the settings module

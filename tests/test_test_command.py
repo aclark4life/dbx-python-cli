@@ -419,6 +419,7 @@ django = "tests/runtests.py"
                         base_dir=None,
                         add_frontend=False,
                         auto_install=False,
+                        python_path_override="python",
                     )
                     assert "django_test project not found" in result.stdout
 

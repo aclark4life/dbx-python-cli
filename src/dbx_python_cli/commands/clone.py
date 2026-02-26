@@ -139,6 +139,50 @@ def ensure_group_venv(group_dir: Path, group_name: str, verbose: bool = False) -
     return True
 
 
+def _switch_to_branch(repo_path: Path, branch_name: str, verbose: bool = False) -> bool:
+    """
+    Switch to a branch in a cloned repository.
+
+    Runs ``git switch <branch_name>`` in *repo_path*.  Failures are reported as
+    warnings rather than hard errors so that the rest of the clone workflow
+    (install, etc.) is not interrupted.
+
+    Args:
+        repo_path: Path to the cloned repository
+        branch_name: Branch to switch to
+        verbose: Whether to show verbose output
+
+    Returns:
+        True if the switch succeeded, False otherwise
+    """
+    if verbose:
+        typer.echo(f"  [verbose] Switching to branch '{branch_name}'")
+
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_path), "switch", branch_name],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            typer.echo(f"  🔀 Switched to branch '{branch_name}'")
+            return True
+        else:
+            typer.echo(
+                f"  ⚠️  Could not switch to branch '{branch_name}': "
+                f"{result.stderr.strip() or 'unknown error'}",
+                err=True,
+            )
+            return False
+    except Exception as exc:
+        typer.echo(
+            f"  ⚠️  Could not switch to branch '{branch_name}': {exc}",
+            err=True,
+        )
+        return False
+
+
 app = typer.Typer(
     help="Clone repositories",
     no_args_is_help=True,
@@ -478,6 +522,14 @@ def clone_callback(
                             )
                     else:
                         typer.echo(f"  ✅ {repo_name} cloned successfully")
+
+                    # Switch to default branch if configured
+                    if clone_success:
+                        default_branch = repo.get_default_branch(
+                            config, group_name, repo_name
+                        )
+                        if default_branch:
+                            _switch_to_branch(repo_path, default_branch, verbose)
 
                     # Track successful clone for auto-install
                     if clone_success:
