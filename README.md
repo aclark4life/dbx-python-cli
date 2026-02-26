@@ -6,6 +6,7 @@
 [![codecov](https://codecov.io/gh/aclark4life/dbx-python-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/aclark4life/dbx-python-cli)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Documentation Status](https://readthedocs.org/projects/dbx-python-cli/badge/?version=latest)](https://dbx-python-cli.readthedocs.io/en/latest/?badge=latest)
 
 ## About
 
