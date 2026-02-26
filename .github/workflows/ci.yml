@@ -31,7 +31,7 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m pytest --cov=dbx_python_cli --cov-report=xml --cov-report=term
+        python -m pytest --cov=dbx_python_cli --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -39,6 +39,12 @@ jobs:
       with:
         file: ./coverage.xml
         fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
   lint:
