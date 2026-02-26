@@ -213,7 +213,7 @@ repos = [
 
         result = runner.invoke(app, ["config", "show"])
         assert result.exit_code == 0
-        assert "Custom test runners:" in result.stdout
+        assert "Test runner:" in result.stdout
         assert "django: tests/runtests.py" in result.stdout
         # pymongo group should not show test runners since it doesn't have any
         assert "pymongo" in result.stdout
@@ -245,7 +245,7 @@ langchain-mongodb = [
 
         result = runner.invoke(app, ["config", "show"])
         assert result.exit_code == 0
-        assert "Install directories:" in result.stdout
+        assert "Install dirs:" in result.stdout
         assert "langchain-mongodb:" in result.stdout
         assert "libs/langchain-mongodb/" in result.stdout
         assert "libs/langgraph-checkpoint-mongodb/" in result.stdout
@@ -278,7 +278,7 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
 
             result = runner.invoke(app, ["config", "show"])
             assert result.exit_code == 0
-            assert "Test environment variables:" in result.stdout
+            assert "Test env:" in result.stdout
             assert "mongo-python-driver:" in result.stdout
             assert (
                 "DRIVERS_TOOLS={base_dir}/{group}/drivers-evergreen-tools"
