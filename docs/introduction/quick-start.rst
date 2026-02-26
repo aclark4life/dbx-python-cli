@@ -51,12 +51,6 @@ Clone a group of related repositories:
 
 This will clone all repositories in the django group to ``~/Developer/mongodb/django/``.
 
-To see available groups and repositories:
-
-.. code-block:: bash
-
-   dbx list
-
 Step 4: Install Dependencies
 -----------------------------
 
