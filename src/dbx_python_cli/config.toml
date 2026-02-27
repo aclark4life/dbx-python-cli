@@ -95,6 +95,8 @@ django = "mongodb-6.0.x"
 
 [repo.groups.django-3p]
 repos = [
+    "git@github.com:django/django.git",
+    "git@github.com:mongodb-labs/django-mongodb-backend.git",
     "git@github.com:pennersr/django-allauth.git",
     "git@github.com:encode/django-rest-framework.git",
     "git@github.com:jazzband/django-taggit.git",
