@@ -499,6 +499,10 @@ def clone_callback(
                         preferred_branch = repo.get_preferred_branch(
                             config, group_name, repo_name
                         )
+                        if verbose:
+                            typer.echo(
+                                f"  [verbose] Preferred branch for {repo_name}: {preferred_branch}"
+                            )
                         if preferred_branch:
                             _switch_to_branch(repo_path, preferred_branch, verbose)
 
@@ -529,6 +533,18 @@ def clone_callback(
                             typer.echo(
                                 f"  ✅ {repo_name} cloned from upstream (fork not found)"
                             )
+
+                            # Switch to preferred branch if configured
+                            preferred_branch = repo.get_preferred_branch(
+                                config, group_name, repo_name
+                            )
+                            if verbose:
+                                typer.echo(
+                                    f"  [verbose] Preferred branch for {repo_name}: {preferred_branch}"
+                                )
+                            if preferred_branch:
+                                _switch_to_branch(repo_path, preferred_branch, verbose)
+
                             # Track successful clone from upstream fallback
                             cloned_repos.append(
                                 {

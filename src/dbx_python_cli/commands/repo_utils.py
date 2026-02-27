@@ -210,7 +210,10 @@ def get_preferred_branch(config, group_name, repo_name):
     if group_name not in groups:
         return None
 
+    # Try preferred_branch first (new name), fall back to default_branch (old name) for backwards compatibility
     preferred_branch_config = groups[group_name].get("preferred_branch", {})
+    if not preferred_branch_config:
+        preferred_branch_config = groups[group_name].get("default_branch", {})
     return preferred_branch_config.get(repo_name)
 
 
