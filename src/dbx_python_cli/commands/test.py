@@ -59,6 +59,12 @@ def test_callback(
         "-l",
         help="Show repository status (cloned vs available)",
     ),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Skip confirmation prompts",
+    ),
 ):
     """Run tests in a cloned repository.
 
@@ -175,7 +181,8 @@ def test_callback(
 
         # For the django repo with a custom test runner: inject default settings
         if test_runner and repo_name == "django":
-            # Warn when no test module is specified (would run the entire suite)
+            # Warn when no test module is specified (would run the entire suite).
+            # Also applies when only -k is used, since -k is not supported by the custom runner.
             if not test_args:
                 typer.echo(
                     "⚠️  No test module specified — this will run the entire Django test suite.",
@@ -185,10 +192,11 @@ def test_callback(
                     "    Tip: specify a module to narrow the run, e.g. dbx test django encryption_",
                     err=True,
                 )
-                confirm = typer.confirm("Continue?", default=False)
-                if not confirm:
-                    typer.echo("Aborted.")
-                    raise typer.Exit(0)
+                if not yes:
+                    confirm = typer.confirm("Continue?", default=False)
+                    if not confirm:
+                        typer.echo("Aborted.")
+                        raise typer.Exit(0)
 
             has_settings = "--settings" in test_args or any(
                 a.startswith("--settings=") for a in test_args
