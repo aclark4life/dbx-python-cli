@@ -8,7 +8,7 @@ from dbx_python_cli.commands.repo_utils import (
     _expand_env_var_value,
     find_all_repos,
     find_repo_by_name,
-    get_default_branch,
+    get_preferred_branch,
     get_global_groups,
     get_test_env_vars,
     list_repos,
@@ -371,27 +371,27 @@ def test_get_test_env_vars_no_global_groups(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# get_default_branch tests
+# get_preferred_branch tests
 # ---------------------------------------------------------------------------
 
 
-def test_get_default_branch_returns_configured_branch():
-    """get_default_branch returns the branch name when configured."""
+def test_get_preferred_branch_returns_configured_branch():
+    """get_preferred_branch returns the branch name when configured."""
     config = {
         "repo": {
             "groups": {
                 "django": {
                     "repos": ["git@github.com:mongodb-forks/django.git"],
-                    "default_branch": {"django": "mongodb-6.0.x"},
+                    "preferred_branch": {"django": "mongodb-6.0.x"},
                 },
             },
         }
     }
-    assert get_default_branch(config, "django", "django") == "mongodb-6.0.x"
+    assert get_preferred_branch(config, "django", "django") == "mongodb-6.0.x"
 
 
-def test_get_default_branch_returns_none_when_not_configured():
-    """get_default_branch returns None when no default_branch entry exists."""
+def test_get_preferred_branch_returns_none_when_not_configured():
+    """get_preferred_branch returns None when no preferred_branch entry exists."""
     config = {
         "repo": {
             "groups": {
@@ -401,25 +401,25 @@ def test_get_default_branch_returns_none_when_not_configured():
             },
         }
     }
-    assert get_default_branch(config, "django", "django") is None
+    assert get_preferred_branch(config, "django", "django") is None
 
 
-def test_get_default_branch_returns_none_for_unconfigured_repo():
-    """get_default_branch returns None when the repo is not in default_branch."""
+def test_get_preferred_branch_returns_none_for_unconfigured_repo():
+    """get_preferred_branch returns None when the repo is not in preferred_branch."""
     config = {
         "repo": {
             "groups": {
                 "django": {
                     "repos": ["git@github.com:mongodb-forks/django.git"],
-                    "default_branch": {"django": "mongodb-6.0.x"},
+                    "preferred_branch": {"django": "mongodb-6.0.x"},
                 },
             },
         }
     }
-    assert get_default_branch(config, "django", "django-mongodb-backend") is None
+    assert get_preferred_branch(config, "django", "django-mongodb-backend") is None
 
 
-def test_get_default_branch_returns_none_for_unknown_group():
-    """get_default_branch returns None when the group is not in config."""
+def test_get_preferred_branch_returns_none_for_unknown_group():
+    """get_preferred_branch returns None when the group is not in config."""
     config = {"repo": {"groups": {}}}
-    assert get_default_branch(config, "nonexistent", "django") is None
+    assert get_preferred_branch(config, "nonexistent", "django") is None

@@ -12,11 +12,9 @@ from dbx_python_cli.commands.repo_utils import (
     find_repo_by_name,
     get_base_dir,
     get_config,
-    get_default_branch,
     get_test_env_vars,
     get_test_runner,
     get_test_runner_args,
-    switch_to_branch,
 )
 from dbx_python_cli.commands.venv_utils import get_venv_info
 from dbx_python_cli.commands.project import add_project
@@ -147,11 +145,6 @@ def test_callback(
             raise typer.Exit(1)
 
         repo_path = repo["path"]
-
-        # Switch to the configured default branch before running tests
-        default_branch = get_default_branch(config, repo["group"], repo_name)
-        if default_branch:
-            switch_to_branch(repo_path, default_branch, verbose)
 
         # Determine which group's venv to use
         if group:

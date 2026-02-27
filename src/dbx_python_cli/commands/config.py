@@ -283,11 +283,11 @@ def show():
                         for dir_path in dirs:
                             buf.append(f"        {dim('·')} {dir_path}")
 
-                # Default branch
-                default_branch = group_config.get("default_branch", {})
-                if default_branch:
-                    buf.append(f"\n    {sub('Default branch:')}")
-                    for rname, branch in default_branch.items():
+                # Preferred branch
+                preferred_branch = group_config.get("preferred_branch", {})
+                if preferred_branch:
+                    buf.append(f"\n    {sub('Preferred branch:')}")
+                    for rname, branch in preferred_branch.items():
                         buf.append(f"      {dim(rname + ':')} {branch}")
 
                 # Custom test runners

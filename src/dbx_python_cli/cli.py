@@ -1,5 +1,8 @@
 """Main CLI entry point for dbx."""
 
+import subprocess
+from pathlib import Path
+
 import typer
 
 from dbx_python_cli.commands import (
@@ -22,8 +25,31 @@ from dbx_python_cli.commands import (
     test,
 )
 
+
+def get_git_hash():
+    """Get the current git commit hash."""
+    try:
+        # Get the directory where this file is located
+        cli_dir = Path(__file__).parent
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=cli_dir,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return "dev"
+
+def get_help_text():
+    """Get help text with git hash."""
+    git_hash = get_git_hash()
+    return f"A command line tool for DBX Python development tasks. AI first. De-siloing happens here. (build: {git_hash})"
+
+
 app = typer.Typer(
-    help="A command line tool for DBX Python development tasks. AI first. De-siloing happens here.",
+    help=get_help_text(),
     context_settings={"help_option_names": ["-h", "--help"]},
     no_args_is_help=True,
 )
@@ -51,7 +77,8 @@ app.add_typer(test.app, name="test")
 def version_callback(value: bool):
     """Show version and exit."""
     if value:
-        typer.echo("dbx, version 0.1.0")
+        git_hash = get_git_hash()
+        typer.echo(f"dbx, version 0.1.0 ({git_hash})")
         raise typer.Exit()
 
 

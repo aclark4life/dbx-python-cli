@@ -190,9 +190,9 @@ def get_test_runner_args(config, group_name, repo_name):
     return test_runner_args_config.get(repo_name, [])
 
 
-def get_default_branch(config, group_name, repo_name):
+def get_preferred_branch(config, group_name, repo_name):
     """
-    Get the default branch to switch to after cloning a repository.
+    Get the preferred branch to switch to after cloning a repository.
 
     When configured, ``dbx clone`` will run ``git switch <branch>`` immediately
     after a successful clone, so the working tree starts on the right branch
@@ -204,14 +204,14 @@ def get_default_branch(config, group_name, repo_name):
         repo_name: Name of the repository (e.g., 'django')
 
     Returns:
-        str: Branch name to switch to, or None if no default branch is configured
+        str: Branch name to switch to, or None if no preferred branch is configured
     """
     groups = get_repo_groups(config)
     if group_name not in groups:
         return None
 
-    default_branch_config = groups[group_name].get("default_branch", {})
-    return default_branch_config.get(repo_name)
+    preferred_branch_config = groups[group_name].get("preferred_branch", {})
+    return preferred_branch_config.get(repo_name)
 
 
 def switch_to_branch(repo_path: Path, branch_name: str, verbose: bool = False) -> bool:

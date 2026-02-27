@@ -363,11 +363,11 @@ def clone_callback(
 
                 if repo_path.exists():
                     typer.echo(f"  ⏭️  {repo_name} already exists, skipping")
-                    default_branch = repo.get_default_branch(
+                    preferred_branch = repo.get_preferred_branch(
                         config, group_name, repo_name
                     )
-                    if default_branch:
-                        _switch_to_branch(repo_path, default_branch, verbose)
+                    if preferred_branch:
+                        _switch_to_branch(repo_path, preferred_branch, verbose)
                     continue
 
                 # Determine clone URL and upstream URL
@@ -494,13 +494,13 @@ def clone_callback(
                     else:
                         typer.echo(f"  ✅ {repo_name} cloned successfully")
 
-                    # Switch to default branch if configured
+                    # Switch to preferred branch if configured
                     if clone_success:
-                        default_branch = repo.get_default_branch(
+                        preferred_branch = repo.get_preferred_branch(
                             config, group_name, repo_name
                         )
-                        if default_branch:
-                            _switch_to_branch(repo_path, default_branch, verbose)
+                        if preferred_branch:
+                            _switch_to_branch(repo_path, preferred_branch, verbose)
 
                     # Track successful clone for auto-install
                     if clone_success:

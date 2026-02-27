@@ -136,19 +136,19 @@ def test_clone_group_no_global_groups_configured(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# default_branch / post-clone switch tests
+# preferred_branch / post-clone switch tests
 # ---------------------------------------------------------------------------
 
 
-def test_clone_switches_to_default_branch(tmp_path):
-    """After a successful clone, git switch is run when default_branch is configured."""
+def test_clone_switches_to_preferred_branch(tmp_path):
+    """After a successful clone, git switch is run when preferred_branch is configured."""
     config = {
         "repo": {
             "base_dir": str(tmp_path),
             "groups": {
                 "django": {
                     "repos": ["git@github.com:mongodb-forks/django.git"],
-                    "default_branch": {"django": "mongodb-6.0.x"},
+                    "preferred_branch": {"django": "mongodb-6.0.x"},
                 }
             },
         }
@@ -170,8 +170,8 @@ def test_clone_switches_to_default_branch(tmp_path):
             assert "🔀" in result.stdout or "mongodb-6.0.x" in result.stdout
 
 
-def test_clone_no_switch_when_default_branch_not_configured(tmp_path):
-    """git switch is NOT run when no default_branch is configured for the repo."""
+def test_clone_no_switch_when_preferred_branch_not_configured(tmp_path):
+    """git switch is NOT run when no preferred_branch is configured for the repo."""
     config = {
         "repo": {
             "base_dir": str(tmp_path),
@@ -204,7 +204,7 @@ def test_clone_branch_switch_failure_is_non_fatal(tmp_path):
             "groups": {
                 "django": {
                     "repos": ["git@github.com:mongodb-forks/django.git"],
-                    "default_branch": {"django": "mongodb-6.0.x"},
+                    "preferred_branch": {"django": "mongodb-6.0.x"},
                 }
             },
         }
@@ -229,7 +229,7 @@ def test_clone_branch_switch_failure_is_non_fatal(tmp_path):
             assert "Could not switch" in output or "⚠️" in output
 
 
-def test_clone_switches_to_default_branch_when_already_cloned(tmp_path):
+def test_clone_switches_to_preferred_branch_when_already_cloned(tmp_path):
     """git switch is run even when the repo already exists (skipped clone path)."""
     config = {
         "repo": {
@@ -237,7 +237,7 @@ def test_clone_switches_to_default_branch_when_already_cloned(tmp_path):
             "groups": {
                 "django": {
                     "repos": ["git@github.com:mongodb-forks/django.git"],
-                    "default_branch": {"django": "mongodb-6.0.x"},
+                    "preferred_branch": {"django": "mongodb-6.0.x"},
                 }
             },
         }

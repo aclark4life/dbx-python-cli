@@ -89,8 +89,8 @@ django = "tests/runtests.py"
 [repo.groups.django.test_runner_args]
 django = ["-v", "2"]
 
-# Default branch to switch to after cloning (runs `git switch <branch>` automatically)
-[repo.groups.django.default_branch]
+# Preferred branch to switch to after cloning (runs `git switch <branch>` automatically)
+[repo.groups.django.preferred_branch]
 django = "mongodb-6.0.x"
 
 [repo.groups.django-3p]
