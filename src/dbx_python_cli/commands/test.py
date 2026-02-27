@@ -181,30 +181,26 @@ def test_callback(
 
         # For the django repo with a custom test runner: inject default settings
         if test_runner and repo_name == "django":
-            # Django's runtests.py doesn't support -k; convert -k <module> to a positional arg.
-            # This also covers the case where allow_interspersed_args=False causes
-            # `-k encryption_` to land in test_args rather than the keyword option.
-            converted = []
-            i = 0
-            while i < len(test_args):
-                if test_args[i] in ("-k", "--keyword") and i + 1 < len(test_args):
-                    converted.append(test_args[i + 1])
-                    i += 2
-                elif test_args[i].startswith(("-k=", "--keyword=")):
-                    converted.append(test_args[i].split("=", 1)[1])
-                    i += 1
-                else:
-                    converted.append(test_args[i])
-                    i += 1
-            test_args = converted
-
             # Also handle keyword if set via the typer option (e.g. -k before repo name)
             if keyword:
-                test_args = list(test_args) + [keyword]
+                test_args = list(test_args) + ["-k", keyword]
 
-            # Warn when no test module (non-flag positional arg) is specified
-            has_test_module = any(not arg.startswith("-") for arg in test_args)
-            if not has_test_module:
+            # Warn when no test module (non-flag positional arg) is specified.
+            # -k is a keyword filter, not a module — skip its value when scanning.
+            def _has_test_module(args):
+                i = 0
+                while i < len(args):
+                    if args[i] in ("-k", "--keyword") and i + 1 < len(args):
+                        i += 2  # skip flag and its value
+                    elif args[i].startswith(("-k=", "--keyword=")):
+                        i += 1
+                    elif not args[i].startswith("-"):
+                        return True
+                    else:
+                        i += 1
+                return False
+
+            if not _has_test_module(test_args):
                 typer.echo(
                     "⚠️  No test module specified — this will run the entire Django test suite.",
                     err=True,
