@@ -1111,6 +1111,10 @@ def create_superuser(
         email = os.getenv("PROJECT_EMAIL", "admin@example.com")
 
     # Determine project directory
+    # Initialise here so they are in scope for the venv detection below
+    base_dir = None
+    projects_dir = None
+
     if directory is None:
         config = get_config()
         base_dir = get_base_dir(config)
@@ -1133,6 +1137,43 @@ def create_superuser(
     if not project_path.exists():
         typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
         raise typer.Exit(code=1)
+
+    # Detect the project venv so we use the right Python for django-admin.
+    # For Django projects, we need to check the django group venv as well.
+    # Priority order:
+    #   1. project-level venv  (project_path/.venv)
+    #   2. group-level venv    (projects_dir/.venv  OR  directory/.venv)
+    #   3. django group venv   (base_dir/django/.venv) - for Django projects
+    #   4. base-level venv     (base_dir/.venv, only when using config path)
+    #   5. activated / PATH venv
+    python_path = None
+    venv_type = None
+
+    try:
+        if directory is None:
+            # First try the standard venv detection (project, projects group, base)
+            python_path, venv_type = get_venv_info(
+                project_path, projects_dir, base_path=base_dir
+            )
+
+            # If we fell back to an activated venv, check if django group venv exists
+            # and prefer that for Django projects
+            if venv_type == "venv":
+                django_group_path = base_dir / "django"
+                if django_group_path.exists():
+                    django_venv_python = django_group_path / ".venv" / "bin" / "python"
+                    if django_venv_python.exists():
+                        python_path = str(django_venv_python)
+                        venv_type = "group"
+                        typer.echo(
+                            f"✅ Using Django group venv: {django_group_path}/.venv"
+                        )
+        else:
+            python_path, venv_type = get_venv_info(
+                project_path, project_path.parent, base_path=None
+            )
+    except typer.Exit:
+        raise
 
     # Set up environment
     env = os.environ.copy()
@@ -1178,6 +1219,10 @@ def create_superuser(
     env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
     env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
     typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
+
+    # Prepend venv bin dir to PATH so the correct django-admin / Django runtime is used
+    venv_bin = str(Path(python_path).parent)
+    env["PATH"] = f"{venv_bin}{os.pathsep}{env.get('PATH', '')}"
 
     try:
         subprocess.run(
@@ -1245,6 +1290,10 @@ def migrate_project(
     import os
 
     # Determine project directory
+    # Initialise here so they are in scope for the venv detection below
+    base_dir = None
+    projects_dir = None
+
     if directory is None:
         config = get_config()
         base_dir = get_base_dir(config)
@@ -1265,6 +1314,43 @@ def migrate_project(
     if not project_path.exists():
         typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
         raise typer.Exit(code=1)
+
+    # Detect the project venv so we use the right Python for django-admin.
+    # For Django projects, we need to check the django group venv as well.
+    # Priority order:
+    #   1. project-level venv  (project_path/.venv)
+    #   2. group-level venv    (projects_dir/.venv  OR  directory/.venv)
+    #   3. django group venv   (base_dir/django/.venv) - for Django projects
+    #   4. base-level venv     (base_dir/.venv, only when using config path)
+    #   5. activated / PATH venv
+    python_path = None
+    venv_type = None
+
+    try:
+        if directory is None:
+            # First try the standard venv detection (project, projects group, base)
+            python_path, venv_type = get_venv_info(
+                project_path, projects_dir, base_path=base_dir
+            )
+
+            # If we fell back to an activated venv, check if django group venv exists
+            # and prefer that for Django projects
+            if venv_type == "venv":
+                django_group_path = base_dir / "django"
+                if django_group_path.exists():
+                    django_venv_python = django_group_path / ".venv" / "bin" / "python"
+                    if django_venv_python.exists():
+                        python_path = str(django_venv_python)
+                        venv_type = "group"
+                        typer.echo(
+                            f"✅ Using Django group venv: {django_group_path}/.venv"
+                        )
+        else:
+            python_path, venv_type = get_venv_info(
+                project_path, project_path.parent, base_path=None
+            )
+    except typer.Exit:
+        raise
 
     # Set up environment
     env = os.environ.copy()
@@ -1308,6 +1394,10 @@ def migrate_project(
     env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
     env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
     typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
+
+    # Prepend venv bin dir to PATH so the correct django-admin / Django runtime is used
+    venv_bin = str(Path(python_path).parent)
+    env["PATH"] = f"{venv_bin}{os.pathsep}{env.get('PATH', '')}"
 
     # Build migrate command
     cmd = ["django-admin", "migrate"]
