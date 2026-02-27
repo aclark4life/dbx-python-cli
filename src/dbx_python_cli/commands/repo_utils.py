@@ -130,6 +130,26 @@ def get_test_runner(config, group_name, repo_name):
     return test_runner_config.get(repo_name)
 
 
+def get_test_runner_args(config, group_name, repo_name):
+    """
+    Get default arguments for a custom test runner.
+
+    Args:
+        config: Configuration dictionary
+        group_name: Name of the group (e.g., 'django')
+        repo_name: Name of the repository (e.g., 'django')
+
+    Returns:
+        list: List of default args to pass to the test runner, or empty list
+    """
+    groups = get_repo_groups(config)
+    if group_name not in groups:
+        return []
+
+    test_runner_args_config = groups[group_name].get("test_runner_args", {})
+    return test_runner_args_config.get(repo_name, [])
+
+
 def get_default_branch(config, group_name, repo_name):
     """
     Get the default branch to switch to after cloning a repository.

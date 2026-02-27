@@ -15,6 +15,7 @@ from dbx_python_cli.commands.repo_utils import (
     get_default_branch,
     get_test_env_vars,
     get_test_runner,
+    get_test_runner_args,
     switch_to_branch,
 )
 from dbx_python_cli.commands.venv_utils import get_venv_info
@@ -170,6 +171,7 @@ def test_callback(
 
         # Get test runner configuration
         test_runner = get_test_runner(config, repo["group"], repo_name)
+        runner_default_args = get_test_runner_args(config, repo["group"], repo_name)
 
         # For the django repo with a custom test runner: inject default settings
         if test_runner and repo_name == "django":
@@ -191,11 +193,12 @@ def test_callback(
 
             test_cmd = [python_path, str(test_script)]
 
-            # Add test_args if provided
-            if test_args:
-                test_cmd.extend(test_args)
+            # Add default args from config, then user-supplied args
+            all_runner_args = list(runner_default_args) + list(test_args)
+            if all_runner_args:
+                test_cmd.extend(all_runner_args)
                 typer.echo(
-                    f"Running {test_runner} {' '.join(test_args)} in {repo_path}..."
+                    f"Running {test_runner} {' '.join(all_runner_args)} in {repo_path}..."
                 )
             else:
                 typer.echo(f"Running {test_runner} in {repo_path}...")
