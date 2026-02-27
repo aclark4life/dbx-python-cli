@@ -348,7 +348,7 @@ def test_callback(
                         directory=None,
                         base_dir=None,
                         add_frontend=True,
-                        auto_install=False,
+                        auto_install=True,
                         python_path_override=python_path,
                     )
                 except typer.Exit as e:
