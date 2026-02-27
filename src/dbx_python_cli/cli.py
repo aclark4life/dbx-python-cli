@@ -42,6 +42,7 @@ def get_git_hash():
     except (subprocess.CalledProcessError, FileNotFoundError):
         return "dev"
 
+
 def get_help_text():
     """Get help text with git hash."""
     git_hash = get_git_hash()
