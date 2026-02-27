@@ -83,6 +83,12 @@ INSTALLED_APPS += [  # noqa: F405
 #         #     },
 #         # },
 #     },
+#     # Uncomment to add a second database connection for the Django test suite:
+#     # "other": {
+#     #     "ENGINE": "django_mongodb_backend",
+#     #     "HOST": os.getenv("MONGODB_URI", "mongodb://localhost:27017"),
+#     #     "NAME": "{{ project_name }}_other",
+#     # },
 # }
 #
 # # Database router for encrypted models
