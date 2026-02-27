@@ -196,7 +196,7 @@ django = "tests/runtests.py"
                 mock_result.returncode = 0
                 mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["test", "django"])
+                result = runner.invoke(app, ["test", "-y", "django"])
                 assert result.exit_code == 0
                 assert "Running tests/runtests.py" in result.stdout
                 assert "Tests passed" in result.stdout
@@ -250,7 +250,7 @@ django = "tests/runtests.py"
             mock_get_path.return_value = config_path
             mock_venv.return_value = ("python", "venv")
 
-            result = runner.invoke(app, ["test", "django"])
+            result = runner.invoke(app, ["test", "-y", "django"])
             assert result.exit_code == 1
             output = result.stdout + result.stderr
             assert "Test runner not found" in output
@@ -335,7 +335,7 @@ django = "tests/runtests.py"
                 mock_run.return_value = mock_result
 
                 result = runner.invoke(
-                    app, ["test", "django", "--verbose", "--parallel"]
+                    app, ["test", "-y", "django", "--verbose", "--parallel"]
                 )
                 assert result.exit_code == 0
                 # --settings is prepended before user args
@@ -409,7 +409,7 @@ django = "tests/runtests.py"
                     mock_run.return_value = mock_result
                     mock_add_project.return_value = None  # success, no exception
 
-                    result = runner.invoke(app, ["test", "django"])
+                    result = runner.invoke(app, ["test", "-y", "django"])
                     assert result.exit_code == 0
 
                     # Verify add_project was called to create the missing project
