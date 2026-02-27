@@ -3,7 +3,7 @@ Design Decisions
 
 .. toctree::
 
+   git-operations
    command-structure
    standalone-installation
-   git-operations
    venv-strategy
