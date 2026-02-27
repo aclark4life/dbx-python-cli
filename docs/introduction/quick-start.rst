@@ -164,9 +164,6 @@ Keep your repositories up to date:
    # Sync all repositories in a group
    dbx sync -g django
 
-Fetch Remote Updates
-~~~~~~~~~~~~~~~~~~~~
-
 View Git Branches
 ~~~~~~~~~~~~~~~~~
 
