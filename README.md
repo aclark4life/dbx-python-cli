@@ -42,8 +42,11 @@ This will install `dbx-python-cli` globally and make the `dbx` command available
 # Initialize configuration
 dbx config init
 
+# Create virtual environment
+dbx env init -g django
+
 # Clone repositories by group
-dbx clone -g pymongo
+dbx clone -g django
 
 # List available repositories
 dbx list

@@ -39,17 +39,17 @@ Install dbx-python-cli and get started in minutes:
    # Initialize configuration
    dbx config init
 
-   # Clone repositories by group
-   dbx clone -g pymongo
-
    # Create virtual environment
-   dbx env init -g pymongo
+   dbx env init -g django
+
+   # Clone repositories by group
+   dbx clone -g django
 
    # Install dependencies
-   dbx install mongo-python-driver -e test
+   dbx install django-mongodb-backend -e test
 
    # Run tests
-   dbx test mongo-python-driver
+   dbx test django-mongodb-backend
 
 See :doc:`introduction/quick-start` for a detailed walkthrough.
 
