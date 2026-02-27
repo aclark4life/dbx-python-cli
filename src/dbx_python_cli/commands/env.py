@@ -55,7 +55,7 @@ def init(
 
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}")
-            typer.echo(f"[verbose] Available groups: {list(groups.keys())}\n")
+            typer.echo(f"[verbose] Available groups: {sorted(groups)}\n")
 
         # Handle --list flag
         if list_groups:
@@ -323,7 +323,7 @@ def remove(
 
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}")
-            typer.echo(f"[verbose] Available groups: {list(groups.keys())}\n")
+            typer.echo(f"[verbose] Available groups: {sorted(groups)}\n")
 
         # Handle --list flag
         if list_groups:
