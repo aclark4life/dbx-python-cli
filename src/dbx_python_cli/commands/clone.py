@@ -26,7 +26,11 @@ def auto_install_repo(
         base_dir: Path to the base directory
         verbose: Whether to show verbose output
     """
-    from dbx_python_cli.commands.install import install_package, run_build_commands
+    from dbx_python_cli.commands.install import (
+        _effective_install_args,
+        install_package,
+        run_build_commands,
+    )
     from dbx_python_cli.commands.repo_utils import get_build_commands, get_install_dirs
     from dbx_python_cli.commands.venv_utils import get_venv_info
 
@@ -55,6 +59,11 @@ def auto_install_repo(
         # Check if this repo has install_dirs (multiple packages in subdirectories)
         install_dirs = get_install_dirs(config, group_name, repo_name)
 
+        # Apply config default extras/groups
+        eff_extras, eff_groups = _effective_install_args(
+            config, group_name, repo_name, None, None
+        )
+
         if install_dirs:
             # Install from subdirectories
             if verbose:
@@ -67,8 +76,8 @@ def auto_install_repo(
                     repo_path,
                     python_path,
                     install_dir=install_dir,
-                    extras=None,
-                    groups=None,
+                    extras=eff_extras,
+                    groups=eff_groups,
                     verbose=verbose,
                 )
                 if result != "success":
@@ -79,8 +88,8 @@ def auto_install_repo(
                 repo_path,
                 python_path,
                 install_dir=None,
-                extras=None,
-                groups=None,
+                extras=eff_extras,
+                groups=eff_groups,
                 verbose=verbose,
             )
             if result != "success":
