@@ -181,9 +181,30 @@ def test_callback(
 
         # For the django repo with a custom test runner: inject default settings
         if test_runner and repo_name == "django":
-            # Warn when no test module is specified (would run the entire suite).
-            # Also applies when only -k is used, since -k is not supported by the custom runner.
-            if not test_args:
+            # Django's runtests.py doesn't support -k; convert -k <module> to a positional arg.
+            # This also covers the case where allow_interspersed_args=False causes
+            # `-k encryption_` to land in test_args rather than the keyword option.
+            converted = []
+            i = 0
+            while i < len(test_args):
+                if test_args[i] in ("-k", "--keyword") and i + 1 < len(test_args):
+                    converted.append(test_args[i + 1])
+                    i += 2
+                elif test_args[i].startswith(("-k=", "--keyword=")):
+                    converted.append(test_args[i].split("=", 1)[1])
+                    i += 1
+                else:
+                    converted.append(test_args[i])
+                    i += 1
+            test_args = converted
+
+            # Also handle keyword if set via the typer option (e.g. -k before repo name)
+            if keyword:
+                test_args = list(test_args) + [keyword]
+
+            # Warn when no test module (non-flag positional arg) is specified
+            has_test_module = any(not arg.startswith("-") for arg in test_args)
+            if not has_test_module:
                 typer.echo(
                     "⚠️  No test module specified — this will run the entire Django test suite.",
                     err=True,
