@@ -167,19 +167,6 @@ Keep your repositories up to date:
 Fetch Remote Updates
 ~~~~~~~~~~~~~~~~~~~~
 
-Fetch updates from remote repositories to see new branches:
-
-.. code-block:: bash
-
-   # Fetch updates for a single repository
-   dbx fetch django-mongodb-backend
-
-   # Fetch updates for all repositories in a group
-   dbx fetch -g django
-
-   # Fetch with prune to remove stale remote branches
-   dbx fetch --prune django-mongodb-backend
-
 View Git Branches
 ~~~~~~~~~~~~~~~~~
 
@@ -197,10 +184,6 @@ View branches across repositories:
    dbx branch -g django
 
    # View all branches in all repositories in a group
-   dbx branch -g django -a
-
-   # Common workflow: fetch first, then view all branches
-   dbx fetch -g django
    dbx branch -g django -a
 
 Working with Multiple Groups

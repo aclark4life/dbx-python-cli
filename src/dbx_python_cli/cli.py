@@ -9,7 +9,6 @@ from dbx_python_cli.commands import (
     docs,
     edit,
     env,
-    fetch,
     install,
     just,
     list,
@@ -19,7 +18,6 @@ from dbx_python_cli.commands import (
     pull,
     remote,
     remove,
-    reset,
     status,
     switch,
     sync,
@@ -39,7 +37,6 @@ app.add_typer(config.app, name="config")
 app.add_typer(docs.app, name="docs")
 app.add_typer(edit.app, name="edit")
 app.add_typer(env.app, name="env")
-app.add_typer(fetch.app, name="fetch")
 app.add_typer(install.app, name="install")
 app.add_typer(just.app, name="just")
 app.add_typer(list.app, name="list")
@@ -49,7 +46,6 @@ app.add_typer(project.app, name="project")
 app.add_typer(pull.app, name="pull")
 app.add_typer(remote.app, name="remote")
 app.add_typer(remove.app, name="remove")
-app.add_typer(reset.app, name="reset")
 app.add_typer(status.app, name="status")
 app.add_typer(switch.app, name="switch")
 app.add_typer(sync.app, name="sync")

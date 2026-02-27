@@ -1,7 +1,7 @@
 Repository Management
 =====================
 
-The ``dbx clone``, ``dbx fetch``, ``dbx sync``, ``dbx branch``, ``dbx switch``, ``dbx log``, ``dbx remote``, and ``dbx open`` commands provide repository management functionality for cloning and managing groups of related repositories.
+The ``dbx clone``, ``dbx sync``, ``dbx branch``, ``dbx switch``, ``dbx log``, ``dbx remote``, and ``dbx open`` commands provide repository management functionality for cloning and managing groups of related repositories.
 
 Initialize Configuration
 ------------------------
@@ -250,81 +250,6 @@ You can add your own custom groups by editing the configuration file.
 - Provides clear progress feedback with emoji indicators
 - Handles errors gracefully and continues with remaining repositories
 - Easy to add custom repository groups
-
-Fetch Remote Updates
---------------------
-
-The ``dbx fetch`` command fetches updates from remote repositories without merging them. This is useful for updating your local knowledge of remote branches before viewing them with ``dbx branch -a``.
-
-.. code-block:: bash
-
-   # Fetch updates for a single repository
-   dbx fetch mongo-python-driver
-
-   # Fetch updates for all repositories in a group
-   dbx fetch -g pymongo
-
-   # Fetch with prune to remove stale remote-tracking references
-   dbx fetch --prune mongo-python-driver
-
-   # List available repositories
-   dbx fetch --list
-
-This command will:
-
-1. Find the repository or group by name
-2. Run ``git fetch --all`` to fetch from all remotes
-3. Optionally prune stale remote-tracking references with ``--prune``
-4. Display progress and results for each repository
-
-**Examples:**
-
-.. code-block:: bash
-
-   # Fetch updates for a single repository
-   $ dbx fetch django-mongodb-backend
-   📥 django-mongodb-backend: Fetching updates...
-   ✅ django-mongodb-backend: Fetched successfully
-
-   # Fetch updates for all repos in a group
-   $ dbx fetch -g django
-   Fetching updates for 6 repository(ies) in group 'django':
-
-   📥 mongo-python-driver: Fetching updates...
-   ✅ mongo-python-driver: Fetched successfully
-   📥 django-mongodb-extensions: Fetching updates...
-   ✅ django-mongodb-extensions: Fetched successfully
-   📥 django-mongodb-backend: Fetching updates...
-   ✅ django-mongodb-backend: Fetched successfully
-   📥 django: Fetching updates...
-   ✅ django: Already up to date
-
-   ✨ Done! Fetched 6 repository(ies)
-
-   # Fetch with prune to remove deleted remote branches
-   $ dbx fetch --prune mongo-python-driver
-   📥 mongo-python-driver: Fetching updates...
-   ✅ mongo-python-driver: Fetched successfully
-
-**Common Workflow:**
-
-When you want to see all branches including new remote branches that were recently pushed to GitHub:
-
-.. code-block:: bash
-
-   # First, fetch the latest remote information
-   dbx fetch -g django
-
-   # Then view all branches (local and remote)
-   dbx branch -g django -a
-
-**Notes:**
-
-- The command works with any repository that has been cloned using ``dbx clone``
-- Fetching updates your local knowledge of remote branches without changing your working directory
-- Use ``--prune`` to remove remote-tracking references for branches that have been deleted on the remote
-- This is safer than ``dbx sync`` which also rebases your current branch
-- Use the ``--list`` flag to see all available repositories
 
 View Git Branches
 -----------------

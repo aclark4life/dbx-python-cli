@@ -95,7 +95,6 @@ Available commands:
 - ``config`` - Manage configuration
 - ``edit`` - Open repositories in an editor
 - ``env`` - Virtual environment management
-- ``fetch`` - Fetch from remote repositories
 - ``install`` - Dependency installation
 - ``just`` - Run just commands
 - ``list`` - List available repositories
@@ -105,7 +104,6 @@ Available commands:
 - ``pull`` - Pull latest changes
 - ``remote`` - View git remotes
 - ``remove`` - Remove repositories
-- ``reset`` - Reset repositories
 - ``status`` - Show git status
 - ``switch`` - Switch git branches
 - ``sync`` - Sync fork with upstream

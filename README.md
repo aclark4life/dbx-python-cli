@@ -77,21 +77,12 @@ dbx just mongo-python-driver          # Show available just commands
 dbx just mongo-python-driver lint     # Run 'just lint'
 dbx just mongo-python-driver test -v  # Run 'just test -v'
 
-# Fetch remote updates
-dbx fetch mongo-python-driver         # Fetch updates for a single repo
-dbx fetch -g pymongo                  # Fetch updates for all repos in a group
-dbx fetch --prune mongo-python-driver # Fetch and prune stale remote branches
-
 # View git branches in repositories
 dbx branch mongo-python-driver        # Show branches in a repo
 dbx branch mongo-python-driver -a     # Show all branches (including remote)
 dbx branch -g pymongo                 # Show branches in all repos in a group
 dbx branch -g pymongo -a              # Show all branches in all repos in a group
 dbx branch -p myproject               # Show branches in a project
-
-# Common workflow: fetch first, then view all branches
-dbx fetch -g django
-dbx branch -g django -a
 
 # Use verbose mode for more detailed output
 dbx -v install mongo-python-driver -e test
