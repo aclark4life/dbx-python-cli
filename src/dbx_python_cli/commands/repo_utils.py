@@ -130,6 +130,46 @@ def get_test_runner(config, group_name, repo_name):
     return test_runner_config.get(repo_name)
 
 
+def get_install_extras(config, group_name, repo_name):
+    """
+    Get default extras to install for a repository.
+
+    Args:
+        config: Configuration dictionary
+        group_name: Name of the group (e.g., 'langchain')
+        repo_name: Name of the repository (e.g., 'langchain-mongodb')
+
+    Returns:
+        list: List of extras to install by default, or empty list
+    """
+    groups = get_repo_groups(config)
+    if group_name not in groups:
+        return []
+
+    install_extras_config = groups[group_name].get("install_extras", {})
+    return install_extras_config.get(repo_name, [])
+
+
+def get_install_groups(config, group_name, repo_name):
+    """
+    Get default dependency groups to install for a repository.
+
+    Args:
+        config: Configuration dictionary
+        group_name: Name of the group (e.g., 'langchain')
+        repo_name: Name of the repository (e.g., 'langchain-mongodb')
+
+    Returns:
+        list: List of dependency groups to install by default, or empty list
+    """
+    groups = get_repo_groups(config)
+    if group_name not in groups:
+        return []
+
+    install_groups_config = groups[group_name].get("install_groups", {})
+    return install_groups_config.get(repo_name, [])
+
+
 def get_test_runner_args(config, group_name, repo_name):
     """
     Get default arguments for a custom test runner.

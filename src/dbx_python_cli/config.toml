@@ -53,6 +53,10 @@ langchain-mongodb = [
     "libs/langgraph-store-mongodb/",
 ]
 
+# Default dependency groups to install automatically (e.g., always install dev group)
+[repo.groups.langchain.install_groups]
+langchain-mongodb = ["dev"]
+
 [repo.groups.django]
 repos = [
     "git@github.com:mongodb-forks/django.git",

@@ -14,8 +14,26 @@ from dbx_python_cli.commands.repo_utils import (
     get_build_commands,
     get_config,
     get_install_dirs,
+    get_install_extras,
+    get_install_groups,
 )
 from dbx_python_cli.commands.venv_utils import get_venv_info
+
+
+def _effective_install_args(config, group_name, repo_name, extras_str, groups_str):
+    """Merge per-repo config default extras/groups with CLI-supplied values."""
+    config_extras = get_install_extras(config, group_name, repo_name)
+    config_groups = get_install_groups(config, group_name, repo_name)
+
+    user_extras = [e for e in extras_str.split(",") if e] if extras_str else []
+    all_extras = config_extras + [e for e in user_extras if e not in config_extras]
+    effective_extras = ",".join(all_extras) if all_extras else None
+
+    user_groups = [g for g in groups_str.split(",") if g] if groups_str else []
+    all_groups = config_groups + [g for g in user_groups if g not in config_groups]
+    effective_groups = ",".join(all_groups) if all_groups else None
+
+    return effective_extras, effective_groups
 
 
 def run_build_commands(repo_path, build_commands, verbose=False):
@@ -653,6 +671,11 @@ def install_callback(
                 # Check if this repo has install_dirs (multiple packages in sub-directories)
                 install_dirs = get_install_dirs(config, grp, repo["name"])
 
+                # Merge config defaults with CLI-supplied extras/groups
+                eff_extras, eff_groups = _effective_install_args(
+                    config, grp, repo["name"], extras_str, dependency_groups_str
+                )
+
                 if install_dirs:
                     # Install from subdirectories
                     typer.echo(
@@ -667,8 +690,8 @@ def install_callback(
                             repo_path,
                             python_path,
                             install_dir=install_dir,
-                            extras=extras_str,
-                            groups=dependency_groups_str,
+                            extras=eff_extras,
+                            groups=eff_groups,
                             verbose=verbose,
                         )
 
@@ -686,8 +709,8 @@ def install_callback(
                         repo_path,
                         python_path,
                         install_dir=None,
-                        extras=extras_str,
-                        groups=dependency_groups_str,
+                        extras=eff_extras,
+                        groups=eff_groups,
                         verbose=verbose,
                     )
 
@@ -824,6 +847,11 @@ def install_callback(
     # Check if this repo has install_dirs (multiple packages in sub-directories)
     install_dirs = get_install_dirs(config, repo["group"], repo["name"])
 
+    # Merge config defaults with CLI-supplied extras/groups
+    eff_extras, eff_groups = _effective_install_args(
+        config, repo["group"], repo["name"], extras_str, dependency_groups_str
+    )
+
     if install_dirs:
         # Install from subdirectories
         typer.echo(
@@ -839,8 +867,8 @@ def install_callback(
                 repo_path,
                 python_path,
                 install_dir=install_dir,
-                extras=extras_str,
-                groups=dependency_groups_str,
+                extras=eff_extras,
+                groups=eff_groups,
                 verbose=verbose,
             )
 
@@ -874,8 +902,8 @@ def install_callback(
             repo_path,
             python_path,
             install_dir=None,
-            extras=extras_str,
-            groups=dependency_groups_str,
+            extras=eff_extras,
+            groups=eff_groups,
             verbose=verbose,
         )
 
