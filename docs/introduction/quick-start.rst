@@ -143,13 +143,13 @@ If a repository has a ``justfile``, you can run just commands:
 .. code-block:: bash
 
    # Show available just commands
-   dbx just django-mongodb-backend
+   dbx just mongo-python-driver
 
    # Run a specific just command
-   dbx just django-mongodb-backend lint
+   dbx just mongo-python-driver lint
 
    # Run just command with arguments
-   dbx just django-mongodb-backend test -v
+   dbx just mongo-python-driver test -v
 
 Sync Repositories
 ~~~~~~~~~~~~~~~~~
