@@ -1,7 +1,7 @@
 Repository Management
 =====================
 
-The ``dbx clone``, ``dbx sync``, ``dbx branch``, ``dbx switch``, ``dbx log``, ``dbx remote``, and ``dbx open`` commands provide repository management functionality for cloning and managing groups of related repositories.
+The ``dbx clone``, ``dbx sync``, ``dbx branch``, ``dbx switch``, ``dbx log``, and ``dbx open`` commands provide repository management functionality for cloning and managing groups of related repositories.
 
 Initialize Configuration
 ------------------------
@@ -456,71 +456,6 @@ This command will:
 - Use ``--oneline`` for a compact one-line-per-commit format
 - When using with a group, the command runs in all repositories in that group
 - Projects without a ``.git`` directory will be skipped with a warning
-- Run ``dbx list`` to see all available repositories
-
-View Git Remotes
-----------------
-
-The ``dbx remote`` command allows you to view git remotes from one or more repositories:
-
-.. code-block:: bash
-
-   # Show remotes in a single repository
-   dbx remote mongo-python-driver
-
-   # Show remotes with URLs (verbose)
-   dbx -v remote mongo-python-driver
-
-   # Show remotes in all repositories in a group
-   dbx remote -g pymongo
-
-   # Show remotes in all repositories in a group with URLs
-   dbx -v remote -g pymongo
-
-   # Show remotes in a project
-   dbx remote -p myproject
-
-This command will:
-
-1. Find the repository, group, or project by name
-2. Run ``git remote`` (or ``git remote -v`` with the global ``-v``/``--verbose`` flag)
-3. Display the remotes for each repository
-
-**Examples:**
-
-.. code-block:: bash
-
-   # View remotes in a single repo
-   $ dbx remote mongo-python-driver
-   🔗 mongo-python-driver: Remotes
-   origin
-   upstream
-
-   # View remotes with URLs
-   $ dbx -v remote mongo-python-driver
-   🔗 mongo-python-driver: Remotes (verbose)
-   origin    git@github.com:aclark4life/mongo-python-driver.git (fetch)
-   origin    git@github.com:aclark4life/mongo-python-driver.git (push)
-   upstream  git@github.com:mongodb/mongo-python-driver.git (fetch)
-   upstream  git@github.com:mongodb/mongo-python-driver.git (push)
-
-   # View remotes across all repos in a group
-   $ dbx remote -g pymongo
-   Running git remote in 2 repository(ies) in group 'pymongo':
-
-   🔗 mongo-python-driver: Remotes
-   origin
-   upstream
-   🔗 specifications: Remotes
-   origin
-
-**Notes:**
-
-- The command works with any repository that has been cloned using ``dbx clone``
-- Use the global ``-v``/``--verbose`` flag to show remote URLs (equivalent to ``git remote -v``)
-- When using with a group, the command runs in all repositories in that group
-- Projects without a ``.git`` directory will be skipped with a warning
-- Repositories with no remotes configured will show "(no remotes configured)"
 - Run ``dbx list`` to see all available repositories
 
 Open Repositories in Browser

@@ -91,14 +91,6 @@ dbx_python_cli.commands.project module
    :undoc-members:
    :show-inheritance:
 
-dbx_python_cli.commands.remote module
---------------------------------------
-
-.. automodule:: dbx_python_cli.commands.remote
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 dbx_python_cli.commands.remove module
 --------------------------------------
 

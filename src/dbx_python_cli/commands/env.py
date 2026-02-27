@@ -4,7 +4,12 @@ import subprocess
 
 import typer
 
-from dbx_python_cli.commands.repo_utils import get_base_dir, get_config, get_repo_groups
+from dbx_python_cli.commands.repo_utils import (
+    get_base_dir,
+    get_config,
+    get_global_groups,
+    get_repo_groups,
+)
 
 app = typer.Typer(
     help="Virtual environment management commands",
@@ -52,6 +57,7 @@ def init(
         config = get_config()
         base_dir = get_base_dir(config)
         groups = get_repo_groups(config)
+        global_group_names = set(get_global_groups(config))
 
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}")
@@ -59,12 +65,15 @@ def init(
 
         # Handle --list flag
         if list_groups:
-            if not groups:
+            non_global_groups = {
+                k: v for k, v in groups.items() if k not in global_group_names
+            }
+            if not non_global_groups:
                 typer.echo("No groups found in configuration.")
                 return
 
             typer.echo("Available groups:\n")
-            for group_name in sorted(groups.keys()):
+            for group_name in sorted(non_global_groups.keys()):
                 group_dir = base_dir / group_name
                 venv_path = group_dir / ".venv"
                 if venv_path.exists():
@@ -99,6 +108,12 @@ def init(
 
         elif group:
             # Create venv in group directory
+            if group in global_group_names:
+                typer.echo(
+                    f"❌ Error: '{group}' is a global group used only for config — it has no group venv.",
+                    err=True,
+                )
+                raise typer.Exit(1)
             if group not in groups:
                 typer.echo(
                     f"❌ Error: Group '{group}' not found in configuration.", err=True
@@ -183,6 +198,7 @@ def list(ctx: typer.Context):
         config = get_config()
         base_dir = get_base_dir(config)
         groups = get_repo_groups(config)
+        global_group_names = set(get_global_groups(config))
         from dbx_python_cli.commands.repo_utils import find_all_repos
 
         if verbose:
@@ -211,9 +227,11 @@ def list(ctx: typer.Context):
         else:
             typer.echo("  ❌ [BASE]: No venv (create with: dbx env init)")
 
-        # Check group-level venvs
+        # Check group-level venvs (skip global groups — they have no group directory)
         typer.echo("\n  Group venvs:")
-        for group_name in sorted(groups.keys()):
+        for group_name in sorted(
+            k for k in groups.keys() if k not in global_group_names
+        ):
             group_dir = base_dir / group_name
             venv_path = group_dir / ".venv"
 
@@ -320,6 +338,7 @@ def remove(
         config = get_config()
         base_dir = get_base_dir(config)
         groups = get_repo_groups(config)
+        global_group_names = set(get_global_groups(config))
 
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}")
@@ -327,12 +346,15 @@ def remove(
 
         # Handle --list flag
         if list_groups:
-            if not groups:
+            non_global_groups = {
+                k: v for k, v in groups.items() if k not in global_group_names
+            }
+            if not non_global_groups:
                 typer.echo("No groups found in configuration.")
                 return
 
             typer.echo("Available groups:\n")
-            for group_name in sorted(groups.keys()):
+            for group_name in sorted(non_global_groups.keys()):
                 group_dir = base_dir / group_name
                 venv_path = group_dir / ".venv"
                 if venv_path.exists():
@@ -364,6 +386,12 @@ def remove(
 
         elif group:
             # Remove venv from group directory
+            if group in global_group_names:
+                typer.echo(
+                    f"❌ Error: '{group}' is a global group used only for config — it has no group venv.",
+                    err=True,
+                )
+                raise typer.Exit(1)
             if group not in groups:
                 typer.echo(
                     f"❌ Error: Group '{group}' not found in configuration.", err=True

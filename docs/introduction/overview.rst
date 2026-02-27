@@ -101,8 +101,6 @@ Available commands:
 - ``log`` - Show git commit logs
 - ``open`` - Open repositories in browser
 - ``project`` - Manage projects
-- ``pull`` - Pull latest changes
-- ``remote`` - View git remotes
 - ``remove`` - Remove repositories
 - ``status`` - Show git status
 - ``switch`` - Switch git branches
