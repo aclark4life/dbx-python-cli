@@ -41,6 +41,7 @@ def remove_callback(
         False,
         "--force",
         "-f",
+        "-y",
         help="Skip confirmation prompt",
     ),
 ):
