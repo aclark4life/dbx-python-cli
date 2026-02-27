@@ -1,7 +1,7 @@
 Virtual Environment Strategy
 ============================
 
-**Decision: One virtual environment per group**
+**Decision: Fine-grained virtual environments at base, group, or repo level**
 
 dbx-python-cli Installation
 ----------------------------
@@ -17,35 +17,41 @@ This keeps the ``dbx`` command available globally, isolated from project depende
 Repository and Virtual Environment Structure
 ---------------------------------------------
 
-Users configure a base directory and clone repository groups. Virtual environments are created at the group level:
+Users configure a base directory and clone repository groups. Virtual environments can be created at any level of the hierarchy:
 
 .. code-block:: bash
 
-   # Clone repository groups
-   dbx clone -g pymongo
+   # Create a base venv shared across all groups (recommended)
+   dbx env init
 
-   # Create venv for the group
+   # Create a group-level venv
    dbx env init -g pymongo
 
-This creates a structure like:
+   # Create a repo-level venv
+   dbx env init mongo-python-driver
+
+This supports a structure like:
 
 .. code-block:: text
 
    ~/Developer/mongodb/
+   ├── .venv/                          # Base venv (shared across all groups)
    ├── pymongo/
-   │   ├── .venv/                      # Group-level venv
+   │   ├── .venv/                      # Group-level venv (optional)
    │   ├── mongo-python-driver/
+   │   │   └── .venv/                  # Repo-level venv (optional)
    │   ├── specifications/
    │   └── drivers-evergreen-tools/
    ├── langchain/
    │   ├── .venv/                      # Separate group venv
-   │   └── langchain/
+   │   └── langchain-mongodb/
 
 Rationale
 ---------
 
-- **Group-level venvs** - Repos in the same group (e.g., pymongo repos) typically share dependencies
-- **Disk efficient** - Fewer duplicate dependencies
+- **Flexibility** - Choose the right isolation level for each use case: a shared base venv for simplicity, a group venv for per-group dependency sets, or a per-repo venv for full isolation
+- **Most specific wins** - Commands always prefer the most fine-grained venv available (repo > group > base), so adding a repo-level venv is always safe
+- **Disk efficient** - A shared base or group venv avoids duplicating common dependencies across repos
 
 Command Behavior
 ----------------
@@ -53,12 +59,18 @@ Command Behavior
 dbx env init
 ~~~~~~~~~~~~
 
-Create a virtual environment for a group:
+Create a virtual environment at any level:
 
 .. code-block:: bash
 
+   # Create base venv (shared across all groups)
+   dbx env init
+
    # Create venv for pymongo group
    dbx env init -g pymongo
+
+   # Create repo-level venv
+   dbx env init mongo-python-driver
 
    # Create with specific Python version
    dbx env init -g pymongo --python 3.11
@@ -66,45 +78,41 @@ Create a virtual environment for a group:
 dbx install
 ~~~~~~~~~~~
 
-Install dependencies, using group venv if available:
+Install dependencies using the most specific venv found:
 
 .. code-block:: bash
 
-   # Uses pymongo group venv if it exists
+   # Uses repo, group, or base venv — whichever is most specific
    dbx install mongo-python-driver -e test
-
-   # Falls back to system Python if no venv found
 
 dbx test
 ~~~~~~~~
 
-Run tests, using group venv if available:
+Run tests using the most specific venv found:
 
 .. code-block:: bash
 
-   # Uses pymongo group venv if it exists
+   # Uses repo, group, or base venv — whichever is most specific
    dbx test mongo-python-driver
-
-   # Falls back to system Python if no venv found
 
 Venv Detection
 --------------
 
-Commands detect and use venvs in this order:
+Commands detect and use venvs in this priority order (most specific first):
 
-1. **Group-level venv** - ``<group_path>/.venv``
-2. **Active venv** - Detects if the current Python (from ``which python``) is in a virtual environment
-3. **System Python** - Fallback if no venv found
+1. **Repo-level venv** - ``<repo_path>/.venv``
+2. **Group-level venv** - ``<group_path>/.venv``
+3. **Base directory venv** - ``<base_path>/.venv``
+4. **Activated venv** - The current ``sys.executable`` or shell-activated Python if it is inside a venv
+5. **Auto-detected venv** - If exactly one venv exists in the base directory, it is used automatically
+6. **Error** - Installation to system Python is not allowed
 
-The tool intelligently detects whether the Python executable is in a virtual environment by checking ``sys.base_prefix`` and ``sys.prefix``. This means:
+You'll see clear messages indicating which venv is being used:
 
-- If you run ``dbx`` commands while a venv is activated, it will detect and use that venv
-- The actual Python path is always displayed (e.g., ``/path/to/.venv/bin/python`` or ``/usr/bin/python3``)
-- You'll see clear messages indicating which Python is being used:
-
-  - ``Using group venv: <group_path>/.venv`` - Group-level venv found
-  - ``Using venv: /path/to/venv/bin/python`` - Another venv detected
-  - ``⚠️  No venv found, using system Python: /usr/bin/python3`` - System Python
+- ``Using repo venv: <repo_path>/.venv`` - Repo-level venv found
+- ``Using group venv: <group_path>/.venv`` - Group-level venv found
+- ``Using base venv: <base_path>/.venv`` - Base venv found
+- ``Using venv: /path/to/venv/bin/python`` - Activated or auto-detected venv
 
 Technical Implementation
 ------------------------
@@ -133,33 +141,44 @@ Venv Detection Example
 
 .. code-block:: python
 
-   def get_venv_info(repo_path, group_path=None):
+   def get_venv_info(repo_path, group_path=None, base_path=None):
        """
        Get information about which venv will be used.
 
+       Checks in priority order (most specific to least specific):
+       1. Repository-level venv
+       2. Group-level venv
+       3. Base directory venv
+       4. Activated venv (sys.executable or shell PATH)
+       5. Auto-detected venv (if exactly one exists)
+
        Returns:
-           tuple: (python_path, venv_type) where venv_type is "group" or "venv"
+           tuple: (python_path, venv_type) where venv_type is "base", "repo", "group", or "venv"
 
        Raises:
            typer.Exit: If no virtual environment is found (system Python detected)
        """
-       # Check group-level venv if group_path provided
+       # Check repository-level venv (most specific)
+       if repo_path:
+           repo_venv_python = repo_path / ".venv" / "bin" / "python"
+           if repo_venv_python.exists():
+               return str(repo_venv_python), "repo"
+
+       # Check group-level venv
        if group_path:
            group_venv_python = group_path / ".venv" / "bin" / "python"
            if group_venv_python.exists():
                return str(group_venv_python), "group"
 
-       # Check if the default Python is in a venv
-       python_path = _get_python_path()  # Uses 'which python'
-       if _is_venv(python_path):  # Checks sys.base_prefix != sys.prefix
-           return python_path, "venv"
+       # Check base directory venv
+       if base_path:
+           base_venv_python = base_path / ".venv" / "bin" / "python"
+           if base_venv_python.exists():
+               return str(base_venv_python), "base"
+
+       # Check activated venv
+       if _is_venv(sys.executable):
+           return sys.executable, "venv"
 
        # System Python detected - error out
-       typer.echo("❌ Error: No virtual environment found. Installation to system Python is not allowed.", err=True)
-       typer.echo("\nTo fix this, create a virtual environment:", err=True)
-       if group_path:
-           typer.echo(f"  dbx env init -g {group_path.name}", err=True)
-       else:
-           typer.echo("  dbx env init -g <group-name>", err=True)
-       typer.echo("\nOr activate an existing virtual environment before running dbx install.", err=True)
        raise typer.Exit(1)
