@@ -29,6 +29,7 @@ mongo-python-driver = { DRIVERS_TOOLS = "{base_dir}/pymongo/drivers-evergreen-to
 repos = [
     "git@github.com:mongodb/specifications.git",
     "git@github.com:mongodb-labs/drivers-evergreen-tools.git",
+    "git@github.com:mongodb-labs/mongo-arrow.git",
 ]
 
 # Build commands: specify commands to run before installing (e.g., rust builds)
