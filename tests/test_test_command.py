@@ -417,7 +417,7 @@ django = "tests/runtests.py"
                         "django_test",
                         directory=None,
                         base_dir=None,
-                        add_frontend=False,
+                        add_frontend=True,
                         auto_install=False,
                         python_path_override="python",
                     )
