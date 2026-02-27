@@ -175,6 +175,21 @@ def test_callback(
 
         # For the django repo with a custom test runner: inject default settings
         if test_runner and repo_name == "django":
+            # Warn when no test module is specified (would run the entire suite)
+            if not test_args:
+                typer.echo(
+                    "⚠️  No test module specified — this will run the entire Django test suite.",
+                    err=True,
+                )
+                typer.echo(
+                    "    Tip: specify a module to narrow the run, e.g. dbx test django encryption_",
+                    err=True,
+                )
+                confirm = typer.confirm("Continue?", default=False)
+                if not confirm:
+                    typer.echo("Aborted.")
+                    raise typer.Exit(0)
+
             has_settings = "--settings" in test_args or any(
                 a.startswith("--settings=") for a in test_args
             )
