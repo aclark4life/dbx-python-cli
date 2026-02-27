@@ -45,7 +45,6 @@ Rationale
 ---------
 
 - **Group-level venvs** - Repos in the same group (e.g., pymongo repos) typically share dependencies
-- **Simpler management** - One venv per group instead of many per-repo venvs
 - **Disk efficient** - Fewer duplicate dependencies
 
 Command Behavior
