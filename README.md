@@ -45,7 +45,7 @@ dbx config init
 # Create virtual environment
 dbx env init -g django
 
-# Clone repositories by group
+# Clone repositories by group (installs automatically)
 dbx clone -g django
 
 # List available repositories
