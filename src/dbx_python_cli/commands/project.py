@@ -715,22 +715,79 @@ def run_project(
         raise typer.Exit(code=1)
 
     # Detect the project venv so we use the right Python for manage.py.
-    # Mirror the same priority order used by `dbx test`:
+    # For Django projects, we need to check the django group venv as well.
+    # Priority order:
     #   1. project-level venv  (project_path/.venv)
     #   2. group-level venv    (projects_dir/.venv  OR  directory/.venv)
-    #   3. base-level venv     (base_dir/.venv, only when using config path)
-    #   4. activated / PATH venv
+    #   3. django group venv   (base_dir/django/.venv) - for Django projects
+    #   4. base-level venv     (base_dir/.venv, only when using config path)
+    #   5. activated / PATH venv
+    python_path = None
+    venv_type = None
+
     try:
         if directory is None:
+            # First try the standard venv detection (project, projects group, base)
             python_path, venv_type = get_venv_info(
                 project_path, projects_dir, base_path=base_dir
             )
+
+            # If we fell back to an activated venv, check if django group venv exists
+            # and prefer that for Django projects
+            if venv_type == "venv":
+                django_group_path = base_dir / "django"
+                if django_group_path.exists():
+                    django_venv_python = django_group_path / ".venv" / "bin" / "python"
+                    if django_venv_python.exists():
+                        python_path = str(django_venv_python)
+                        venv_type = "group"
+                        typer.echo(
+                            f"✅ Using Django group venv: {django_group_path}/.venv"
+                        )
         else:
             python_path, venv_type = get_venv_info(
                 project_path, project_path.parent, base_path=None
             )
     except typer.Exit:
         raise
+
+    # Check if the project is installed in the venv
+    # This is important when using the Django group venv
+    pyproject_path = project_path / "pyproject.toml"
+    if pyproject_path.exists():
+        # Check if the project is installed by trying to import it
+        # We need to clear PYTHONPATH and run from a different directory to check actual installation
+        module_name = name.replace("-", "_")
+        check_env = os.environ.copy()
+        check_env.pop(
+            "PYTHONPATH", None
+        )  # Remove PYTHONPATH to check actual installation
+        check_cmd = [
+            python_path,
+            "-c",
+            f"import importlib.util; import sys; sys.exit(0 if importlib.util.find_spec('{module_name}') else 1)",
+        ]
+        # Run from /tmp to avoid Python adding the current directory to sys.path
+        result = subprocess.run(
+            check_cmd, capture_output=True, env=check_env, cwd="/tmp"
+        )
+
+        if result.returncode != 0:
+            # Project not installed, install it
+            typer.echo(f"📦 Installing project dependencies for '{name}'...")
+            install_result = install_package(
+                project_path,
+                python_path,
+                install_dir=None,
+                extras=None,
+                groups=None,
+                verbose=False,
+            )
+            if install_result != "success":
+                typer.echo(
+                    f"⚠️  Warning: Failed to install project '{name}'. Some dependencies may be missing.",
+                    err=True,
+                )
 
     # Check if frontend exists
     frontend_path = project_path / "frontend"
