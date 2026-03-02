@@ -823,6 +823,17 @@ def install_callback(
     # Detect venv
     python_path, venv_type = get_venv_info(repo_path, group_path, base_path=base_dir)
 
+    # For projects in the "projects" group, prefer django group venv if available
+    # This matches the behavior of `dbx project manage`
+    if repo.get("group") == "projects" and venv_type == "venv":
+        django_group_path = base_dir / "django"
+        if django_group_path.exists():
+            django_venv_python = django_group_path / ".venv" / "bin" / "python"
+            if django_venv_python.exists():
+                python_path = str(django_venv_python)
+                venv_type = "group"
+                group_path = django_group_path
+
     if verbose:
         typer.echo(f"[verbose] Venv type: {venv_type}")
         typer.echo(f"[verbose] Python: {python_path}\n")

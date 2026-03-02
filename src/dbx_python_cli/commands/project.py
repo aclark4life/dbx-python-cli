@@ -294,21 +294,14 @@ def add_project(
                 # Installation requires a proper venv.  Re-raise the error.
                 raise
 
-    # Build a subprocess environment that sources the venv by prepending its
-    # bin directory to PATH.  This ensures the correct django-admin (and any
-    # other venv-installed scripts) are used even when the venv is not
-    # activated in the calling shell.
-    venv_bin = str(Path(python_path).parent)
-    venv_env = {
-        **os.environ,
-        "PATH": f"{venv_bin}{os.pathsep}{os.environ.get('PATH', '')}",
-    }
-
     with resources.path(
         "dbx_python_cli.templates", "project_template"
     ) as template_path:
+        # Use python -m django to ensure we use the correct venv's Django
         cmd = [
-            "django-admin",
+            python_path,
+            "-m",
+            "django",
             "startproject",
             "--template",
             str(template_path),
@@ -327,7 +320,7 @@ def add_project(
 
         typer.echo(f"📦 Creating project: {name}")
 
-        # Run django-admin in a way that surfaces a clean, user-friendly error
+        # Run django in a way that surfaces a clean, user-friendly error
         # instead of a full Python traceback when Django is missing or
         # misconfigured in the current environment.
         try:
@@ -337,12 +330,11 @@ def add_project(
                 capture_output=True,
                 text=True,
                 cwd=cwd,
-                env=venv_env,
             )
         except FileNotFoundError:
             typer.echo(
-                "❌ 'django-admin' command not found. Make sure Django is installed "
-                "in this environment and that 'django-admin' is on your PATH.",
+                f"❌ Python not found at '{python_path}'. Make sure the venv exists "
+                "and Django is installed.",
                 err=True,
             )
             raise typer.Exit(code=1)
@@ -358,7 +350,7 @@ def add_project(
                     reason = lines[-1]
 
             typer.echo(
-                "❌ Failed to create project using django-admin. "
+                "❌ Failed to create project. "
                 "This usually means Django is not installed or is misconfigured "
                 "in the current Python environment.",
                 err=True,
@@ -376,13 +368,13 @@ def add_project(
     if not project_path.exists():
         typer.echo(
             f"❌ Project directory was not created at {project_path}. "
-            "The django-admin command may have failed silently.",
+            "The command may have failed silently.",
             err=True,
         )
         if result.stdout:
-            typer.echo(f"   django-admin stdout: {result.stdout.strip()}", err=True)
+            typer.echo(f"   stdout: {result.stdout.strip()}", err=True)
         if result.stderr:
-            typer.echo(f"   django-admin stderr: {result.stderr.strip()}", err=True)
+            typer.echo(f"   stderr: {result.stderr.strip()}", err=True)
         raise typer.Exit(code=1)
 
     # Add pyproject.toml after project creation
@@ -394,7 +386,7 @@ def add_project(
         try:
             # Call the internal frontend create helper
             # Pass the parent directory of project_path and the venv python so
-            # the helper can also locate the correct django-admin.
+            # the helper uses the correct Django.
             _add_frontend(name, project_path.parent, python_path=python_path)
         except Exception as e:
             typer.echo(
@@ -517,9 +509,8 @@ def _add_frontend(
     Internal helper to create a frontend app inside an existing project.
 
     ``python_path`` should be the Python executable inside the target venv.
-    When provided the venv's bin directory is prepended to PATH so that the
-    correct ``django-admin`` is used even when the venv is not activated in
-    the calling shell.
+    When provided, python -m django is used to ensure the correct Django
+    is invoked even when the venv is not activated in the calling shell.
     """
     project_path = directory / project_name
     name = "frontend"
@@ -535,28 +526,25 @@ def _add_frontend(
         raise typer.Exit(code=1)
     typer.echo(f"📦 Creating app '{name}' in project '{project_name}'")
 
-    # Build env that sources the venv when a python_path is provided
-    env = None
-    if python_path:
-        venv_bin = str(Path(python_path).parent)
-        env = {
-            **os.environ,
-            "PATH": f"{venv_bin}{os.pathsep}{os.environ.get('PATH', '')}",
-        }
+    # Use the provided python_path or fall back to system python
+    effective_python = python_path if python_path else "python"
 
     # Locate the Django app template directory in package resources
     with resources.path(
         "dbx_python_cli.templates", "frontend_template"
     ) as template_path:
+        # Use python -m django to ensure we use the correct venv's Django
         cmd = [
-            "django-admin",
+            effective_python,
+            "-m",
+            "django",
             "startapp",
             "--template",
             str(template_path),
             name,
             str(project_path),
         ]
-        subprocess.run(cmd, check=True, env=env)
+        subprocess.run(cmd, check=True)
 
 
 @app.command("remove")
@@ -1071,24 +1059,20 @@ def manage(
     env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
     typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
 
-    # Prepend venv bin dir to PATH so the correct django-admin / Django runtime is used
-    venv_bin = str(Path(python_path).parent)
-    env["PATH"] = f"{venv_bin}{os.pathsep}{env.get('PATH', '')}"
-
-    # Build command
+    # Build command - use python -m django to ensure we use the correct venv's Django
     cmd_args = []
     if command:
         cmd_args.append(command)
         if database:
             cmd_args.append(f"--database={database}")
         cmd_args.extend(args)
-        typer.echo(f"⚙️  Running django-admin {' '.join(cmd_args)} for '{name}'")
+        typer.echo(f"⚙️  Running: {python_path} -m django {' '.join(cmd_args)}")
     else:
-        typer.echo(f"ℹ️  Running django-admin with no arguments for '{name}'")
+        typer.echo(f"ℹ️  Running: {python_path} -m django")
 
     try:
         subprocess.run(
-            ["django-admin", *cmd_args],
+            [python_path, "-m", "django", *cmd_args],
             cwd=project_path.parent,
             env=env,
             check=True,
@@ -1098,7 +1082,7 @@ def manage(
         raise typer.Exit(code=e.returncode)
     except FileNotFoundError:
         typer.echo(
-            "❌ 'django-admin' command not found. Make sure Django is installed.",
+            f"❌ Python not found at '{python_path}'. Make sure the venv exists.",
             err=True,
         )
         raise typer.Exit(code=1)
@@ -1265,14 +1249,13 @@ def create_superuser(
     env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
     typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
 
-    # Prepend venv bin dir to PATH so the correct django-admin / Django runtime is used
-    venv_bin = str(Path(python_path).parent)
-    env["PATH"] = f"{venv_bin}{os.pathsep}{env.get('PATH', '')}"
-
+    # Use python -m django to ensure we use the correct venv's Django
     try:
         subprocess.run(
             [
-                "django-admin",
+                python_path,
+                "-m",
+                "django",
                 "createsuperuser",
                 "--noinput",
                 f"--username={username}",
@@ -1288,7 +1271,7 @@ def create_superuser(
         raise typer.Exit(code=e.returncode)
     except FileNotFoundError:
         typer.echo(
-            "❌ 'django-admin' command not found. Make sure Django is installed.",
+            f"❌ Python not found at '{python_path}'. Make sure the venv exists.",
             err=True,
         )
         raise typer.Exit(code=1)
@@ -1440,12 +1423,8 @@ def migrate_project(
     env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
     typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
 
-    # Prepend venv bin dir to PATH so the correct django-admin / Django runtime is used
-    venv_bin = str(Path(python_path).parent)
-    env["PATH"] = f"{venv_bin}{os.pathsep}{env.get('PATH', '')}"
-
-    # Build migrate command
-    cmd = ["django-admin", "migrate"]
+    # Build migrate command - use python -m django to ensure we use the correct venv's Django
+    cmd = [python_path, "-m", "django", "migrate"]
     if database:
         cmd.append(f"--database={database}")
         typer.echo(f"🗄️  Running migrations for database: {database}")
@@ -1465,7 +1444,7 @@ def migrate_project(
         raise typer.Exit(code=e.returncode)
     except FileNotFoundError:
         typer.echo(
-            "❌ 'django-admin' command not found. Make sure Django is installed.",
+            f"❌ Python not found at '{python_path}'. Make sure the venv exists.",
             err=True,
         )
         raise typer.Exit(code=1)
