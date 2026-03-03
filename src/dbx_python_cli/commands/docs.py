@@ -7,7 +7,7 @@ import typer
 DOCS_URL = "https://dbx-python-cli.readthedocs.io/"
 
 app = typer.Typer(
-    help="Open the dbx documentation in a web browser",
+    help="⚙️  Open the dbx documentation in a web browser",
     invoke_without_command=True,
     context_settings={"help_option_names": ["-h", "--help"]},
 )

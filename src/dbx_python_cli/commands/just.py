@@ -15,7 +15,7 @@ from dbx_python_cli.commands.repo_utils import (
 
 # Create a Typer app that will act as a single command
 app = typer.Typer(
-    help="Just commands",
+    help="⚙️  Just commands",
     no_args_is_help=True,
     invoke_without_command=True,
     context_settings={

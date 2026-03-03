@@ -9,7 +9,7 @@ import typer
 from dbx_python_cli.commands import repo_utils as repo
 
 app = typer.Typer(
-    help="Remove repositories or repository groups",
+    help="❌ Remove repositories or repository groups",
     no_args_is_help=True,
     invoke_without_command=True,
     context_settings={
