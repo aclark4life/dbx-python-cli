@@ -11,7 +11,7 @@ from dbx_python_cli.commands.repo_utils import find_repo_by_name
 
 # Create a Typer app that will act as a single command
 app = typer.Typer(
-    help="⚙️  Open repositories in web browser",
+    help="Open repositories in web browser",
     no_args_is_help=True,
     invoke_without_command=True,
     context_settings={
