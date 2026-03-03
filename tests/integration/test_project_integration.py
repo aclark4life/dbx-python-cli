@@ -462,8 +462,12 @@ def test_project_run_settings_module(tmp_path):
     projects_dir.mkdir(parents=True)
     base_dir_str = str(base_dir).replace("\\", "/")
 
+    # Include MONGODB_URI in config to avoid mongodb-runner being called
     config_content = f"""[repo]
 base_dir = "{base_dir_str}"
+
+[project.default_env]
+MONGODB_URI = "mongodb://localhost:27017"
 """
     config_path.write_text(config_content)
 

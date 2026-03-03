@@ -108,15 +108,35 @@ class TestEnsureMongodb:
 
             with patch("dbx_python_cli.commands.project.subprocess.run") as mock_run:
                 # First call: which npx (success)
-                # Second call: npx mongodb-runner start (success)
+                # Second call: npx mongodb-runner start (success with URI in output)
                 mock_run.side_effect = [
                     MagicMock(returncode=0),  # which npx
-                    MagicMock(returncode=0, stderr=""),  # mongodb-runner start
+                    MagicMock(
+                        returncode=0,
+                        stdout="Server started at mongodb://127.0.0.1:52065/\n",
+                        stderr="",
+                    ),  # mongodb-runner start
+                ]
+
+                result = ensure_mongodb(env)
+                assert result["MONGODB_URI"] == "mongodb://127.0.0.1:52065"
+                assert mock_run.call_count == 2
+
+    def test_mongodb_runner_fallback_uri_on_no_output(self):
+        """Test that default URI is used when mongodb-runner output can't be parsed."""
+        env = {}
+        with patch("dbx_python_cli.commands.project.get_config") as mock_config:
+            mock_config.return_value = {"project": {"default_env": {}}}
+
+            with patch("dbx_python_cli.commands.project.subprocess.run") as mock_run:
+                # mongodb-runner succeeds but no URI in output
+                mock_run.side_effect = [
+                    MagicMock(returncode=0),  # which npx
+                    MagicMock(returncode=0, stdout="Started\n", stderr=""),
                 ]
 
                 result = ensure_mongodb(env)
                 assert result["MONGODB_URI"] == "mongodb://localhost:27017"
-                assert mock_run.call_count == 2
 
     def test_mongodb_runner_failure_exits(self):
         """Test that mongodb-runner failure exits with 'no db running'."""

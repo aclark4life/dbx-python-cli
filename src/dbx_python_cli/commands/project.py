@@ -2,6 +2,7 @@
 
 import os
 import random
+import re
 import shutil
 import subprocess
 import sys
@@ -89,8 +90,22 @@ def ensure_mongodb(env: dict) -> dict:
             typer.echo("no db running", err=True)
             raise typer.Exit(code=1)
 
-        # mongodb-runner started successfully, use default localhost:27017
-        mongodb_uri = "mongodb://localhost:27017"
+        # Parse the MongoDB URI from mongodb-runner output
+        # Output format includes "mongodb://127.0.0.1:PORT/" on multiple lines
+        mongodb_uri = None
+        output = result.stdout + result.stderr
+        # Look for mongodb:// URI in the output
+        uri_match = re.search(r"(mongodb://[^\s]+)", output)
+        if uri_match:
+            mongodb_uri = uri_match.group(1).rstrip("/")
+        else:
+            # Fallback to default if we can't parse the output
+            mongodb_uri = "mongodb://localhost:27017"
+            typer.echo(
+                "⚠️  Could not parse mongodb-runner output, using default URI",
+                err=True,
+            )
+
         env["MONGODB_URI"] = mongodb_uri
         _mongodb_runner_started = True
         typer.echo("✅ MongoDB started successfully with mongodb-runner")
