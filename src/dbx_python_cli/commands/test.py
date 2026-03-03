@@ -20,7 +20,7 @@ from dbx_python_cli.commands.venv_utils import get_venv_info
 from dbx_python_cli.commands.project import add_project
 
 app = typer.Typer(
-    help="Test commands",
+    help="🍃 Test commands",
     context_settings={
         "help_option_names": ["-h", "--help"],
         "ignore_unknown_options": False,

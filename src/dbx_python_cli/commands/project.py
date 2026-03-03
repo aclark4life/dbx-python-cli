@@ -112,7 +112,7 @@ def ensure_mongodb(env: dict) -> dict:
 
 
 app = typer.Typer(
-    help="Project management commands",
+    help="🍃 Project management commands",
     context_settings={"help_option_names": ["-h", "--help"]},
     no_args_is_help=True,
 )
