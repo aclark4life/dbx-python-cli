@@ -19,6 +19,98 @@ from dbx_python_cli.commands.repo_utils import get_base_dir, get_config
 from dbx_python_cli.commands.venv_utils import get_venv_info
 from dbx_python_cli.commands.install import install_package, install_frontend_if_exists
 
+# Global variable to track if we started mongodb-runner
+_mongodb_runner_started = False
+
+
+def ensure_mongodb(env: dict) -> dict:
+    """
+    Ensure MongoDB is available.
+
+    Checks for MONGODB_URI in the environment. If not set:
+    1. Try to start MongoDB using mongodb-runner
+    2. If mongodb-runner fails, exit with "no db running"
+
+    Args:
+        env: Environment dictionary to update with MONGODB_URI
+
+    Returns:
+        Updated environment dictionary with MONGODB_URI set
+
+    Raises:
+        typer.Exit: If no MongoDB is available and mongodb-runner fails
+    """
+    global _mongodb_runner_started
+
+    if "MONGODB_URI" in env and env["MONGODB_URI"]:
+        typer.echo(f"🔗 Using MONGODB_URI from environment: {env['MONGODB_URI']}")
+        return env
+
+    # Check for default MONGODB_URI in config
+    config = get_config()
+    default_env = config.get("project", {}).get("default_env", {})
+    default_uri = default_env.get("MONGODB_URI")
+
+    if default_uri:
+        typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
+        env["MONGODB_URI"] = default_uri
+        return env
+
+    # No MONGODB_URI set, try to start mongodb-runner
+    typer.echo(
+        "⚠️  MONGODB_URI is not set. Attempting to start MongoDB with mongodb-runner..."
+    )
+
+    try:
+        # Check if npx is available
+        npx_check = subprocess.run(
+            ["which", "npx"],
+            capture_output=True,
+            text=True,
+        )
+        if npx_check.returncode != 0:
+            typer.echo(
+                "❌ npx is not available. Cannot start mongodb-runner.", err=True
+            )
+            typer.echo("no db running", err=True)
+            raise typer.Exit(code=1)
+
+        # Try to start mongodb-runner
+        typer.echo("🚀 Starting MongoDB with mongodb-runner...")
+        result = subprocess.run(
+            ["npx", "mongodb-runner", "start"],
+            capture_output=True,
+            text=True,
+            timeout=120,  # 2 minute timeout for download/start
+        )
+
+        if result.returncode != 0:
+            typer.echo(f"❌ mongodb-runner failed to start: {result.stderr}", err=True)
+            typer.echo("no db running", err=True)
+            raise typer.Exit(code=1)
+
+        # mongodb-runner started successfully, use default localhost:27017
+        mongodb_uri = "mongodb://localhost:27017"
+        env["MONGODB_URI"] = mongodb_uri
+        _mongodb_runner_started = True
+        typer.echo("✅ MongoDB started successfully with mongodb-runner")
+        typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
+        return env
+
+    except subprocess.TimeoutExpired:
+        typer.echo("❌ mongodb-runner timed out", err=True)
+        typer.echo("no db running", err=True)
+        raise typer.Exit(code=1)
+    except FileNotFoundError:
+        typer.echo("❌ npx command not found. Cannot start mongodb-runner.", err=True)
+        typer.echo("no db running", err=True)
+        raise typer.Exit(code=1)
+    except Exception as e:
+        typer.echo(f"❌ Failed to start mongodb-runner: {e}", err=True)
+        typer.echo("no db running", err=True)
+        raise typer.Exit(code=1)
+
+
 app = typer.Typer(
     help="Project management commands",
     context_settings={"help_option_names": ["-h", "--help"]},
@@ -786,16 +878,12 @@ def run_project(
     # Set up environment
     env = os.environ.copy()
 
+    # Ensure MongoDB is available (starts mongodb-runner if needed)
+    env = ensure_mongodb(env)
+
     # Check for default environment variables from config
     config = get_config()
     default_env = config.get("project", {}).get("default_env", {})
-
-    # Set MONGODB_URI if not in environment
-    if "MONGODB_URI" not in env:
-        default_uri = default_env.get("MONGODB_URI")
-        if default_uri:
-            typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
-            env["MONGODB_URI"] = default_uri
 
     # Set library paths for libmongocrypt (Queryable Encryption support)
     for var in [
@@ -1019,19 +1107,17 @@ def manage(
     # Set up environment
     env = os.environ.copy()
 
-    # Check for default environment variables from config
-    config = get_config()
-    default_env = config.get("project", {}).get("default_env", {})
-
+    # Handle MongoDB URI: explicit flag takes precedence
     if mongodb_uri:
         typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
         env["MONGODB_URI"] = mongodb_uri
-    elif "MONGODB_URI" not in env:
-        # Check config for default MONGODB_URI
-        default_uri = default_env.get("MONGODB_URI")
-        if default_uri:
-            typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
-            env["MONGODB_URI"] = default_uri
+    else:
+        # Ensure MongoDB is available (starts mongodb-runner if needed)
+        env = ensure_mongodb(env)
+
+    # Check for default environment variables from config
+    config = get_config()
+    default_env = config.get("project", {}).get("default_env", {})
 
     # Set library paths for libmongocrypt (Queryable Encryption support)
     for var in [
@@ -1207,19 +1293,17 @@ def create_superuser(
     # Set up environment
     env = os.environ.copy()
 
-    # Check for default environment variables from config
-    config = get_config()
-    default_env = config.get("project", {}).get("default_env", {})
-
+    # Handle MongoDB URI: explicit flag takes precedence
     if mongodb_uri:
         typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
         env["MONGODB_URI"] = mongodb_uri
-    elif "MONGODB_URI" not in env:
-        # Check config for default MONGODB_URI
-        default_uri = default_env.get("MONGODB_URI")
-        if default_uri:
-            typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
-            env["MONGODB_URI"] = default_uri
+    else:
+        # Ensure MongoDB is available (starts mongodb-runner if needed)
+        env = ensure_mongodb(env)
+
+    # Check for default environment variables from config
+    config = get_config()
+    default_env = config.get("project", {}).get("default_env", {})
 
     # Set library paths for libmongocrypt (Queryable Encryption support)
     for var in [
@@ -1383,19 +1467,17 @@ def migrate_project(
     # Set up environment
     env = os.environ.copy()
 
-    # Check for default environment variables from config
-    config = get_config()
-    default_env = config.get("project", {}).get("default_env", {})
-
+    # Handle MongoDB URI: explicit flag takes precedence
     if mongodb_uri:
         typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
         env["MONGODB_URI"] = mongodb_uri
-    elif "MONGODB_URI" not in env:
-        # Check config for default MONGODB_URI
-        default_uri = default_env.get("MONGODB_URI")
-        if default_uri:
-            typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
-            env["MONGODB_URI"] = default_uri
+    else:
+        # Ensure MongoDB is available (starts mongodb-runner if needed)
+        env = ensure_mongodb(env)
+
+    # Check for default environment variables from config
+    config = get_config()
+    default_env = config.get("project", {}).get("default_env", {})
 
     # Set library paths for libmongocrypt (Queryable Encryption support)
     for var in [

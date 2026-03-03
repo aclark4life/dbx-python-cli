@@ -368,6 +368,53 @@ These environment variables are automatically used by the ``run``, ``manage``, `
    # Environment variables from config are used if not overridden
    dbx project migrate myproject
 
+Automatic MongoDB Startup
+-------------------------
+
+If ``MONGODB_URI`` is not set in your environment or config, the CLI will automatically attempt to start MongoDB using `mongodb-runner <https://www.npmjs.com/package/mongodb-runner>`_.
+
+**How it works:**
+
+1. The CLI first checks for ``MONGODB_URI`` in your environment variables
+2. If not found, it checks the ``[project.default_env]`` section in your config file
+3. If still not found, it attempts to start MongoDB using ``npx mongodb-runner start``
+4. If mongodb-runner succeeds, it uses ``mongodb://localhost:27017`` as the connection URI
+5. If mongodb-runner fails (or npx is not available), the command exits with ``no db running``
+
+**Requirements:**
+
+- Node.js and npm must be installed (for ``npx`` command)
+- mongodb-runner will automatically download and install the latest stable MongoDB version for your OS/architecture (stored in ``~/.mongodb/``)
+
+**Example output:**
+
+.. code-block:: text
+
+   ⚠️  MONGODB_URI is not set. Attempting to start MongoDB with mongodb-runner...
+   🚀 Starting MongoDB with mongodb-runner...
+   ✅ MongoDB started successfully with mongodb-runner
+   🔗 Using MongoDB URI: mongodb://localhost:27017
+
+**When mongodb-runner fails:**
+
+.. code-block:: text
+
+   ⚠️  MONGODB_URI is not set. Attempting to start MongoDB with mongodb-runner...
+   🚀 Starting MongoDB with mongodb-runner...
+   ❌ mongodb-runner failed to start: <error message>
+   no db running
+
+This feature makes it easy to get started with Django + MongoDB projects without manually configuring a database. Simply run ``dbx project run`` and the CLI will handle the rest.
+
+.. note::
+
+   **Recommended setup:** For production or regular development, set ``MONGODB_URI`` in your config file or environment to avoid the startup delay of mongodb-runner:
+
+   .. code-block:: toml
+
+      [project.default_env]
+      MONGODB_URI = "mongodb://localhost:27017"
+
 Settings Configurations
 -----------------------
 
