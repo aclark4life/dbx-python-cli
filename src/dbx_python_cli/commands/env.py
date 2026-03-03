@@ -12,7 +12,7 @@ from dbx_python_cli.commands.repo_utils import (
 )
 
 app = typer.Typer(
-    help="🐍 Virtual environment management commands",
+    help="📦 Virtual environment management commands",
     context_settings={"help_option_names": ["-h", "--help"]},
     no_args_is_help=True,
 )
