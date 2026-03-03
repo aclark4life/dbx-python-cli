@@ -100,17 +100,41 @@ class TestEnsureMongodb:
             result = ensure_mongodb(env)
             assert result["MONGODB_URI"] == "mongodb://confighost:27017"
 
-    def test_mongodb_runner_started_on_success(self):
-        """Test that mongodb-runner is started when no URI is available."""
+    def test_mongodb_runner_reuses_existing_instance(self):
+        """Test that existing mongodb-runner instance is reused."""
         env = {}
         with patch("dbx_python_cli.commands.project.get_config") as mock_config:
             mock_config.return_value = {"project": {"default_env": {}}}
 
             with patch("dbx_python_cli.commands.project.subprocess.run") as mock_run:
                 # First call: which npx (success)
-                # Second call: npx mongodb-runner start (success with URI in output)
+                # Second call: mongodb-runner ls (returns existing instance)
                 mock_run.side_effect = [
                     MagicMock(returncode=0),  # which npx
+                    MagicMock(
+                        returncode=0,
+                        stdout="abc123: mongodb://127.0.0.1:52065/\n",
+                        stderr="",
+                    ),  # mongodb-runner ls
+                ]
+
+                result = ensure_mongodb(env)
+                assert result["MONGODB_URI"] == "mongodb://127.0.0.1:52065"
+                assert mock_run.call_count == 2
+
+    def test_mongodb_runner_started_on_success(self):
+        """Test that mongodb-runner is started when no instance is running."""
+        env = {}
+        with patch("dbx_python_cli.commands.project.get_config") as mock_config:
+            mock_config.return_value = {"project": {"default_env": {}}}
+
+            with patch("dbx_python_cli.commands.project.subprocess.run") as mock_run:
+                # First call: which npx (success)
+                # Second call: mongodb-runner ls (no instances)
+                # Third call: mongodb-runner start (success with URI in output)
+                mock_run.side_effect = [
+                    MagicMock(returncode=0),  # which npx
+                    MagicMock(returncode=0, stdout="", stderr=""),  # mongodb-runner ls
                     MagicMock(
                         returncode=0,
                         stdout="Server started at mongodb://127.0.0.1:52065/\n",
@@ -120,7 +144,7 @@ class TestEnsureMongodb:
 
                 result = ensure_mongodb(env)
                 assert result["MONGODB_URI"] == "mongodb://127.0.0.1:52065"
-                assert mock_run.call_count == 2
+                assert mock_run.call_count == 3
 
     def test_mongodb_runner_fallback_uri_on_no_output(self):
         """Test that default URI is used when mongodb-runner output can't be parsed."""
@@ -132,7 +156,8 @@ class TestEnsureMongodb:
                 # mongodb-runner succeeds but no URI in output
                 mock_run.side_effect = [
                     MagicMock(returncode=0),  # which npx
-                    MagicMock(returncode=0, stdout="Started\n", stderr=""),
+                    MagicMock(returncode=0, stdout="", stderr=""),  # mongodb-runner ls
+                    MagicMock(returncode=0, stdout="Started\n", stderr=""),  # start
                 ]
 
                 result = ensure_mongodb(env)
@@ -146,9 +171,11 @@ class TestEnsureMongodb:
 
             with patch("dbx_python_cli.commands.project.subprocess.run") as mock_run:
                 # First call: which npx (success)
-                # Second call: npx mongodb-runner start (failure)
+                # Second call: mongodb-runner ls (no instances)
+                # Third call: mongodb-runner start (failure)
                 mock_run.side_effect = [
                     MagicMock(returncode=0),  # which npx
+                    MagicMock(returncode=0, stdout="", stderr=""),  # mongodb-runner ls
                     MagicMock(returncode=1, stderr="MongoDB failed to start"),
                 ]
 
@@ -180,9 +207,11 @@ class TestEnsureMongodb:
 
             with patch("dbx_python_cli.commands.project.subprocess.run") as mock_run:
                 # First call: which npx (success)
-                # Second call: timeout
+                # Second call: mongodb-runner ls (no instances)
+                # Third call: timeout on start
                 mock_run.side_effect = [
                     MagicMock(returncode=0),  # which npx
+                    MagicMock(returncode=0, stdout="", stderr=""),  # mongodb-runner ls
                     subprocess.TimeoutExpired(cmd="npx", timeout=120),
                 ]
 

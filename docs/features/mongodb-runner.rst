@@ -10,8 +10,11 @@ When you run commands that require MongoDB (``project run``, ``project manage``,
 
 1. **Environment variable**: Uses ``MONGODB_URI`` if set in your shell environment
 2. **Config file**: Uses ``MONGODB_URI`` from ``~/.config/dbx-python-cli/config.toml``
-3. **mongodb-runner**: Automatically starts MongoDB using ``npx mongodb-runner start``
-4. **Exit**: If all above fail, exits with ``no db running``
+3. **Existing mongodb-runner**: Checks for running instances with ``mongodb-runner ls`` and reuses them
+4. **New mongodb-runner**: Starts a new MongoDB instance using ``npx mongodb-runner start``
+5. **Exit**: If all above fail, exits with ``no db running``
+
+This means if you run ``dbx project run`` in one terminal and then ``dbx project migrate`` in another, both will use the same MongoDB instance.
 
 Requirements
 ------------

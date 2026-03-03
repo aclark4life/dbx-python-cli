@@ -57,10 +57,8 @@ def ensure_mongodb(env: dict) -> dict:
         env["MONGODB_URI"] = default_uri
         return env
 
-    # No MONGODB_URI set, try to start mongodb-runner
-    typer.echo(
-        "⚠️  MONGODB_URI is not set. Attempting to start MongoDB with mongodb-runner..."
-    )
+    # No MONGODB_URI set, try to use mongodb-runner
+    typer.echo("⚠️  MONGODB_URI is not set. Checking for mongodb-runner...")
 
     try:
         # Check if npx is available
@@ -70,13 +68,29 @@ def ensure_mongodb(env: dict) -> dict:
             text=True,
         )
         if npx_check.returncode != 0:
-            typer.echo(
-                "❌ npx is not available. Cannot start mongodb-runner.", err=True
-            )
+            typer.echo("❌ npx is not available. Cannot use mongodb-runner.", err=True)
             typer.echo("no db running", err=True)
             raise typer.Exit(code=1)
 
-        # Try to start mongodb-runner
+        # Check if mongodb-runner is already running
+        ls_result = subprocess.run(
+            ["npx", "mongodb-runner", "ls"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        if ls_result.returncode == 0 and ls_result.stdout.strip():
+            # Parse the first running instance's URI
+            uri_match = re.search(r"(mongodb://[^\s]+)", ls_result.stdout)
+            if uri_match:
+                mongodb_uri = uri_match.group(1).rstrip("/")
+                env["MONGODB_URI"] = mongodb_uri
+                typer.echo("✅ Found running mongodb-runner instance")
+                typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
+                return env
+
+        # No running instance, start a new one
         typer.echo("🚀 Starting MongoDB with mongodb-runner...")
         result = subprocess.run(
             ["npx", "mongodb-runner", "start"],
