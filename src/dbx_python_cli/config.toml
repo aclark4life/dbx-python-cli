@@ -9,8 +9,8 @@
 # MONGODB_URI = "mongodb://localhost:27017"
 
 # Set the path to your libmongocrypt build for Queryable Encryption support
-# PYMONGOCRYPT_LIB = "~/Developer/mongodb/django/libmongocrypt/cmake-build/libmongocrypt.dylib"
-# CRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-macos-arm64-enterprise-8.2.5/lib/mongo_crypt_v1.dylib"
+PYMONGOCRYPT_LIB = "~/Developer/mongodb/django/libmongocrypt/cmake-build/libmongocrypt.dylib"
+CRYPT_SHARED_LIB_PATH = "~/Downloads/mongo_crypt_shared_v1-macos-arm64-enterprise-8.2.5/lib/mongo_crypt_v1.dylib"
 
 # MongoDB backend configuration
 [project.mongodb]

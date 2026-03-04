@@ -1483,6 +1483,7 @@ def run_project(
     for var in [
         "PYMONGOCRYPT_LIB",
         "DYLD_LIBRARY_PATH",
+        "DYLD_FALLBACK_LIBRARY_PATH",
         "LD_LIBRARY_PATH",
         "CRYPT_SHARED_LIB_PATH",
     ]:
@@ -1722,6 +1723,7 @@ def manage(
     for var in [
         "PYMONGOCRYPT_LIB",
         "DYLD_LIBRARY_PATH",
+        "DYLD_FALLBACK_LIBRARY_PATH",
         "LD_LIBRARY_PATH",
         "CRYPT_SHARED_LIB_PATH",
     ]:
