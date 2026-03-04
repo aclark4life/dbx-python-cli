@@ -37,6 +37,7 @@ repos = [
     "git@github.com:mongodb/specifications.git",
     "git@github.com:mongodb-labs/drivers-evergreen-tools.git",
     "git@github.com:mongodb-labs/mongo-arrow.git",
+    "git@github.com:mongodb/mongo-orchestration.git",
 ]
 
 # Build commands: specify commands to run before installing (e.g., rust builds)
