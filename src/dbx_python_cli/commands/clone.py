@@ -173,6 +173,12 @@ def clone_callback(
         "-g",
         help="Repository group(s) to clone (e.g., pymongo, langchain, django). Can be specified multiple times or as comma-separated values.",
     ),
+    all_groups: bool = typer.Option(
+        False,
+        "--all",
+        "-a",
+        help="Clone all groups from configuration",
+    ),
     fork: bool = typer.Option(
         True,
         "--fork",
@@ -189,7 +195,7 @@ def clone_callback(
         help="Skip automatic installation after cloning",
     ),
 ):
-    """Clone a repository by name or all repositories from one or more groups."""
+    """Clone a repository by name, all repositories from one or more groups, or all groups."""
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
 
@@ -232,6 +238,37 @@ def clone_callback(
 
             if verbose:
                 typer.echo(f"[verbose] Found '{repo_name}' in group '{found_group}'")
+
+        # Handle clone all groups
+        elif all_groups:
+            repos_to_clone = {}
+
+            # Clone all groups from configuration
+            for group_name in groups.keys():
+                group_repos = groups[group_name].get("repos", [])
+                if group_repos:
+                    repos_to_clone[group_name] = group_repos
+
+            if not repos_to_clone:
+                typer.echo("❌ Error: No groups found in configuration.", err=True)
+                raise typer.Exit(1)
+
+            # Append global-group repos to every non-global group being cloned.
+            global_group_names = repo.get_global_groups(config)
+            if global_group_names:
+                global_urls = []
+                for gname in global_group_names:
+                    if gname in groups:
+                        global_urls.extend(groups[gname].get("repos", []))
+
+                if global_urls:
+                    for target_group in list(repos_to_clone.keys()):
+                        if target_group not in global_group_names:
+                            existing_urls = set(repos_to_clone[target_group])
+                            for url in global_urls:
+                                if url not in existing_urls:
+                                    repos_to_clone[target_group].append(url)
+                                    existing_urls.add(url)
 
         # Handle group clone (can be multiple groups)
         elif group:
@@ -292,6 +329,7 @@ def clone_callback(
             typer.echo("   or: dbx clone -g <group>")
             typer.echo("   or: dbx clone -g <group1> -g <group2>")
             typer.echo("   or: dbx clone -g <group1>,<group2>")
+            typer.echo("   or: dbx clone -a")
             raise typer.Exit(1)
 
         # Handle fork options

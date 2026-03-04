@@ -286,3 +286,97 @@ def test_clone_global_group_itself_not_doubled(tmp_path):
                 c for c in clone_calls if "mongo-python-driver" in c.args[0][2]
             ]
             assert len(mpd_calls) == 1
+
+
+def test_clone_all_groups(tmp_path):
+    """Test cloning all groups with -a flag."""
+    config = _make_config(
+        tmp_path,
+        global_groups={"global": ["git@github.com:mongodb/mongo-python-driver.git"]},
+        extra_groups={
+            "pymongo": ["git@github.com:mongodb/specifications.git"],
+            "django": ["git@github.com:mongodb-forks/django.git"],
+            "langchain": ["git@github.com:langchain-ai/langchain-mongodb.git"],
+        },
+    )
+
+    with patch("dbx_python_cli.commands.clone.repo.get_config", return_value=config):
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+
+            result = runner.invoke(app, ["clone", "-a", "--no-install"])
+            assert result.exit_code == 0
+
+            # Collect all git clone calls
+            clone_calls = [
+                c
+                for c in mock_run.call_args_list
+                if c.args and c.args[0][:2] == ["git", "clone"]
+            ]
+
+            # Should clone repos from all groups
+            cloned_urls = [c.args[0][2] for c in clone_calls]
+            assert any("specifications" in url for url in cloned_urls)
+            assert any("django" in url for url in cloned_urls)
+            assert any("langchain-mongodb" in url for url in cloned_urls)
+            assert any("mongo-python-driver" in url for url in cloned_urls)
+
+            # Verify all group directories were created
+            assert (tmp_path / "global").exists()
+            assert (tmp_path / "pymongo").exists()
+            assert (tmp_path / "django").exists()
+            assert (tmp_path / "langchain").exists()
+
+
+def test_clone_all_groups_with_global_repos(tmp_path):
+    """Test that -a clones all groups and global repos are added to non-global groups."""
+    config = _make_config(
+        tmp_path,
+        global_groups={"global": ["git@github.com:mongodb/mongo-python-driver.git"]},
+        extra_groups={
+            "pymongo": ["git@github.com:mongodb/specifications.git"],
+            "django": ["git@github.com:mongodb-forks/django.git"],
+        },
+    )
+
+    with patch("dbx_python_cli.commands.clone.repo.get_config", return_value=config):
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+
+            result = runner.invoke(app, ["clone", "-a", "--no-install"])
+            assert result.exit_code == 0
+
+            clone_calls = [
+                c
+                for c in mock_run.call_args_list
+                if c.args and c.args[0][:2] == ["git", "clone"]
+            ]
+
+            # mongo-python-driver should be cloned into global, pymongo, and django
+            mpd_calls = [
+                c for c in clone_calls if "mongo-python-driver" in c.args[0][2]
+            ]
+            # Should be cloned once for global, once for pymongo, once for django
+            assert len(mpd_calls) == 3
+
+            # Check destination paths
+            dest_paths = [c.args[0][3] for c in mpd_calls]
+            assert any(str(tmp_path / "global") in p for p in dest_paths)
+            assert any(str(tmp_path / "pymongo") in p for p in dest_paths)
+            assert any(str(tmp_path / "django") in p for p in dest_paths)
+
+
+def test_clone_all_groups_empty_config(tmp_path):
+    """Test that -a with no groups in config shows an error."""
+    config = {
+        "repo": {
+            "base_dir": str(tmp_path),
+            "groups": {},
+        }
+    }
+
+    with patch("dbx_python_cli.commands.clone.repo.get_config", return_value=config):
+        result = runner.invoke(app, ["clone", "-a"])
+        assert result.exit_code != 0
+        output = result.stdout + (result.stderr or "")
+        assert "No groups found" in output

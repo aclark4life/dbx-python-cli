@@ -31,6 +31,11 @@ Clone repositories from predefined groups:
    # Clone django repositories
    dbx clone -g django
 
+   # Clone all groups from configuration
+   dbx clone -a
+   # or
+   dbx clone --all
+
 Fork-Based Workflow
 ~~~~~~~~~~~~~~~~~~~
 
@@ -94,6 +99,40 @@ With this configuration, you can simply run:
 
    # Or specify a different username
    dbx clone -g pymongo --fork-user different-user
+
+Clone All Groups
+~~~~~~~~~~~~~~~~
+
+You can clone all groups defined in your configuration at once using the ``-a`` or ``--all`` flag:
+
+.. code-block:: bash
+
+   # Clone all groups from configuration
+   dbx clone -a
+
+   # Clone all groups with fork workflow
+   dbx clone -a --fork-user aclark4life
+
+   # Clone all groups without automatic installation
+   dbx clone -a --no-install
+
+This will:
+
+1. Clone all repositories from every group defined in your configuration
+2. Create separate directories for each group under your ``base_dir``
+3. Automatically include global group repositories in each non-global group
+4. Optionally install dependencies if ``--no-install`` is not specified
+
+**Example:**
+
+If your configuration has groups ``global``, ``pymongo``, ``django``, and ``langchain``, running ``dbx clone -a`` will:
+
+- Clone ``global`` group repos into ``~/Developer/mongodb/global/``
+- Clone ``pymongo`` group repos (plus global repos) into ``~/Developer/mongodb/pymongo/``
+- Clone ``django`` group repos (plus global repos) into ``~/Developer/mongodb/django/``
+- Clone ``langchain`` group repos (plus global repos) into ``~/Developer/mongodb/langchain/``
+
+This is useful when setting up a new development environment or when you want to work with all configured repositories.
 
 Sync Fork with Upstream
 ~~~~~~~~~~~~~~~~~~~~~~~~
