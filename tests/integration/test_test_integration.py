@@ -70,8 +70,9 @@ repos = [
     )
 
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        mock_get_path.return_value = config_path
+        with patch.dict("os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}):
+            mock_get_path.return_value = config_path
 
-        result = runner.invoke(app, ["test", "test_repo"])
-        assert result.exit_code == 0
-        assert "Running pytest in" in result.stdout
+            result = runner.invoke(app, ["test", "test_repo"])
+            assert result.exit_code == 0
+            assert "Running pytest in" in result.stdout
