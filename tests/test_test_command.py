@@ -101,23 +101,26 @@ def test_test_runs_pytest_success(mock_config, temp_repos_dir):
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
-                mock_get_path.return_value = mock_config
-                mock_venv.return_value = ("python", "venv")
+                with patch.dict(
+                    "os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}
+                ):
+                    mock_get_path.return_value = mock_config
+                    mock_venv.return_value = ("python", "venv")
 
-                # Mock successful pytest run
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+                    # Mock successful pytest run
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["test", "mongo-python-driver"])
-                assert result.exit_code == 0
-                assert "Running pytest" in result.stdout
-                assert "Tests passed" in result.stdout
+                    result = runner.invoke(app, ["test", "mongo-python-driver"])
+                    assert result.exit_code == 0
+                    assert "Running pytest" in result.stdout
+                    assert "Tests passed" in result.stdout
 
-                # Verify pytest was called with correct arguments
-                mock_run.assert_called_once()
-                call_args = mock_run.call_args
-                assert call_args[0][0] == ["python", "-m", "pytest"]
+                    # Verify pytest was called with correct arguments
+                    mock_run.assert_called_once()
+                    call_args = mock_run.call_args
+                    assert call_args[0][0] == ["python", "-m", "pytest"]
                 assert "mongo-python-driver" in str(call_args[1]["cwd"])
 
 
@@ -126,19 +129,22 @@ def test_test_runs_pytest_failure(mock_config, temp_repos_dir):
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
-                mock_get_path.return_value = mock_config
-                mock_venv.return_value = ("python", "venv")
+                with patch.dict(
+                    "os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}
+                ):
+                    mock_get_path.return_value = mock_config
+                    mock_venv.return_value = ("python", "venv")
 
-                # Mock failed pytest run
-                mock_result = MagicMock()
-                mock_result.returncode = 1
-                mock_run.return_value = mock_result
+                    # Mock failed pytest run
+                    mock_result = MagicMock()
+                    mock_result.returncode = 1
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["test", "mongo-python-driver"])
-                assert result.exit_code == 1
-                assert "Running pytest" in result.stdout
-                output = result.stdout + result.stderr
-                assert "Tests failed" in output
+                    result = runner.invoke(app, ["test", "mongo-python-driver"])
+                    assert result.exit_code == 1
+                    assert "Running pytest" in result.stdout
+                    output = result.stdout + result.stderr
+                    assert "Tests failed" in output
 
 
 def test_test_with_custom_test_runner(tmp_path):
@@ -188,24 +194,27 @@ django = "tests/runtests.py"
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
-                mock_get_path.return_value = config_path
-                mock_venv.return_value = ("python", "venv")
+                with patch.dict(
+                    "os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}
+                ):
+                    mock_get_path.return_value = config_path
+                    mock_venv.return_value = ("python", "venv")
 
-                # Mock successful test run
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+                    # Mock successful test run
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["test", "-y", "django"])
-                assert result.exit_code == 0
-                assert "Running tests/runtests.py" in result.stdout
-                assert "Tests passed" in result.stdout
+                    result = runner.invoke(app, ["test", "-y", "django"])
+                    assert result.exit_code == 0
+                    assert "Running tests/runtests.py" in result.stdout
+                    assert "Tests passed" in result.stdout
 
-                # Verify custom test runner was called with injected --settings
-                mock_run.assert_called_once()
-                call_args = mock_run.call_args
-                assert "runtests.py" in call_args[0][0][1]
-                assert "--settings" in call_args[0][0]
+                    # Verify custom test runner was called with injected --settings
+                    mock_run.assert_called_once()
+                    call_args = mock_run.call_args
+                    assert "runtests.py" in call_args[0][0][1]
+                    assert "--settings" in call_args[0][0]
                 assert "django_test.settings.django_test" in call_args[0][0]
                 assert "django" in str(call_args[1]["cwd"])
 
@@ -261,22 +270,25 @@ def test_test_fallback_to_pytest_when_no_test_runner(mock_config, temp_repos_dir
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
-                mock_get_path.return_value = mock_config
-                mock_venv.return_value = ("python", "venv")
+                with patch.dict(
+                    "os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}
+                ):
+                    mock_get_path.return_value = mock_config
+                    mock_venv.return_value = ("python", "venv")
 
-                # Mock successful pytest run
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+                    # Mock successful pytest run
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["test", "django"])
-                assert result.exit_code == 0
-                assert "Running pytest" in result.stdout
+                    result = runner.invoke(app, ["test", "django"])
+                    assert result.exit_code == 0
+                    assert "Running pytest" in result.stdout
 
-                # Verify pytest was called (not custom runner)
-                mock_run.assert_called_once()
-                call_args = mock_run.call_args
-                assert call_args[0][0] == ["python", "-m", "pytest"]
+                    # Verify pytest was called (not custom runner)
+                    mock_run.assert_called_once()
+                    call_args = mock_run.call_args
+                    assert call_args[0][0] == ["python", "-m", "pytest"]
 
 
 def test_test_with_custom_test_runner_and_args(tmp_path):
@@ -326,29 +338,32 @@ django = "tests/runtests.py"
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
-                mock_get_path.return_value = config_path
-                mock_venv.return_value = ("python", "venv")
+                with patch.dict(
+                    "os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}
+                ):
+                    mock_get_path.return_value = config_path
+                    mock_venv.return_value = ("python", "venv")
 
-                # Mock successful test run
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+                    # Mock successful test run
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(
-                    app, ["test", "-y", "django", "--verbose", "--parallel"]
-                )
-                assert result.exit_code == 0
-                # --settings is prepended before user args
-                assert (
-                    "Running tests/runtests.py --settings django_test.settings.django_test --verbose --parallel"
-                    in result.stdout
-                )
+                    result = runner.invoke(
+                        app, ["test", "-y", "django", "--verbose", "--parallel"]
+                    )
+                    assert result.exit_code == 0
+                    # --settings is prepended before user args
+                    assert (
+                        "Running tests/runtests.py --settings django_test.settings.django_test --verbose --parallel"
+                        in result.stdout
+                    )
 
-                # Verify custom test runner was called with args
-                mock_run.assert_called_once()
-                call_args = mock_run.call_args
-                assert "runtests.py" in call_args[0][0][1]
-                assert "--settings" in call_args[0][0]
+                    # Verify custom test runner was called with args
+                    mock_run.assert_called_once()
+                    call_args = mock_run.call_args
+                    assert "runtests.py" in call_args[0][0][1]
+                    assert "--settings" in call_args[0][0]
                 assert "django_test.settings.django_test" in call_args[0][0]
                 assert "--verbose" in call_args[0][0]
                 assert "--parallel" in call_args[0][0]
@@ -400,27 +415,30 @@ django = "tests/runtests.py"
                 with patch(
                     "dbx_python_cli.commands.test.add_project"
                 ) as mock_add_project:
-                    mock_get_path.return_value = config_path
-                    mock_venv.return_value = ("python", "venv")
+                    with patch.dict(
+                        "os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}
+                    ):
+                        mock_get_path.return_value = config_path
+                        mock_venv.return_value = ("python", "venv")
 
-                    # Mock successful test run
-                    mock_result = MagicMock()
-                    mock_result.returncode = 0
-                    mock_run.return_value = mock_result
-                    mock_add_project.return_value = None  # success, no exception
+                        # Mock successful test run
+                        mock_result = MagicMock()
+                        mock_result.returncode = 0
+                        mock_run.return_value = mock_result
+                        mock_add_project.return_value = None  # success, no exception
 
-                    result = runner.invoke(app, ["test", "-y", "django"])
-                    assert result.exit_code == 0
+                        result = runner.invoke(app, ["test", "-y", "django"])
+                        assert result.exit_code == 0
 
-                    # Verify add_project was called to create the missing project
-                    mock_add_project.assert_called_once_with(
-                        "django_test",
-                        directory=None,
-                        base_dir=None,
-                        add_frontend=True,
-                        auto_install=True,
-                        python_path_override="python",
-                    )
+                        # Verify add_project was called to create the missing project
+                        mock_add_project.assert_called_once_with(
+                            "django_test",
+                            directory=None,
+                            base_dir=None,
+                            add_frontend=True,
+                            auto_install=True,
+                            python_path_override="python",
+                        )
                     assert "django_test project not found" in result.stdout
 
 
@@ -429,24 +447,33 @@ def test_test_with_pytest_and_args(mock_config, temp_repos_dir):
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
-                mock_get_path.return_value = mock_config
-                mock_venv.return_value = ("python", "venv")
+                with patch.dict(
+                    "os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}
+                ):
+                    mock_get_path.return_value = mock_config
+                    mock_venv.return_value = ("python", "venv")
 
-                # Mock successful pytest run
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+                    # Mock successful pytest run
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(
-                    app, ["test", "mongo-python-driver", "-x", "--tb=short"]
-                )
-                assert result.exit_code == 0
-                assert "Running pytest -x --tb=short" in result.stdout
+                    result = runner.invoke(
+                        app, ["test", "mongo-python-driver", "-x", "--tb=short"]
+                    )
+                    assert result.exit_code == 0
+                    assert "Running pytest -x --tb=short" in result.stdout
 
-                # Verify pytest was called with args
-                mock_run.assert_called_once()
-                call_args = mock_run.call_args
-                assert call_args[0][0] == ["python", "-m", "pytest", "-x", "--tb=short"]
+                    # Verify pytest was called with args
+                    mock_run.assert_called_once()
+                    call_args = mock_run.call_args
+                    assert call_args[0][0] == [
+                        "python",
+                        "-m",
+                        "pytest",
+                        "-x",
+                        "--tb=short",
+                    ]
 
 
 def test_test_env_vars(tmp_path, temp_repos_dir):
@@ -473,26 +500,29 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
-                mock_get_path.return_value = config_path
-                mock_venv.return_value = ("python", "venv")
+                with patch.dict(
+                    "os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}
+                ):
+                    mock_get_path.return_value = config_path
+                    mock_venv.return_value = ("python", "venv")
 
-                # Mock successful test run
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+                    # Mock successful test run
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["test", "mongo-python-driver"])
-                assert result.exit_code == 0
+                    result = runner.invoke(app, ["test", "mongo-python-driver"])
+                    assert result.exit_code == 0
 
-                # Verify subprocess.run was called with env containing DRIVERS_TOOLS
-                mock_run.assert_called_once()
-                call_args = mock_run.call_args
-                env = call_args[1]["env"]
-                assert "DRIVERS_TOOLS" in env
-                expected_path = str(
-                    Path(temp_repos_dir) / "pymongo" / "drivers-evergreen-tools"
-                )
-                assert env["DRIVERS_TOOLS"] == expected_path
+                    # Verify subprocess.run was called with env containing DRIVERS_TOOLS
+                    mock_run.assert_called_once()
+                    call_args = mock_run.call_args
+                    env = call_args[1]["env"]
+                    assert "DRIVERS_TOOLS" in env
+                    expected_path = str(
+                        Path(temp_repos_dir) / "pymongo" / "drivers-evergreen-tools"
+                    )
+                    assert env["DRIVERS_TOOLS"] == expected_path
 
 
 def test_test_with_multiple_env_vars(tmp_path, temp_repos_dir):
@@ -519,24 +549,27 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
-                mock_get_path.return_value = config_path
-                mock_venv.return_value = ("python", "venv")
+                with patch.dict(
+                    "os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}
+                ):
+                    mock_get_path.return_value = config_path
+                    mock_venv.return_value = ("python", "venv")
 
-                # Mock successful test run
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+                    # Mock successful test run
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(app, ["test", "mongo-python-driver"])
-                assert result.exit_code == 0
+                    result = runner.invoke(app, ["test", "mongo-python-driver"])
+                    assert result.exit_code == 0
 
-                # Verify subprocess.run was called with both env vars
-                mock_run.assert_called_once()
-                call_args = mock_run.call_args
-                env = call_args[1]["env"]
-                assert "DRIVERS_TOOLS" in env
-                assert "TEST_VAR" in env
-                assert env["TEST_VAR"] == "test_value"
+                    # Verify subprocess.run was called with both env vars
+                    mock_run.assert_called_once()
+                    call_args = mock_run.call_args
+                    env = call_args[1]["env"]
+                    assert "DRIVERS_TOOLS" in env
+                    assert "TEST_VAR" in env
+                    assert env["TEST_VAR"] == "test_value"
 
 
 def test_test_env_vars_verbose_output(tmp_path, temp_repos_dir):
@@ -563,17 +596,20 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
-                mock_get_path.return_value = config_path
-                mock_venv.return_value = ("python", "venv")
+                with patch.dict(
+                    "os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}
+                ):
+                    mock_get_path.return_value = config_path
+                    mock_venv.return_value = ("python", "venv")
 
-                # Mock successful test run
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_run.return_value = mock_result
+                    # Mock successful test run
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
 
-                result = runner.invoke(
-                    app, ["--verbose", "test", "mongo-python-driver"]
-                )
-                assert result.exit_code == 0
-                assert "Environment variables:" in result.stdout
-                assert "DRIVERS_TOOLS=" in result.stdout
+                    result = runner.invoke(
+                        app, ["--verbose", "test", "mongo-python-driver"]
+                    )
+                    assert result.exit_code == 0
+                    assert "Environment variables:" in result.stdout
+                    assert "DRIVERS_TOOLS=" in result.stdout
