@@ -515,18 +515,18 @@ def ensure_mongodb_runner(env: dict, config: dict) -> dict:
 
     typer.echo(f"⚠️  MONGODB_URI is not set. Checking for mongodb-runner ({edition})...")
 
-    # First check if mongodb-runner is already running
+    # First check if mongodb-runner is already running (use 'ls' command)
     try:
-        status_result = subprocess.run(
-            ["npx", "mongodb-runner", "status"],
+        ls_result = subprocess.run(
+            ["npx", "mongodb-runner", "ls"],
             capture_output=True,
             text=True,
             timeout=30,
         )
 
-        if status_result.returncode == 0:
-            # Extract MONGODB_URI from status output
-            stdout = status_result.stdout
+        if ls_result.returncode == 0 and ls_result.stdout.strip():
+            # Extract MONGODB_URI from ls output (first running instance)
+            stdout = ls_result.stdout
             uri_match = re.search(r"(mongodb://[^\s]+)", stdout)
             if uri_match:
                 mongodb_uri = uri_match.group(1)
@@ -561,16 +561,16 @@ def ensure_mongodb_runner(env: dict, config: dict) -> dict:
             typer.echo("no db running", err=True)
             raise typer.Exit(code=1)
 
-        # Get the status to find the URI
-        status_result = subprocess.run(
-            ["npx", "mongodb-runner", "status"],
+        # Get the list of running instances to find the URI
+        ls_result = subprocess.run(
+            ["npx", "mongodb-runner", "ls"],
             capture_output=True,
             text=True,
             timeout=30,
         )
 
-        if status_result.returncode == 0:
-            stdout = status_result.stdout
+        if ls_result.returncode == 0 and ls_result.stdout.strip():
+            stdout = ls_result.stdout
             uri_match = re.search(r"(mongodb://[^\s]+)", stdout)
             if uri_match:
                 mongodb_uri = uri_match.group(1)
