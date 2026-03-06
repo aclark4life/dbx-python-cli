@@ -106,7 +106,7 @@ def ensure_group_venv(
     group_dir: Path,
     group_name: str,
     verbose: bool = False,
-    python_version: str = "3.13",
+    python_version: str = None,
 ) -> bool:
     """
     Ensure a group-level virtual environment exists, creating one if needed.
@@ -115,7 +115,7 @@ def ensure_group_venv(
         group_dir: Path to the group directory
         group_name: Name of the group
         verbose: Whether to show verbose output
-        python_version: Python version to use (default: '3.13')
+        python_version: Python version to use (e.g., '3.13'), or None for system default
 
     Returns:
         True if venv exists or was created successfully, False otherwise
@@ -126,12 +126,16 @@ def ensure_group_venv(
         typer.echo(f"  🐍 Using existing venv: {venv_path}")
         return True
 
-    typer.echo(
-        f"  🐍 Creating virtual environment for group '{group_name}' (Python {python_version})..."
-    )
+    if python_version:
+        typer.echo(
+            f"  🐍 Creating virtual environment for group '{group_name}' (Python {python_version})..."
+        )
+    else:
+        typer.echo(f"  🐍 Creating virtual environment for group '{group_name}'...")
 
     venv_cmd = ["uv", "venv", str(venv_path), "--no-python-downloads"]
-    venv_cmd.extend(["--python", python_version])
+    if python_version:
+        venv_cmd.extend(["--python", python_version])
 
     if verbose:
         typer.echo(f"  [verbose] Running command: {' '.join(venv_cmd)}")
