@@ -256,7 +256,6 @@ def build_command(
 @app.callback(invoke_without_command=True)
 def docs_callback(
     ctx: typer.Context,
-    repo_name: str = typer.Argument(None, help="Repository name"),
 ):
     """Documentation commands for repositories.
 
@@ -277,22 +276,5 @@ def docs_callback(
     if ctx.invoked_subcommand is not None:
         return
 
-    # Handle subcommand names as special cases
-    if repo_name == "list":
-        _list_repos_with_docs(ctx)
-        return
-
-    if repo_name == "open":
-        # Open dbx docs (no repo specified)
-        typer.echo(f"📖 Opening dbx docs: {DBX_DOCS_URL}")
-        webbrowser.open(DBX_DOCS_URL)
-        return
-
-    if repo_name == "build":
-        typer.echo("❌ Error: Repository name is required for build", err=True)
-        typer.echo("\nUsage: dbx docs build <repo_name>")
-        raise typer.Exit(1)
-
-    # No args - show help
-    if not repo_name:
-        raise typer.Exit(0)
+    # No subcommand - show help (handled by no_args_is_help=True)
+    pass
