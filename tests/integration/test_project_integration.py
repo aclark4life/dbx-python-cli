@@ -477,7 +477,10 @@ MONGODB_URI = "mongodb://localhost:27017"
     (project_path / "manage.py").write_text("# manage.py")
 
     with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
-        with patch("dbx_python_cli.commands.project.get_venv_info") as mock_venv_info:
+        # Patch get_venv_info in project_utils (where get_django_python_path calls it)
+        with patch(
+            "dbx_python_cli.commands.project_utils.get_venv_info"
+        ) as mock_venv_info:
             with patch("dbx_python_cli.commands.project.subprocess.run") as mock_run:
                 mock_get_path.return_value = config_path
                 mock_venv_info.return_value = ("/usr/bin/python", "venv")

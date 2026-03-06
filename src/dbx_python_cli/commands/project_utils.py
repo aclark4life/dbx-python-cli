@@ -1,0 +1,253 @@
+"""Project management utilities.
+
+This module provides helper functions for Django project management,
+including project path resolution, venv detection with Django-specific
+fallback, and environment setup for Django commands.
+
+These utilities are used by `dbx project` commands.
+"""
+
+import os
+from pathlib import Path
+from typing import Optional
+
+import typer
+
+from dbx_python_cli.commands.mongodb import ensure_mongodb
+from dbx_python_cli.commands.repo_utils import get_base_dir, get_config
+from dbx_python_cli.commands.venv_utils import get_venv_info
+
+
+def get_newest_project(projects_dir: Path) -> tuple[str, Path]:
+    """
+    Get the newest project from the projects directory.
+
+    Returns:
+        tuple: (project_name, project_path)
+
+    Raises:
+        typer.Exit: If no projects are found
+    """
+    if not projects_dir.exists():
+        typer.echo(f"❌ Projects directory not found at {projects_dir}", err=True)
+        typer.echo("\nCreate a project using: dbx project add <name>")
+        raise typer.Exit(code=1)
+
+    # Find all projects (directories with pyproject.toml)
+    projects = []
+    for item in projects_dir.iterdir():
+        if item.is_dir() and (item / "pyproject.toml").exists():
+            projects.append(item)
+
+    if not projects:
+        typer.echo(f"❌ No projects found in {projects_dir}", err=True)
+        typer.echo("\nCreate a project using: dbx project add <name>")
+        raise typer.Exit(code=1)
+
+    # Sort by modification time (newest first)
+    projects.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    project_path = projects[0]
+    project_name = project_path.name
+
+    return project_name, project_path
+
+
+class ProjectContext:
+    """Container for resolved project information."""
+
+    def __init__(
+        self,
+        name: str,
+        project_path: Path,
+        base_dir: Optional[Path],
+        projects_dir: Optional[Path],
+    ):
+        self.name = name
+        self.project_path = project_path
+        self.base_dir = base_dir
+        self.projects_dir = projects_dir
+
+
+def resolve_project_path(
+    name: Optional[str],
+    directory: Optional[Path],
+    require_exists: bool = True,
+) -> ProjectContext:
+    """
+    Resolve project path from name and directory arguments.
+
+    This helper consolidates the common pattern of resolving a project's location
+    from CLI arguments, including the "newest project" fallback when no name is provided.
+
+    Args:
+        name: Project name (optional, will use newest project if None and directory is None)
+        directory: Custom directory where the project is located (optional)
+        require_exists: If True, raises typer.Exit if project doesn't exist
+
+    Returns:
+        ProjectContext with resolved name, project_path, base_dir, and projects_dir
+
+    Raises:
+        typer.Exit: If project name is required but not provided, or if project doesn't exist
+    """
+    base_dir = None
+    projects_dir = None
+
+    if directory is None:
+        # Use base_dir/projects/ as default
+        config = get_config()
+        base_dir = get_base_dir(config)
+        projects_dir = base_dir / "projects"
+
+        # If no name provided, find the newest project
+        if name is None:
+            name, project_path = get_newest_project(projects_dir)
+            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
+        else:
+            project_path = projects_dir / name
+    else:
+        if name is None:
+            typer.echo("❌ Project name is required when using --directory", err=True)
+            raise typer.Exit(code=1)
+        project_path = directory / name
+
+    if require_exists and not project_path.exists():
+        typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
+        raise typer.Exit(code=1)
+
+    return ProjectContext(name, project_path, base_dir, projects_dir)
+
+
+def get_django_python_path(
+    ctx: ProjectContext,
+    directory: Optional[Path],
+) -> tuple[str, str]:
+    """
+    Get the Python path for Django commands, with Django group venv fallback.
+
+    This helper consolidates the venv detection logic that checks:
+    1. project-level venv  (project_path/.venv)
+    2. group-level venv    (projects_dir/.venv OR directory/.venv)
+    3. django group venv   (base_dir/django/.venv) - for Django projects
+    4. base-level venv     (base_dir/.venv, only when using config path)
+    5. activated / PATH venv
+
+    Args:
+        ctx: ProjectContext from resolve_project_path
+        directory: The original directory argument from CLI
+
+    Returns:
+        tuple: (python_path, venv_type)
+
+    Raises:
+        typer.Exit: If no suitable venv is found
+    """
+    try:
+        if directory is None:
+            # First try the standard venv detection (project, projects group, base)
+            python_path, venv_type = get_venv_info(
+                ctx.project_path, ctx.projects_dir, base_path=ctx.base_dir
+            )
+
+            # If we fell back to an activated venv, check if django group venv exists
+            # and prefer that for Django projects
+            if venv_type == "venv" and ctx.base_dir is not None:
+                django_group_path = ctx.base_dir / "django"
+                if django_group_path.exists():
+                    django_venv_python = django_group_path / ".venv" / "bin" / "python"
+                    if django_venv_python.exists():
+                        python_path = str(django_venv_python)
+                        venv_type = "group"
+                        typer.echo(
+                            f"✅ Using Django group venv: {django_group_path}/.venv"
+                        )
+        else:
+            python_path, venv_type = get_venv_info(
+                ctx.project_path, ctx.project_path.parent, base_path=None
+            )
+    except typer.Exit:
+        raise
+
+    return python_path, venv_type
+
+
+def setup_django_command_env(
+    ctx: ProjectContext,
+    typer_ctx: typer.Context,
+    mongodb_uri: Optional[str] = None,
+    settings: Optional[str] = None,
+    include_dyld_fallback: bool = True,
+) -> dict:
+    """
+    Set up the environment for running Django commands.
+
+    This helper consolidates the common pattern of:
+    - Setting up MONGODB_URI (explicit or via ensure_mongodb)
+    - Setting library paths for libmongocrypt (Queryable Encryption)
+    - Setting DJANGO_SETTINGS_MODULE
+    - Setting PYTHONPATH
+
+    Args:
+        ctx: ProjectContext from resolve_project_path
+        typer_ctx: The typer Context for accessing CLI overrides
+        mongodb_uri: Optional explicit MongoDB URI (takes precedence)
+        settings: Optional settings module name (defaults to project name)
+        include_dyld_fallback: Whether to include DYLD_FALLBACK_LIBRARY_PATH
+
+    Returns:
+        dict: Environment dictionary ready for subprocess calls
+    """
+    env = os.environ.copy()
+
+    # Handle MongoDB URI: explicit flag takes precedence
+    if mongodb_uri:
+        typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
+        env["MONGODB_URI"] = mongodb_uri
+    else:
+        # Get CLI overrides from context
+        backend_override = (
+            typer_ctx.obj.get("mongodb_backend") if typer_ctx.obj else None
+        )
+        edition_override = (
+            typer_ctx.obj.get("mongodb_edition") if typer_ctx.obj else None
+        )
+
+        # Ensure MongoDB is available (starts mongodb-runner if needed)
+        env = ensure_mongodb(env, backend_override, edition_override)
+
+    # Check for default environment variables from config
+    config = get_config()
+    default_env = config.get("project", {}).get("default_env", {})
+
+    # Build list of library path variables to check
+    library_vars = [
+        "PYMONGOCRYPT_LIB",
+        "DYLD_LIBRARY_PATH",
+        "LD_LIBRARY_PATH",
+        "CRYPT_SHARED_LIB_PATH",
+    ]
+    if include_dyld_fallback:
+        library_vars.insert(2, "DYLD_FALLBACK_LIBRARY_PATH")
+
+    # Set library paths for libmongocrypt (Queryable Encryption support)
+    for var in library_vars:
+        if var not in env and var in default_env:
+            value = os.path.expanduser(default_env[var])
+            # For library file paths, check if the file exists
+            if var in ["PYMONGOCRYPT_LIB", "CRYPT_SHARED_LIB_PATH"]:
+                if Path(value).exists():
+                    env[var] = value
+                    typer.echo(f"🔧 Using {var} from config: {value}")
+                # Skip warning - user may not need QE
+            else:
+                # For library directory paths, set them even if directory doesn't exist yet
+                env[var] = value
+                typer.echo(f"🔧 Using {var} from config: {value}")
+
+    # Default to project_name.py settings if not specified
+    settings_module = settings if settings else ctx.name
+    env["DJANGO_SETTINGS_MODULE"] = f"{ctx.name}.settings.{settings_module}"
+    env["PYTHONPATH"] = str(ctx.project_path) + os.pathsep + env.get("PYTHONPATH", "")
+    typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
+
+    return env

@@ -2,7 +2,6 @@
 
 import os
 import random
-import re
 import shutil
 import subprocess
 import sys
@@ -16,692 +15,14 @@ try:
 except ImportError:
     import importlib_resources as resources
 
+from dbx_python_cli.commands.install import install_frontend_if_exists, install_package
+from dbx_python_cli.commands.project_utils import (
+    get_django_python_path,
+    resolve_project_path,
+    setup_django_command_env,
+)
 from dbx_python_cli.commands.repo_utils import get_base_dir, get_config
 from dbx_python_cli.commands.venv_utils import get_venv_info
-from dbx_python_cli.commands.install import install_package, install_frontend_if_exists
-
-# Global variable to track if we started mongodb-runner, docker, or atlas-local
-_mongodb_runner_started = False
-_docker_started = False
-_atlas_local_started = False
-
-
-def ensure_mongodb_docker(env: dict, config: dict) -> dict:
-    """
-    Start MongoDB using standard Docker images (community or enterprise).
-
-    Args:
-        env: Environment dictionary to update with MONGODB_URI
-        config: Configuration dictionary
-
-    Returns:
-        Updated environment dictionary with MONGODB_URI set
-
-    Raises:
-        typer.Exit: If Docker is not available or MongoDB fails to start
-    """
-    global _docker_started
-
-    # Get configuration
-    mongodb_config = config.get("project", {}).get("mongodb", {})
-    edition = mongodb_config.get("edition", "community")
-    docker_config = mongodb_config.get("docker", {})
-
-    # Determine image based on edition if not explicitly set
-    if "image" in docker_config:
-        image = docker_config["image"]
-    else:
-        if edition == "enterprise":
-            image = "mongodb/mongodb-enterprise-server"
-        else:
-            image = "mongodb/mongodb-community-server"
-
-    tag = docker_config.get("tag", "latest")
-    container_name = docker_config.get("container_name", "dbx-mongodb")
-    port = docker_config.get("port", 27017)
-    replset = docker_config.get("replset")
-    docker_options = docker_config.get("docker_options", [])
-
-    full_image = f"{image}:{tag}"
-    edition_label = "Enterprise" if edition == "enterprise" else "Community"
-    topology_label = "Replica Set" if replset else "Standalone"
-
-    typer.echo(
-        f"⚠️  MONGODB_URI is not set. Checking for Docker MongoDB ({edition_label}, {topology_label})..."
-    )
-
-    try:
-        # Check if docker is available
-        docker_check = subprocess.run(
-            ["which", "docker"],
-            capture_output=True,
-            text=True,
-        )
-        if docker_check.returncode != 0:
-            typer.echo(
-                "❌ docker is not available. Cannot use Docker MongoDB.", err=True
-            )
-            typer.echo(
-                "💡 Install Docker: https://docs.docker.com/get-docker/", err=True
-            )
-            typer.echo("no db running", err=True)
-            raise typer.Exit(code=1)
-
-        # Check if container is already running
-        ps_result = subprocess.run(
-            [
-                "docker",
-                "ps",
-                "--filter",
-                f"name={container_name}",
-                "--format",
-                "{{.Names}}",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-
-        if ps_result.returncode == 0 and container_name in ps_result.stdout:
-            # Container is running, check if it's healthy
-            mongodb_uri = f"mongodb://localhost:{port}"
-            if replset:
-                mongodb_uri += f"/?replicaSet={replset}"
-            env["MONGODB_URI"] = mongodb_uri
-            typer.echo(f"✅ Found running Docker MongoDB container: {container_name}")
-            typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
-            return env
-
-        # Check if container exists but is stopped
-        ps_all_result = subprocess.run(
-            [
-                "docker",
-                "ps",
-                "-a",
-                "--filter",
-                f"name={container_name}",
-                "--format",
-                "{{.Names}}",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-
-        if ps_all_result.returncode == 0 and container_name in ps_all_result.stdout:
-            # Container exists but is stopped, start it
-            typer.echo(
-                f"🚀 Starting existing Docker MongoDB container: {container_name}..."
-            )
-            start_result = subprocess.run(
-                ["docker", "start", container_name],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-
-            if start_result.returncode != 0:
-                typer.echo(
-                    f"❌ Failed to start Docker MongoDB container: {start_result.stderr}",
-                    err=True,
-                )
-                typer.echo("no db running", err=True)
-                raise typer.Exit(code=1)
-        else:
-            # No container exists, create and start a new one
-            typer.echo(
-                f"🚀 Starting new Docker MongoDB container with image: {full_image}..."
-            )
-
-            # Build docker run command
-            docker_cmd = [
-                "docker",
-                "run",
-                "-d",
-                "--name",
-                container_name,
-                "-p",
-                f"{port}:27017",
-            ]
-
-            # Add any additional docker options
-            docker_cmd.extend(docker_options)
-
-            # Add the image
-            docker_cmd.append(full_image)
-
-            # Add replica set configuration if specified
-            if replset:
-                docker_cmd.extend(["--replSet", replset])
-
-            run_result = subprocess.run(
-                docker_cmd,
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-
-            if run_result.returncode != 0:
-                typer.echo(
-                    f"❌ Failed to start Docker MongoDB: {run_result.stderr}", err=True
-                )
-                typer.echo("no db running", err=True)
-                raise typer.Exit(code=1)
-
-        # Wait a moment for MongoDB to start
-        import time
-
-        typer.echo("⏳ Waiting for MongoDB to start...")
-        time.sleep(5)
-
-        # If replica set is configured, initialize it
-        if replset:
-            typer.echo(f"⏳ Initializing replica set '{replset}'...")
-            init_result = subprocess.run(
-                [
-                    "docker",
-                    "exec",
-                    container_name,
-                    "mongosh",
-                    "--quiet",
-                    "--eval",
-                    f"rs.initiate({{_id: '{replset}', members: [{{_id: 0, host: 'localhost:27017'}}]}})",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-            if init_result.returncode != 0:
-                typer.echo(
-                    f"⚠️  Warning: Failed to initialize replica set: {init_result.stderr}",
-                    err=True,
-                )
-            else:
-                typer.echo(f"✅ Replica set '{replset}' initialized successfully")
-                # Wait a bit more for replica set to stabilize
-                time.sleep(3)
-
-        mongodb_uri = f"mongodb://localhost:{port}"
-        if replset:
-            mongodb_uri += f"/?replicaSet={replset}"
-
-        env["MONGODB_URI"] = mongodb_uri
-        _docker_started = True
-        typer.echo(
-            f"✅ Docker MongoDB {edition_label} ({topology_label}) started successfully"
-        )
-        typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
-        return env
-
-    except subprocess.TimeoutExpired:
-        typer.echo("❌ Docker command timed out", err=True)
-        typer.echo("no db running", err=True)
-        raise typer.Exit(code=1)
-    except FileNotFoundError:
-        typer.echo("❌ docker command not found. Cannot use Docker MongoDB.", err=True)
-        typer.echo("💡 Install Docker: https://docs.docker.com/get-docker/", err=True)
-        typer.echo("no db running", err=True)
-        raise typer.Exit(code=1)
-    except Exception as e:
-        typer.echo(f"❌ Failed to start Docker MongoDB: {e}", err=True)
-        typer.echo("no db running", err=True)
-        raise typer.Exit(code=1)
-
-
-def ensure_mongodb_atlas_local(env: dict, config: dict) -> dict:
-    """
-    Start MongoDB using Atlas Local Docker image.
-
-    Args:
-        env: Environment dictionary to update with MONGODB_URI
-        config: Configuration dictionary
-
-    Returns:
-        Updated environment dictionary with MONGODB_URI set
-
-    Raises:
-        typer.Exit: If Docker is not available or Atlas Local fails to start
-    """
-    global _atlas_local_started
-
-    # Get Atlas Local configuration
-    atlas_config = config.get("project", {}).get("mongodb", {}).get("atlas_local", {})
-    image = atlas_config.get("image", "mongodb/mongodb-atlas-local")
-    tag = atlas_config.get("tag", "latest")
-    container_name = atlas_config.get("container_name", "dbx-atlas-local")
-    port = atlas_config.get("port", 27017)
-    docker_options = atlas_config.get("docker_options", [])
-
-    full_image = f"{image}:{tag}"
-
-    typer.echo("⚠️  MONGODB_URI is not set. Checking for Atlas Local...")
-
-    try:
-        # Check if docker is available
-        docker_check = subprocess.run(
-            ["which", "docker"],
-            capture_output=True,
-            text=True,
-        )
-        if docker_check.returncode != 0:
-            typer.echo("❌ docker is not available. Cannot use Atlas Local.", err=True)
-            typer.echo(
-                "💡 Install Docker: https://docs.docker.com/get-docker/", err=True
-            )
-            typer.echo("no db running", err=True)
-            raise typer.Exit(code=1)
-
-        # Check if container is already running
-        ps_result = subprocess.run(
-            [
-                "docker",
-                "ps",
-                "--filter",
-                f"name={container_name}",
-                "--format",
-                "{{.Names}}",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-
-        if ps_result.returncode == 0 and container_name in ps_result.stdout:
-            # Container is running, check if it's healthy
-            health_result = subprocess.run(
-                [
-                    "docker",
-                    "inspect",
-                    "--format",
-                    "{{.State.Health.Status}}",
-                    container_name,
-                ],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-
-            health_status = (
-                health_result.stdout.strip()
-                if health_result.returncode == 0
-                else "unknown"
-            )
-
-            if health_status == "healthy":
-                # Atlas Local runs as a replica set with internal hostname
-                # Use directConnection=true to bypass replica set discovery
-                mongodb_uri = f"mongodb://localhost:{port}/?directConnection=true"
-                env["MONGODB_URI"] = mongodb_uri
-                typer.echo(f"✅ Found running Atlas Local container: {container_name}")
-                typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
-                return env
-            elif health_status == "starting":
-                typer.echo(
-                    "⏳ Atlas Local container is starting, waiting for healthy status..."
-                )
-                # Wait for container to become healthy (max 60 seconds)
-                for _ in range(30):
-                    import time
-
-                    time.sleep(2)
-                    health_result = subprocess.run(
-                        [
-                            "docker",
-                            "inspect",
-                            "--format",
-                            "{{.State.Health.Status}}",
-                            container_name,
-                        ],
-                        capture_output=True,
-                        text=True,
-                        timeout=10,
-                    )
-                    if (
-                        health_result.returncode == 0
-                        and health_result.stdout.strip() == "healthy"
-                    ):
-                        # Atlas Local runs as a replica set with internal hostname
-                        # Use directConnection=true to bypass replica set discovery
-                        mongodb_uri = (
-                            f"mongodb://localhost:{port}/?directConnection=true"
-                        )
-                        env["MONGODB_URI"] = mongodb_uri
-                        typer.echo("✅ Atlas Local container is now healthy")
-                        typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
-                        return env
-
-                typer.echo(
-                    "❌ Atlas Local container did not become healthy in time", err=True
-                )
-                typer.echo("no db running", err=True)
-                raise typer.Exit(code=1)
-
-        # Check if container exists but is stopped
-        ps_all_result = subprocess.run(
-            [
-                "docker",
-                "ps",
-                "-a",
-                "--filter",
-                f"name={container_name}",
-                "--format",
-                "{{.Names}}",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-
-        if ps_all_result.returncode == 0 and container_name in ps_all_result.stdout:
-            # Container exists but is stopped, start it
-            typer.echo(
-                f"🚀 Starting existing Atlas Local container: {container_name}..."
-            )
-            start_result = subprocess.run(
-                ["docker", "start", container_name],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-
-            if start_result.returncode != 0:
-                typer.echo(
-                    f"❌ Failed to start Atlas Local container: {start_result.stderr}",
-                    err=True,
-                )
-                typer.echo("no db running", err=True)
-                raise typer.Exit(code=1)
-        else:
-            # No container exists, create and start a new one
-            typer.echo(
-                f"🚀 Starting new Atlas Local container with image: {full_image}..."
-            )
-
-            # Build docker run command
-            docker_cmd = [
-                "docker",
-                "run",
-                "-d",
-                "--name",
-                container_name,
-                "-p",
-                f"{port}:27017",
-            ]
-
-            # Add any additional docker options
-            docker_cmd.extend(docker_options)
-
-            # Add the image
-            docker_cmd.append(full_image)
-
-            run_result = subprocess.run(
-                docker_cmd,
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-
-            if run_result.returncode != 0:
-                typer.echo(
-                    f"❌ Failed to start Atlas Local: {run_result.stderr}", err=True
-                )
-                typer.echo("no db running", err=True)
-                raise typer.Exit(code=1)
-
-        # Wait for container to become healthy
-        typer.echo("⏳ Waiting for Atlas Local to become healthy...")
-        for _ in range(60):  # Wait up to 2 minutes
-            import time
-
-            time.sleep(2)
-            health_result = subprocess.run(
-                [
-                    "docker",
-                    "inspect",
-                    "--format",
-                    "{{.State.Health.Status}}",
-                    container_name,
-                ],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            if (
-                health_result.returncode == 0
-                and health_result.stdout.strip() == "healthy"
-            ):
-                # Atlas Local runs as a replica set with internal hostname
-                # Use directConnection=true to bypass replica set discovery
-                mongodb_uri = f"mongodb://localhost:{port}/?directConnection=true"
-                env["MONGODB_URI"] = mongodb_uri
-                _atlas_local_started = True
-                typer.echo("✅ Atlas Local started successfully")
-                typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
-                return env
-
-        typer.echo("❌ Atlas Local did not become healthy in time", err=True)
-        typer.echo("💡 Check container logs: docker logs " + container_name, err=True)
-        typer.echo("no db running", err=True)
-        raise typer.Exit(code=1)
-
-    except subprocess.TimeoutExpired:
-        typer.echo("❌ Docker command timed out", err=True)
-        typer.echo("no db running", err=True)
-        raise typer.Exit(code=1)
-    except FileNotFoundError:
-        typer.echo("❌ docker command not found. Cannot use Atlas Local.", err=True)
-        typer.echo("💡 Install Docker: https://docs.docker.com/get-docker/", err=True)
-        typer.echo("no db running", err=True)
-        raise typer.Exit(code=1)
-    except Exception as e:
-        typer.echo(f"❌ Failed to start Atlas Local: {e}", err=True)
-        typer.echo("no db running", err=True)
-        raise typer.Exit(code=1)
-
-
-def ensure_mongodb_runner(env: dict, config: dict) -> dict:
-    """
-    Start MongoDB using mongodb-runner.
-
-    Args:
-        env: Environment dictionary to update with MONGODB_URI
-        config: Configuration dictionary
-
-    Returns:
-        Updated environment dictionary with MONGODB_URI set
-
-    Raises:
-        typer.Exit: If npx is not available or mongodb-runner fails to start
-    """
-    global _mongodb_runner_started
-
-    # Get configuration
-    mongodb_config = config.get("project", {}).get("mongodb", {})
-    edition = mongodb_config.get("edition", "community")
-    runner_config = mongodb_config.get("mongodb_runner", {})
-    topology = runner_config.get("topology", "standalone")
-    shards = runner_config.get("shards")
-    secondaries = runner_config.get("secondaries")
-    arbiters = runner_config.get("arbiters")
-    additional_options = runner_config.get("options", [])
-
-    edition_label = "Enterprise" if edition == "enterprise" else "Community"
-    topology_label = topology.capitalize()
-    typer.echo(
-        f"⚠️  MONGODB_URI is not set. Checking for mongodb-runner ({edition_label}, {topology_label})..."
-    )
-
-    try:
-        # Check if npx is available
-        npx_check = subprocess.run(
-            ["which", "npx"],
-            capture_output=True,
-            text=True,
-        )
-        if npx_check.returncode != 0:
-            typer.echo("❌ npx is not available. Cannot use mongodb-runner.", err=True)
-            typer.echo("no db running", err=True)
-            raise typer.Exit(code=1)
-
-        # Check if mongodb-runner is already running
-        ls_result = subprocess.run(
-            ["npx", "mongodb-runner", "ls"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-
-        if ls_result.returncode == 0 and ls_result.stdout.strip():
-            # Parse the first running instance's URI
-            uri_match = re.search(r"(mongodb://[^\s]+)", ls_result.stdout)
-            if uri_match:
-                mongodb_uri = uri_match.group(1).rstrip("/")
-                env["MONGODB_URI"] = mongodb_uri
-                typer.echo("✅ Found running mongodb-runner instance")
-                typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
-                return env
-
-        # No running instance, start a new one
-        typer.echo(
-            f"🚀 Starting MongoDB {edition_label} ({topology_label}) with mongodb-runner..."
-        )
-
-        # Build command with options
-        cmd = ["npx", "mongodb-runner", "start"]
-
-        # Add topology
-        if topology and topology != "standalone":
-            cmd.extend(["-t", topology])
-
-        # Add enterprise flag if needed
-        if edition == "enterprise":
-            cmd.append("--enterprise")
-
-        # Add topology-specific options
-        if shards is not None and topology == "sharded":
-            cmd.extend(["--shards", str(shards)])
-
-        if secondaries is not None and topology in ["replset", "sharded"]:
-            cmd.extend(["--secondaries", str(secondaries)])
-
-        if arbiters is not None and topology in ["replset", "sharded"]:
-            cmd.extend(["--arbiters", str(arbiters)])
-
-        # Add any additional options from config
-        cmd.extend(additional_options)
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=120,  # 2 minute timeout for download/start
-        )
-
-        if result.returncode != 0:
-            typer.echo(f"❌ mongodb-runner failed to start: {result.stderr}", err=True)
-            typer.echo("no db running", err=True)
-            raise typer.Exit(code=1)
-
-        # Parse the MongoDB URI from mongodb-runner output
-        # Output format includes "mongodb://127.0.0.1:PORT/" on multiple lines
-        mongodb_uri = None
-        output = result.stdout + result.stderr
-        # Look for mongodb:// URI in the output
-        uri_match = re.search(r"(mongodb://[^\s]+)", output)
-        if uri_match:
-            mongodb_uri = uri_match.group(1).rstrip("/")
-        else:
-            # Fallback to default if we can't parse the output
-            mongodb_uri = "mongodb://localhost:27017"
-            typer.echo(
-                "⚠️  Could not parse mongodb-runner output, using default URI",
-                err=True,
-            )
-
-        env["MONGODB_URI"] = mongodb_uri
-        _mongodb_runner_started = True
-        typer.echo("✅ MongoDB started successfully with mongodb-runner")
-        typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
-        return env
-
-    except subprocess.TimeoutExpired:
-        typer.echo("❌ mongodb-runner timed out", err=True)
-        typer.echo("no db running", err=True)
-        raise typer.Exit(code=1)
-    except FileNotFoundError:
-        typer.echo("❌ npx command not found. Cannot start mongodb-runner.", err=True)
-        typer.echo("no db running", err=True)
-        raise typer.Exit(code=1)
-    except Exception as e:
-        typer.echo(f"❌ Failed to start mongodb-runner: {e}", err=True)
-        typer.echo("no db running", err=True)
-        raise typer.Exit(code=1)
-
-
-def ensure_mongodb(
-    env: dict, backend_override: str = None, edition_override: str = None
-) -> dict:
-    """
-    Ensure MongoDB is available.
-
-    Checks for MONGODB_URI in the environment. If not set:
-    1. Check config for backend preference (mongodb-runner, docker, or atlas-local)
-    2. Try to start MongoDB using the configured backend
-    3. If backend fails, exit with "no db running"
-
-    Args:
-        env: Environment dictionary to update with MONGODB_URI
-        backend_override: Optional backend override from CLI flag
-        edition_override: Optional edition override from CLI flag
-
-    Returns:
-        Updated environment dictionary with MONGODB_URI set
-
-    Raises:
-        typer.Exit: If no MongoDB is available and configured backend fails
-    """
-    if "MONGODB_URI" in env and env["MONGODB_URI"]:
-        typer.echo(f"🔗 Using MONGODB_URI from environment: {env['MONGODB_URI']}")
-        return env
-
-    # Check for default MONGODB_URI in config
-    config = get_config()
-    default_env = config.get("project", {}).get("default_env", {})
-    default_uri = default_env.get("MONGODB_URI")
-
-    if default_uri:
-        typer.echo(f"🔗 Using default MongoDB URI from config: {default_uri}")
-        env["MONGODB_URI"] = default_uri
-        return env
-
-    # Apply CLI overrides to config
-    mongodb_config = config.get("project", {}).get("mongodb", {}).copy()
-
-    # Override backend if provided via CLI
-    if backend_override:
-        mongodb_config["backend"] = backend_override
-        typer.echo(f"🔧 Using backend from CLI: {backend_override}")
-
-    # Override edition if provided via CLI
-    if edition_override:
-        mongodb_config["edition"] = edition_override
-        typer.echo(f"🔧 Using edition from CLI: {edition_override}")
-
-    # Update config with overrides
-    config_with_overrides = config.copy()
-    if "project" not in config_with_overrides:
-        config_with_overrides["project"] = {}
-    config_with_overrides["project"]["mongodb"] = mongodb_config
-
-    # Check which backend to use
-    backend = mongodb_config.get("backend", "mongodb-runner")
-
-    if backend == "atlas-local":
-        return ensure_mongodb_atlas_local(env, config_with_overrides)
-    elif backend == "docker":
-        return ensure_mongodb_docker(env, config_with_overrides)
-    else:
-        return ensure_mongodb_runner(env, config_with_overrides)
 
 
 app = typer.Typer(
@@ -709,40 +30,6 @@ app = typer.Typer(
     context_settings={"help_option_names": ["-h", "--help"]},
     no_args_is_help=True,
 )
-
-
-def get_newest_project(projects_dir: Path) -> tuple[str, Path]:
-    """
-    Get the newest project from the projects directory.
-
-    Returns:
-        tuple: (project_name, project_path)
-
-    Raises:
-        typer.Exit: If no projects are found
-    """
-    if not projects_dir.exists():
-        typer.echo(f"❌ Projects directory not found at {projects_dir}", err=True)
-        typer.echo("\nCreate a project using: dbx project add <name>")
-        raise typer.Exit(code=1)
-
-    # Find all projects (directories with pyproject.toml)
-    projects = []
-    for item in projects_dir.iterdir():
-        if item.is_dir() and (item / "pyproject.toml").exists():
-            projects.append(item)
-
-    if not projects:
-        typer.echo(f"❌ No projects found in {projects_dir}", err=True)
-        typer.echo("\nCreate a project using: dbx project add <name>")
-        raise typer.Exit(code=1)
-
-    # Sort by modification time (newest first)
-    projects.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-    project_path = projects[0]
-    project_name = project_path.name
-
-    return project_name, project_path
 
 
 @app.callback(invoke_without_command=True)
@@ -1249,34 +536,20 @@ def remove_project(
         dbx project remove                # Remove newest project
         dbx project remove myproject      # Remove specific project
     """
-    # Determine project directory
-    if directory is None:
-        # Use base_dir/projects/ as default
-        config = get_config()
-        base_dir = get_base_dir(config)
-        projects_dir = base_dir / "projects"
+    # Resolve project path (don't require exists - we check manually for better error message)
+    proj = resolve_project_path(name, directory, require_exists=False)
 
-        # If no name provided, find the newest project
-        if name is None:
-            name, target = get_newest_project(projects_dir)
-            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
-        else:
-            target = projects_dir / name
-    else:
-        if name is None:
-            typer.echo("❌ Project name is required when using --directory", err=True)
-            raise typer.Exit(code=1)
-        target = directory / name
-
-    if not target.exists() or not target.is_dir():
-        typer.echo(f"❌ Project {name} does not exist at {target}.", err=True)
+    if not proj.project_path.exists() or not proj.project_path.is_dir():
+        typer.echo(
+            f"❌ Project {proj.name} does not exist at {proj.project_path}.", err=True
+        )
         return
 
     # Try to uninstall the package from the current environment before
     # removing the project directory. Failures here are non-fatal so that
     # filesystem cleanup still proceeds.
-    uninstall_cmd = [sys.executable, "-m", "pip", "uninstall", "-y", name]
-    typer.echo(f"📦 Uninstalling project package '{name}' with pip")
+    uninstall_cmd = [sys.executable, "-m", "pip", "uninstall", "-y", proj.name]
+    typer.echo(f"📦 Uninstalling project package '{proj.name}' with pip")
     try:
         result = subprocess.run(uninstall_cmd, check=False)
         if result.returncode != 0:
@@ -1292,25 +565,25 @@ def remove_project(
             err=True,
         )
 
-    shutil.rmtree(target)
-    typer.echo(f"🗑️ Removed project {name}")
+    shutil.rmtree(proj.project_path)
+    typer.echo(f"🗑️ Removed project {proj.name}")
 
     # If using default projects directory, check if it's now empty and remove it
-    if directory is None:
+    if directory is None and proj.projects_dir is not None:
         # Check if projects_dir is empty (no directories with pyproject.toml)
         remaining_projects = []
-        if projects_dir.exists():
-            for item in projects_dir.iterdir():
+        if proj.projects_dir.exists():
+            for item in proj.projects_dir.iterdir():
                 if item.is_dir() and (item / "pyproject.toml").exists():
                     remaining_projects.append(item)
 
         # If no projects remain, remove the projects directory
-        if not remaining_projects and projects_dir.exists():
+        if not remaining_projects and proj.projects_dir.exists():
             # Check if directory is completely empty or only has hidden files
-            all_items = list(projects_dir.iterdir())
+            all_items = list(proj.projects_dir.iterdir())
             if not all_items:
-                shutil.rmtree(projects_dir)
-                typer.echo(f"🗑️ Removed empty projects directory: {projects_dir}")
+                shutil.rmtree(proj.projects_dir)
+                typer.echo(f"🗑️ Removed empty projects directory: {proj.projects_dir}")
 
 
 @app.command("run")
@@ -1354,80 +627,19 @@ def run_project(
         dbx project run myproject --settings base
         dbx project run myproject -s qe --port 8080
     """
-    import os
     import signal
 
-    # Determine project directory
-    # Initialise here so they are in scope for the venv detection below
-    base_dir = None
-    projects_dir = None
-
-    if directory is None:
-        # Use base_dir/projects/ as default
-        config = get_config()
-        base_dir = get_base_dir(config)
-        projects_dir = base_dir / "projects"
-
-        # If no name provided, find the newest project
-        if name is None:
-            name, project_path = get_newest_project(projects_dir)
-            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
-        else:
-            project_path = projects_dir / name
-    else:
-        if name is None:
-            typer.echo("❌ Project name is required when using --directory", err=True)
-            raise typer.Exit(code=1)
-        project_path = directory / name
-
-    if not project_path.exists():
-        typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
-        raise typer.Exit(code=1)
-
-    # Detect the project venv so we use the right Python for manage.py.
-    # For Django projects, we need to check the django group venv as well.
-    # Priority order:
-    #   1. project-level venv  (project_path/.venv)
-    #   2. group-level venv    (projects_dir/.venv  OR  directory/.venv)
-    #   3. django group venv   (base_dir/django/.venv) - for Django projects
-    #   4. base-level venv     (base_dir/.venv, only when using config path)
-    #   5. activated / PATH venv
-    python_path = None
-    venv_type = None
-
-    try:
-        if directory is None:
-            # First try the standard venv detection (project, projects group, base)
-            python_path, venv_type = get_venv_info(
-                project_path, projects_dir, base_path=base_dir
-            )
-
-            # If we fell back to an activated venv, check if django group venv exists
-            # and prefer that for Django projects
-            if venv_type == "venv":
-                django_group_path = base_dir / "django"
-                if django_group_path.exists():
-                    django_venv_python = django_group_path / ".venv" / "bin" / "python"
-                    if django_venv_python.exists():
-                        python_path = str(django_venv_python)
-                        venv_type = "group"
-                        typer.echo(
-                            f"✅ Using Django group venv: {django_group_path}/.venv"
-                        )
-        else:
-            python_path, venv_type = get_venv_info(
-                project_path, project_path.parent, base_path=None
-            )
-    except typer.Exit:
-        raise
+    # Resolve project path and get venv
+    proj = resolve_project_path(name, directory)
+    python_path, venv_type = get_django_python_path(proj, directory)
 
     # Check if the project is installed in the venv
     # This is important when using the Django group venv
-    pyproject_path = project_path / "pyproject.toml"
+    pyproject_path = proj.project_path / "pyproject.toml"
     if pyproject_path.exists():
         # Check if the project is installed by trying to import it
         # We need to clear PYTHONPATH and run from a different directory to check actual installation
-        module_name = name.replace("-", "_")
+        module_name = proj.name.replace("-", "_")
         check_env = os.environ.copy()
         check_env.pop(
             "PYTHONPATH", None
@@ -1444,9 +656,9 @@ def run_project(
 
         if result.returncode != 0:
             # Project not installed, install it
-            typer.echo(f"📦 Installing project dependencies for '{name}'...")
+            typer.echo(f"📦 Installing project dependencies for '{proj.name}'...")
             install_result = install_package(
-                project_path,
+                proj.project_path,
                 python_path,
                 install_dir=None,
                 extras=None,
@@ -1455,56 +667,18 @@ def run_project(
             )
             if install_result != "success":
                 typer.echo(
-                    f"⚠️  Warning: Failed to install project '{name}'. Some dependencies may be missing.",
+                    f"⚠️  Warning: Failed to install project '{proj.name}'. Some dependencies may be missing.",
                     err=True,
                 )
 
     # Check if frontend exists
-    frontend_path = project_path / "frontend"
+    frontend_path = proj.project_path / "frontend"
     has_frontend = frontend_path.exists() and (frontend_path / "package.json").exists()
 
-    typer.echo(f"🚀 Running project '{name}' on http://{host}:{port}")
+    typer.echo(f"🚀 Running project '{proj.name}' on http://{host}:{port}")
 
     # Set up environment
-    env = os.environ.copy()
-
-    # Get CLI overrides from context
-    backend_override = ctx.obj.get("mongodb_backend") if ctx.obj else None
-    edition_override = ctx.obj.get("mongodb_edition") if ctx.obj else None
-
-    # Ensure MongoDB is available (starts mongodb-runner if needed)
-    env = ensure_mongodb(env, backend_override, edition_override)
-
-    # Check for default environment variables from config
-    config = get_config()
-    default_env = config.get("project", {}).get("default_env", {})
-
-    # Set library paths for libmongocrypt (Queryable Encryption support)
-    for var in [
-        "PYMONGOCRYPT_LIB",
-        "DYLD_LIBRARY_PATH",
-        "DYLD_FALLBACK_LIBRARY_PATH",
-        "LD_LIBRARY_PATH",
-        "CRYPT_SHARED_LIB_PATH",
-    ]:
-        if var not in env and var in default_env:
-            value = os.path.expanduser(default_env[var])
-            # For library file paths, check if the file exists
-            if var in ["PYMONGOCRYPT_LIB", "CRYPT_SHARED_LIB_PATH"]:
-                if Path(value).exists():
-                    env[var] = value
-                    typer.echo(f"🔧 Using {var} from config: {value}")
-                # Skip warning - user may not need QE
-            else:
-                # For library directory paths, set them even if directory doesn't exist yet
-                env[var] = value
-                typer.echo(f"🔧 Using {var} from config: {value}")
-
-    # Default to project_name.py settings if not specified
-    settings_module = settings if settings else name
-    env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
-    env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
-    typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
+    env = setup_django_command_env(proj, ctx, settings=settings)
 
     # Prepend venv bin dir to PATH so the correct manage.py / Django runtime is used
     venv_bin = str(Path(python_path).parent)
@@ -1514,7 +688,7 @@ def run_project(
         # Ensure frontend is installed
         typer.echo("📦 Checking frontend dependencies...")
         try:
-            _install_npm(name, directory=project_path.parent)
+            _install_npm(proj.name, directory=proj.project_path.parent)
         except Exception as e:
             typer.echo(f"⚠️  Frontend installation check failed: {e}", err=True)
             # Continue anyway - frontend might already be installed
@@ -1540,7 +714,7 @@ def run_project(
             typer.echo("🌐 Starting Django development server...")
             subprocess.run(
                 [python_path, "manage.py", "runserver", f"{host}:{port}"],
-                cwd=project_path,
+                cwd=proj.project_path,
                 env=env,
                 check=True,
             )
@@ -1556,7 +730,7 @@ def run_project(
             typer.echo("🌐 Starting Django development server...")
             subprocess.run(
                 [python_path, "manage.py", "runserver", f"{host}:{port}"],
-                cwd=project_path,
+                cwd=proj.project_path,
                 env=env,
                 check=True,
             )
@@ -1632,119 +806,17 @@ def manage(
         dbx project manage myproject --settings base shell
         dbx project manage myproject migrate --database default
     """
-    import os
-
     if args is None:
         args = []
 
-    # Determine project directory
-    # Initialise here so they are in scope for the venv detection below
-    base_dir = None
-    projects_dir = None
-
-    if directory is None:
-        config = get_config()
-        base_dir = get_base_dir(config)
-        projects_dir = base_dir / "projects"
-
-        # If no name provided, find the newest project
-        if name is None:
-            name, project_path = get_newest_project(projects_dir)
-            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
-        else:
-            project_path = projects_dir / name
-    else:
-        if name is None:
-            typer.echo("❌ Project name is required when using --directory", err=True)
-            raise typer.Exit(code=1)
-        project_path = directory / name
-
-    if not project_path.exists():
-        typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
-        raise typer.Exit(code=1)
-
-    # Detect the project venv so we use the right Python for django-admin.
-    # For Django projects, we need to check the django group venv as well.
-    # Priority order:
-    #   1. project-level venv  (project_path/.venv)
-    #   2. group-level venv    (projects_dir/.venv  OR  directory/.venv)
-    #   3. django group venv   (base_dir/django/.venv) - for Django projects
-    #   4. base-level venv     (base_dir/.venv, only when using config path)
-    #   5. activated / PATH venv
-    python_path = None
-    venv_type = None
-
-    try:
-        if directory is None:
-            # First try the standard venv detection (project, projects group, base)
-            python_path, venv_type = get_venv_info(
-                project_path, projects_dir, base_path=base_dir
-            )
-
-            # If we fell back to an activated venv, check if django group venv exists
-            # and prefer that for Django projects
-            if venv_type == "venv":
-                django_group_path = base_dir / "django"
-                if django_group_path.exists():
-                    django_venv_python = django_group_path / ".venv" / "bin" / "python"
-                    if django_venv_python.exists():
-                        python_path = str(django_venv_python)
-                        venv_type = "group"
-                        typer.echo(
-                            f"✅ Using Django group venv: {django_group_path}/.venv"
-                        )
-        else:
-            python_path, venv_type = get_venv_info(
-                project_path, project_path.parent, base_path=None
-            )
-    except typer.Exit:
-        raise
+    # Resolve project path and get venv
+    proj = resolve_project_path(name, directory)
+    python_path, venv_type = get_django_python_path(proj, directory)
 
     # Set up environment
-    env = os.environ.copy()
-
-    # Handle MongoDB URI: explicit flag takes precedence
-    if mongodb_uri:
-        typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
-        env["MONGODB_URI"] = mongodb_uri
-    else:
-        # Get CLI overrides from context
-        backend_override = ctx.obj.get("mongodb_backend") if ctx.obj else None
-        edition_override = ctx.obj.get("mongodb_edition") if ctx.obj else None
-
-        # Ensure MongoDB is available (starts mongodb-runner if needed)
-        env = ensure_mongodb(env, backend_override, edition_override)
-
-    # Check for default environment variables from config
-    config = get_config()
-    default_env = config.get("project", {}).get("default_env", {})
-
-    # Set library paths for libmongocrypt (Queryable Encryption support)
-    for var in [
-        "PYMONGOCRYPT_LIB",
-        "DYLD_LIBRARY_PATH",
-        "DYLD_FALLBACK_LIBRARY_PATH",
-        "LD_LIBRARY_PATH",
-        "CRYPT_SHARED_LIB_PATH",
-    ]:
-        if var not in env and var in default_env:
-            value = os.path.expanduser(default_env[var])
-            # For library file paths, check if the file exists
-            if var in ["PYMONGOCRYPT_LIB", "CRYPT_SHARED_LIB_PATH"]:
-                if Path(value).exists():
-                    env[var] = value
-                    typer.echo(f"🔧 Using {var} from config: {value}")
-                # Skip warning - user may not need QE
-            else:
-                # For library directory paths, set them even if directory doesn't exist yet
-                env[var] = value
-                typer.echo(f"🔧 Using {var} from config: {value}")
-
-    # Default to project_name.py settings if not specified
-    settings_module = settings if settings else name
-    env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
-    env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
-    typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
+    env = setup_django_command_env(
+        proj, ctx, mongodb_uri=mongodb_uri, settings=settings
+    )
 
     # Build command - use python -m django to ensure we use the correct venv's Django
     cmd_args = []
@@ -1760,7 +832,7 @@ def manage(
     try:
         subprocess.run(
             [python_path, "-m", "django", *cmd_args],
-            cwd=project_path.parent,
+            cwd=proj.project_path.parent,
             env=env,
             check=True,
         )
@@ -1822,122 +894,24 @@ def create_superuser(
         dbx project su myproject -u myuser -p mypass
         dbx project su myproject -e admin@example.com
     """
-    import os
-
     if not email:
         email = os.getenv("PROJECT_EMAIL", "admin@example.com")
 
-    # Determine project directory
-    # Initialise here so they are in scope for the venv detection below
-    base_dir = None
-    projects_dir = None
+    # Resolve project path and get venv
+    proj = resolve_project_path(name, directory)
+    python_path, venv_type = get_django_python_path(proj, directory)
 
-    if directory is None:
-        config = get_config()
-        base_dir = get_base_dir(config)
-        projects_dir = base_dir / "projects"
+    typer.echo(f"👑 Creating Django superuser '{username}' for project '{proj.name}'")
 
-        # If no name provided, find the newest project
-        if name is None:
-            name, project_path = get_newest_project(projects_dir)
-            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
-        else:
-            project_path = projects_dir / name
-    else:
-        if name is None:
-            typer.echo("❌ Project name is required when using --directory", err=True)
-            raise typer.Exit(code=1)
-        project_path = directory / name
-
-    typer.echo(f"👑 Creating Django superuser '{username}' for project '{name}'")
-
-    if not project_path.exists():
-        typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
-        raise typer.Exit(code=1)
-
-    # Detect the project venv so we use the right Python for django-admin.
-    # For Django projects, we need to check the django group venv as well.
-    # Priority order:
-    #   1. project-level venv  (project_path/.venv)
-    #   2. group-level venv    (projects_dir/.venv  OR  directory/.venv)
-    #   3. django group venv   (base_dir/django/.venv) - for Django projects
-    #   4. base-level venv     (base_dir/.venv, only when using config path)
-    #   5. activated / PATH venv
-    python_path = None
-    venv_type = None
-
-    try:
-        if directory is None:
-            # First try the standard venv detection (project, projects group, base)
-            python_path, venv_type = get_venv_info(
-                project_path, projects_dir, base_path=base_dir
-            )
-
-            # If we fell back to an activated venv, check if django group venv exists
-            # and prefer that for Django projects
-            if venv_type == "venv":
-                django_group_path = base_dir / "django"
-                if django_group_path.exists():
-                    django_venv_python = django_group_path / ".venv" / "bin" / "python"
-                    if django_venv_python.exists():
-                        python_path = str(django_venv_python)
-                        venv_type = "group"
-                        typer.echo(
-                            f"✅ Using Django group venv: {django_group_path}/.venv"
-                        )
-        else:
-            python_path, venv_type = get_venv_info(
-                project_path, project_path.parent, base_path=None
-            )
-    except typer.Exit:
-        raise
-
-    # Set up environment
-    env = os.environ.copy()
-
-    # Handle MongoDB URI: explicit flag takes precedence
-    if mongodb_uri:
-        typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
-        env["MONGODB_URI"] = mongodb_uri
-    else:
-        # Get CLI overrides from context
-        backend_override = ctx.obj.get("mongodb_backend") if ctx.obj else None
-        edition_override = ctx.obj.get("mongodb_edition") if ctx.obj else None
-
-        # Ensure MongoDB is available (starts mongodb-runner if needed)
-        env = ensure_mongodb(env, backend_override, edition_override)
-
-    # Check for default environment variables from config
-    config = get_config()
-    default_env = config.get("project", {}).get("default_env", {})
-
-    # Set library paths for libmongocrypt (Queryable Encryption support)
-    for var in [
-        "PYMONGOCRYPT_LIB",
-        "DYLD_LIBRARY_PATH",
-        "LD_LIBRARY_PATH",
-        "CRYPT_SHARED_LIB_PATH",
-    ]:
-        if var not in env and var in default_env:
-            value = os.path.expanduser(default_env[var])
-            # For library file paths, check if the file exists
-            if var in ["PYMONGOCRYPT_LIB", "CRYPT_SHARED_LIB_PATH"]:
-                if Path(value).exists():
-                    env[var] = value
-                    typer.echo(f"🔧 Using {var} from config: {value}")
-                # Skip warning - user may not need QE
-            else:
-                # For library directory paths, set them even if directory doesn't exist yet
-                env[var] = value
-                typer.echo(f"🔧 Using {var} from config: {value}")
-
+    # Set up environment (without DYLD_FALLBACK_LIBRARY_PATH for su command)
+    env = setup_django_command_env(
+        proj,
+        ctx,
+        mongodb_uri=mongodb_uri,
+        settings=settings,
+        include_dyld_fallback=False,
+    )
     env["DJANGO_SUPERUSER_PASSWORD"] = password
-
-    # Default to project_name.py settings if not specified
-    settings_module = settings if settings else name
-    env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
-    env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
-    typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
 
     # Use python -m django to ensure we use the correct venv's Django
     try:
@@ -1951,7 +925,7 @@ def create_superuser(
                 f"--username={username}",
                 f"--email={email}",
             ],
-            cwd=project_path.parent,
+            cwd=proj.project_path.parent,
             env=env,
             check=True,
         )
@@ -2006,115 +980,18 @@ def migrate_project(
         dbx project migrate myproject --settings base
         dbx project migrate myproject --database encrypted
     """
-    import os
+    # Resolve project path and get venv
+    proj = resolve_project_path(name, directory)
+    python_path, venv_type = get_django_python_path(proj, directory)
 
-    # Determine project directory
-    # Initialise here so they are in scope for the venv detection below
-    base_dir = None
-    projects_dir = None
-
-    if directory is None:
-        config = get_config()
-        base_dir = get_base_dir(config)
-        projects_dir = base_dir / "projects"
-
-        # If no name provided, find the newest project
-        if name is None:
-            name, project_path = get_newest_project(projects_dir)
-            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
-        else:
-            project_path = projects_dir / name
-    else:
-        if name is None:
-            typer.echo("❌ Project name is required when using --directory", err=True)
-            raise typer.Exit(code=1)
-        project_path = directory / name
-
-    if not project_path.exists():
-        typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
-        raise typer.Exit(code=1)
-
-    # Detect the project venv so we use the right Python for django-admin.
-    # For Django projects, we need to check the django group venv as well.
-    # Priority order:
-    #   1. project-level venv  (project_path/.venv)
-    #   2. group-level venv    (projects_dir/.venv  OR  directory/.venv)
-    #   3. django group venv   (base_dir/django/.venv) - for Django projects
-    #   4. base-level venv     (base_dir/.venv, only when using config path)
-    #   5. activated / PATH venv
-    python_path = None
-    venv_type = None
-
-    try:
-        if directory is None:
-            # First try the standard venv detection (project, projects group, base)
-            python_path, venv_type = get_venv_info(
-                project_path, projects_dir, base_path=base_dir
-            )
-
-            # If we fell back to an activated venv, check if django group venv exists
-            # and prefer that for Django projects
-            if venv_type == "venv":
-                django_group_path = base_dir / "django"
-                if django_group_path.exists():
-                    django_venv_python = django_group_path / ".venv" / "bin" / "python"
-                    if django_venv_python.exists():
-                        python_path = str(django_venv_python)
-                        venv_type = "group"
-                        typer.echo(
-                            f"✅ Using Django group venv: {django_group_path}/.venv"
-                        )
-        else:
-            python_path, venv_type = get_venv_info(
-                project_path, project_path.parent, base_path=None
-            )
-    except typer.Exit:
-        raise
-
-    # Set up environment
-    env = os.environ.copy()
-
-    # Handle MongoDB URI: explicit flag takes precedence
-    if mongodb_uri:
-        typer.echo(f"🔗 Using MongoDB URI: {mongodb_uri}")
-        env["MONGODB_URI"] = mongodb_uri
-    else:
-        # Get CLI overrides from context
-        backend_override = ctx.obj.get("mongodb_backend") if ctx.obj else None
-        edition_override = ctx.obj.get("mongodb_edition") if ctx.obj else None
-
-        # Ensure MongoDB is available (starts mongodb-runner if needed)
-        env = ensure_mongodb(env, backend_override, edition_override)
-
-    # Check for default environment variables from config
-    config = get_config()
-    default_env = config.get("project", {}).get("default_env", {})
-
-    # Set library paths for libmongocrypt (Queryable Encryption support)
-    for var in [
-        "PYMONGOCRYPT_LIB",
-        "DYLD_LIBRARY_PATH",
-        "LD_LIBRARY_PATH",
-        "CRYPT_SHARED_LIB_PATH",
-    ]:
-        if var not in env and var in default_env:
-            value = os.path.expanduser(default_env[var])
-            # For library file paths, check if the file exists
-            if var in ["PYMONGOCRYPT_LIB", "CRYPT_SHARED_LIB_PATH"]:
-                if Path(value).exists():
-                    env[var] = value
-                    typer.echo(f"🔧 Using {var} from config: {value}")
-                # Skip warning - user may not need QE
-            else:
-                # For library directory paths, set them even if directory doesn't exist yet
-                env[var] = value
-                typer.echo(f"🔧 Using {var} from config: {value}")
-
-    # Default to project_name.py settings if not specified
-    settings_module = settings if settings else name
-    env["DJANGO_SETTINGS_MODULE"] = f"{name}.settings.{settings_module}"
-    env["PYTHONPATH"] = str(project_path) + os.pathsep + env.get("PYTHONPATH", "")
-    typer.echo(f"🔧 Using DJANGO_SETTINGS_MODULE={env['DJANGO_SETTINGS_MODULE']}")
+    # Set up environment (without DYLD_FALLBACK_LIBRARY_PATH for migrate command)
+    env = setup_django_command_env(
+        proj,
+        ctx,
+        mongodb_uri=mongodb_uri,
+        settings=settings,
+        include_dyld_fallback=False,
+    )
 
     # Build migrate command - use python -m django to ensure we use the correct venv's Django
     cmd = [python_path, "-m", "django", "migrate"]
@@ -2122,12 +999,12 @@ def migrate_project(
         cmd.append(f"--database={database}")
         typer.echo(f"🗄️  Running migrations for database: {database}")
     else:
-        typer.echo(f"🗄️  Running migrations for project '{name}'")
+        typer.echo(f"🗄️  Running migrations for project '{proj.name}'")
 
     try:
         subprocess.run(
             cmd,
-            cwd=project_path.parent,
+            cwd=proj.project_path.parent,
             env=env,
             check=True,
         )
@@ -2176,36 +1053,19 @@ def edit_project(
         dbx project edit myproject -s qe      # Edit qe settings
         EDITOR=code dbx project edit          # Open with VS Code
     """
-    # Determine project directory
-    if directory is None:
-        config = get_config()
-        base_dir = get_base_dir(config)
-        projects_dir = base_dir / "projects"
-
-        # If no name provided, find the newest project
-        if name is None:
-            name, project_path = get_newest_project(projects_dir)
-            typer.echo(f"ℹ️  No project specified, using newest: '{name}'")
-        else:
-            project_path = projects_dir / name
-    else:
-        if name is None:
-            typer.echo("❌ Project name is required when using --directory", err=True)
-            raise typer.Exit(code=1)
-        project_path = directory / name
-
-    if not project_path.exists():
-        typer.echo(f"❌ Project '{name}' not found at {project_path}", err=True)
-        raise typer.Exit(code=1)
+    # Resolve project path
+    proj = resolve_project_path(name, directory)
 
     # Determine which settings file to edit
-    settings_module = settings if settings else name
-    settings_file = project_path / name / "settings" / f"{settings_module}.py"
+    settings_module = settings if settings else proj.name
+    settings_file = proj.project_path / proj.name / "settings" / f"{settings_module}.py"
 
     if not settings_file.exists():
         typer.echo(f"❌ Settings file not found: {settings_file}", err=True)
-        typer.echo(f"\nAvailable settings files in {project_path / name / 'settings'}:")
-        settings_dir = project_path / name / "settings"
+        typer.echo(
+            f"\nAvailable settings files in {proj.project_path / proj.name / 'settings'}:"
+        )
+        settings_dir = proj.project_path / proj.name / "settings"
         if settings_dir.exists():
             for file in settings_dir.glob("*.py"):
                 if file.name != "__init__.py":
