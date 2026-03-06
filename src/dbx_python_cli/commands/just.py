@@ -11,6 +11,7 @@ from dbx_python_cli.commands.repo_utils import (
     find_repo_by_name,
     get_base_dir,
     get_config,
+    get_global_groups,
     get_test_env_vars,
 )
 
@@ -46,9 +47,14 @@ def _list_repos_with_justfiles(ctx: typer.Context):
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
 
-    # Get all repos and filter for those with justfiles
+    # Get all repos and filter for those with justfiles, excluding global groups
     all_repos = find_all_repos(base_dir)
-    repos_with_justfiles = [repo for repo in all_repos if has_justfile(repo["path"])]
+    global_group_names = set(get_global_groups(config))
+    repos_with_justfiles = [
+        repo
+        for repo in all_repos
+        if has_justfile(repo["path"]) and repo["group"] not in global_group_names
+    ]
 
     if not repos_with_justfiles:
         typer.echo("No repositories with justfiles found.")
