@@ -94,9 +94,6 @@ Create and manage Django projects with MongoDB backend:
    # Create a superuser (defaults to newest project)
    dbx project su
 
-   # Run Django management commands (defaults to newest project)
-   dbx project manage shell
-
 .. note::
 
    **Convenience Feature**: Most project commands default to the newest project when no name is specified. This makes it faster to work with your current project without typing the name repeatedly.
