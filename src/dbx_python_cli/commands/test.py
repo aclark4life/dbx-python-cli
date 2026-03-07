@@ -338,7 +338,7 @@ def test_callback(
                         "django_test",
                         directory=None,
                         base_dir=None,
-                        add_frontend=False,
+                        add_frontend=True,
                         auto_install=False,
                     )
                 except typer.Exit as e:
