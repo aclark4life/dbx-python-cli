@@ -39,9 +39,6 @@ Install dbx-python-cli and get started in minutes:
    # Initialize configuration
    dbx config init
 
-   # Create virtual environment
-   dbx env init -g django
-
    # Clone repositories by group (installs automatically)
    dbx clone -g django
 
