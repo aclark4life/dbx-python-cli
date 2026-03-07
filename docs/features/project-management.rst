@@ -32,8 +32,8 @@ Commands that support this behavior:
 - ``dbx project run`` - Run the Django development server
 - ``dbx project remove`` - Remove a project
 - ``dbx project manage`` - Run Django management commands
-- ``dbx project su`` - Create a superuser
 - ``dbx project migrate`` - Run Django migrations
+- ``dbx project su`` - Create a superuser
 
 This feature is particularly useful during active development when you're frequently working with the same project.
 
