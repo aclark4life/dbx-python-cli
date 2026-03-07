@@ -17,7 +17,7 @@ from dbx_python_cli.commands.repo_utils import (
 DBX_DOCS_URL = "https://dbx-python-cli.readthedocs.io/"
 
 app = typer.Typer(
-    help="📖 Documentation commands",
+    help="Documentation commands",
     no_args_is_help=True,
     invoke_without_command=True,
     context_settings={"help_option_names": ["-h", "--help"]},

@@ -143,7 +143,7 @@ def install_frontend_if_exists(repo_path, verbose=False):
 
 
 app = typer.Typer(
-    help="📦 Install commands",
+    help="Install commands",
     context_settings={
         "help_option_names": ["-h", "--help"],
         "ignore_unknown_options": False,
