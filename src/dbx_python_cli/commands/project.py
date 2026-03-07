@@ -15,7 +15,10 @@ try:
 except ImportError:
     import importlib_resources as resources
 
-from dbx_python_cli.commands.install import install_frontend_if_exists, install_package
+from dbx_python_cli.commands.install import (
+    install_frontend_if_exists,
+    install_package,
+)
 from dbx_python_cli.commands.project_utils import (
     get_django_python_path,
     resolve_project_path,
@@ -76,6 +79,75 @@ def list_projects():
 
     if any((projects_dir / p / "frontend").exists() for p in projects):
         typer.echo("\n🎨 = has frontend")
+
+
+@app.command("install")
+def install_project(
+    name: str = typer.Argument(None, help="Project name (defaults to newest project)"),
+    directory: Path = typer.Option(
+        None,
+        "--directory",
+        "-d",
+        help="Custom directory where the project is located (defaults to base_dir/projects/)",
+    ),
+    extras: str = typer.Option(
+        None,
+        "--extras",
+        "-e",
+        help="Comma-separated extras to install (e.g., 'test,dev')",
+    ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Show verbose output",
+    ),
+):
+    """
+    Install a Django project's dependencies.
+
+    If no project name is provided, uses the most recently created project.
+
+    Examples::
+
+        dbx project install                    # Install newest project
+        dbx project install myproject          # Install specific project
+        dbx project install myproject -e test  # Install with extras
+    """
+    # Resolve project path
+    proj = resolve_project_path(name, directory)
+
+    # Get venv info
+    try:
+        python_path, venv_type = get_venv_info(
+            proj.project_path, proj.projects_dir, base_path=proj.base_dir
+        )
+    except typer.Exit:
+        raise
+
+    typer.echo(f"📦 Installing project '{proj.name}'...")
+    typer.echo(f"   Project path: {proj.project_path}")
+    typer.echo(f"   Using {venv_type} venv")
+
+    # Install the project
+    result = install_package(
+        proj.project_path,
+        python_path,
+        install_dir=None,
+        extras=extras,
+        groups=None,
+        verbose=verbose,
+    )
+
+    if result == "failed":
+        raise typer.Exit(1)
+    elif result == "skipped":
+        return
+
+    typer.echo(f"\n✅ Project '{proj.name}' installed successfully!")
+
+    # Check for frontend and install if present
+    install_frontend_if_exists(proj.project_path, verbose=verbose)
 
 
 # Constants for random name generation

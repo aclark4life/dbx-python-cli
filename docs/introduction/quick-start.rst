@@ -87,8 +87,8 @@ Create and manage Django projects with MongoDB backend:
    # Create a new project
    dbx project add myproject
 
-   # Install the project
-   dbx install myproject
+   # Install the project (defaults to newest project)
+   dbx project install
 
    # Run migrations (defaults to newest project)
    dbx project migrate
