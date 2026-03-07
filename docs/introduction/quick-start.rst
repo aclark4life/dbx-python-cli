@@ -38,7 +38,7 @@ Step 3: Install Dependencies
 
 .. tip::
 
-   The ``dbx clone`` command automatically runs ``dbx install`` after cloning, so you may not need to run this step manually.
+   The ``dbx clone`` command automatically runs ``dbx install`` after cloning, but you can also install repositories and repository groups manually.
 
 Install dependencies for a repository:
 
