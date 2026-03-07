@@ -21,25 +21,7 @@ The default configuration includes:
 
 You can edit this file to customize your setup.
 
-Step 2: Create a Virtual Environment
--------------------------------------
-
-Create a virtual environment for the group:
-
-.. code-block:: bash
-
-   # Create venv for django group
-   dbx env init -g django
-
-This creates a virtual environment at ``~/Developer/mongodb/django/.venv``.
-
-To specify a Python version:
-
-.. code-block:: bash
-
-   dbx env init -g django --python 3.11
-
-Step 3: Clone Repositories
+Step 2: Clone Repositories
 ---------------------------
 
 Clone a group of related repositories:
@@ -51,7 +33,7 @@ Clone a group of related repositories:
 
 This will clone all repositories in the django group to ``~/Developer/mongodb/django/``.
 
-Step 4: Install Dependencies
+Step 3: Install Dependencies
 -----------------------------
 
 Install dependencies for a repository:
@@ -71,7 +53,7 @@ To install with extras:
    # Install libmongocrypt (includes cmake build step for Queryable Encryption)
    dbx install libmongocrypt
 
-Step 5: Run Tests
+Step 4: Run Tests
 -----------------
 
 Run tests for a repository:
