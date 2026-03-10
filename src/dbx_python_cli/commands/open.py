@@ -1,5 +1,6 @@
 """Open command for opening repositories in a web browser."""
 
+import json
 import subprocess
 import webbrowser
 from pathlib import Path
@@ -52,7 +53,7 @@ def open_callback(
         base_dir = get_base_dir(config)
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}")
-            typer.echo(f"[verbose] Config: {config}\n")
+            typer.echo(f"[verbose] Config:\n{json.dumps(config, indent=4)}\n")
 
         # Handle group option
         if group:

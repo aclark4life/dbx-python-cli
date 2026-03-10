@@ -1,5 +1,6 @@
 """Test command for running pytest in repositories."""
 
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -96,7 +97,7 @@ def test_callback(
         base_dir = get_base_dir(config)
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}")
-            typer.echo(f"[verbose] Config: {config}\n")
+            typer.echo(f"[verbose] Config:\n{json.dumps(config, indent=4)}\n")
     except Exception as e:
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
