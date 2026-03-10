@@ -239,7 +239,13 @@ def show():
     # Collect all output into a buffer so we can paginate it
     buf = []
     buf.append(typer.style(f"📋 Configuration ({config_source})", bold=True))
-    buf.append(f"{key('Location:')} {active_config_path}\n")
+    buf.append(f"{key('Location:')} {active_config_path}")
+
+    # Show Python version
+    python_version = (
+        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    )
+    buf.append(f"{key('Python:')}   {val(python_version)}\n")
 
     # Load and display the config
     try:
@@ -284,6 +290,11 @@ def show():
                 for repo_url in repos:
                     repo_name = repo_url.split("/")[-1].replace(".git", "")
                     buf.append(f"      {dim('─')} {repo_name}")
+
+                # Python version for the group
+                python_version = group_config.get("python_version")
+                if python_version:
+                    buf.append(f"\n    {sub('Python version:')} {python_version}")
 
                 # Install directories
                 install_dirs = group_config.get("install_dirs", {})

@@ -93,6 +93,8 @@ mongo-python-driver = { DRIVERS_TOOLS = "{base_dir}/pymongo/drivers-evergreen-to
 mongo-python-driver = ["test"]
 
 [repo.groups.pymongo]
+# Python version for the group's virtual environment
+python_version = "3.13"
 repos = [
     "git@github.com:mongodb/specifications.git",
     "git@github.com:mongodb-labs/drivers-evergreen-tools.git",
