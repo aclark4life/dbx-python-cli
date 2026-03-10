@@ -168,10 +168,12 @@ def test_callback(
             if len(all_matches) > 1:
                 groups = [r["group"] for r in all_matches]
                 typer.echo(
-                    f"ℹ️  Note: '{repo_name}' exists in multiple groups: {', '.join(groups)}"
+                    f"⚠️  Warning: '{repo_name}' exists in multiple groups: {', '.join(groups)}",
+                    err=True,
                 )
                 typer.echo(
-                    f"   Using: {repo['group']} group (specify with -g to use a different one)\n"
+                    f"⚠️  Using '{repo['group']}' group. Specify -g <group> to use a different one.\n",
+                    err=True,
                 )
 
             repo_path = repo["path"]
