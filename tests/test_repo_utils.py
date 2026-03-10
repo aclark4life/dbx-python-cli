@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from dbx_python_cli.commands.repo_utils import (
+from dbx_python_cli.utils.repo import (
     _expand_env_var_value,
     find_all_repos,
     find_repo_by_name,

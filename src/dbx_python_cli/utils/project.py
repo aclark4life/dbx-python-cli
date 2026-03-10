@@ -14,8 +14,8 @@ from typing import Optional
 import typer
 
 from dbx_python_cli.commands.mongodb import ensure_mongodb
-from dbx_python_cli.commands.repo_utils import get_base_dir, get_config
-from dbx_python_cli.commands.venv_utils import get_venv_info
+from dbx_python_cli.utils.repo import get_base_dir, get_config
+from dbx_python_cli.utils.venv import get_venv_info
 
 
 def get_newest_project(projects_dir: Path) -> tuple[str, Path]:

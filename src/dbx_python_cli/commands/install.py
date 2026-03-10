@@ -8,7 +8,7 @@ from typing import Optional
 
 import typer
 
-from dbx_python_cli.commands.repo_utils import (
+from dbx_python_cli.utils.repo import (
     find_all_repos,
     find_repo_by_name,
     get_base_dir,
@@ -20,7 +20,7 @@ from dbx_python_cli.commands.repo_utils import (
     get_install_groups,
     should_skip_install,
 )
-from dbx_python_cli.commands.venv_utils import get_venv_info
+from dbx_python_cli.utils.venv import get_venv_info
 
 
 def _effective_install_args(config, group_name, repo_name, extras_str, groups_str):
@@ -427,7 +427,7 @@ def install_callback(
 
     # Handle --list flag
     if list_repos:
-        from dbx_python_cli.commands.repo_utils import list_repos as list_repos_func
+        from dbx_python_cli.utils.repo import list_repos as list_repos_func
 
         output = list_repos_func(base_dir, config=config)
         if output:

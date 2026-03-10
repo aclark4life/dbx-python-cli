@@ -23,7 +23,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["project", "add", "--no-install", "testproject"])
@@ -62,7 +62,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(
@@ -98,7 +98,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # When no name is provided, a random name is automatically generated
@@ -150,7 +150,7 @@ base_dir = "{base_dir_str}"
     # Use --base-dir to specify the exact project location
     project_path = tmp_path / "custom_location" / "myproject"
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(
@@ -195,7 +195,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["project", "add", "--no-install", "myproject"])
@@ -222,7 +222,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # First create a project
@@ -255,7 +255,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["project", "remove", "nonexistent"])
@@ -277,7 +277,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # Create a single project
@@ -314,7 +314,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # Create two projects
@@ -356,7 +356,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path_1:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path_1:
         mock_get_path_1.return_value = config_path
 
         # Create a project
@@ -366,7 +366,7 @@ base_dir = "{base_dir_str}"
         assert result.exit_code == 0
 
     # Now test that it can be found by dbx install
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path_2:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path_2:
         mock_get_path_2.return_value = config_path
 
         # List should show the project
@@ -390,7 +390,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["project", "add", "--no-install", "frontendtest"])
@@ -422,7 +422,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # Test with no projects directory
@@ -476,11 +476,9 @@ MONGODB_URI = "mongodb://localhost:27017"
     project_path.mkdir()
     (project_path / "manage.py").write_text("# manage.py")
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         # Patch get_venv_info in project_utils (where get_django_python_path calls it)
-        with patch(
-            "dbx_python_cli.commands.project_utils.get_venv_info"
-        ) as mock_venv_info:
+        with patch("dbx_python_cli.utils.project.get_venv_info") as mock_venv_info:
             with patch("dbx_python_cli.commands.project.subprocess.run") as mock_run:
                 mock_get_path.return_value = config_path
                 mock_venv_info.return_value = ("/usr/bin/python", "venv")
@@ -517,7 +515,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # Try to run a nonexistent project
@@ -542,7 +540,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # Try to edit a nonexistent project
@@ -566,7 +564,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # Create a project
@@ -615,7 +613,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # Create a project
@@ -664,7 +662,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # Create two projects
@@ -712,7 +710,7 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         # Create a project

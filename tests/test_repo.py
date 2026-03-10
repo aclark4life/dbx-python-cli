@@ -270,9 +270,7 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
     config_path.write_text(config_content)
 
     with patch("dbx_python_cli.commands.config.get_config_path") as mock_get_path:
-        with patch(
-            "dbx_python_cli.commands.repo_utils.get_config_path"
-        ) as mock_get_path2:
+        with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path2:
             mock_get_path.return_value = config_path
             mock_get_path2.return_value = config_path
 
@@ -296,7 +294,7 @@ def test_repo_clone_help():
 
 def test_repo_clone_invalid_group(tmp_path, mock_config):
     """Test that repo clone fails with invalid group."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         result = runner.invoke(app, ["clone", "-g", "nonexistent"])
@@ -307,7 +305,7 @@ def test_repo_clone_invalid_group(tmp_path, mock_config):
 
 def test_repo_clone_success(tmp_path, mock_config, temp_repos_dir):
     """Test successful repo clone."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = mock_config
             mock_run.return_value = MagicMock(returncode=0)
@@ -320,7 +318,7 @@ def test_repo_clone_success(tmp_path, mock_config, temp_repos_dir):
 
 def test_repo_clone_creates_group_directory(tmp_path, mock_config, temp_repos_dir):
     """Test that repo clone creates group subdirectory."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = mock_config
             mock_run.return_value = MagicMock(returncode=0)
@@ -336,7 +334,7 @@ def test_repo_clone_creates_group_directory(tmp_path, mock_config, temp_repos_di
 
 def test_repo_clone_skips_existing(tmp_path, mock_config, temp_repos_dir):
     """Test that repo clone skips existing repositories."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         # Create existing repo
@@ -355,7 +353,7 @@ def test_repo_clone_git_failure(mock_config, temp_repos_dir):
     """Test that repo clone handles git clone failures gracefully."""
     import subprocess
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         # Mock subprocess.run to raise CalledProcessError
@@ -384,7 +382,7 @@ repos = []
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
         result = runner.invoke(app, ["clone", "-g", "empty"])
         assert result.exit_code == 1
@@ -395,10 +393,10 @@ repos = []
 
 def test_get_config_fallback_to_default(temp_config_dir):
     """Test that get_config falls back to default config when user config doesn't exist."""
-    from dbx_python_cli.commands.repo_utils import get_config
+    from dbx_python_cli.utils.repo import get_config
 
     # Don't create user config, should fall back to package default
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         # Point to non-existent user config
         mock_get_path.return_value = temp_config_dir / "nonexistent.toml"
         config = get_config()
@@ -410,7 +408,7 @@ def test_get_config_fallback_to_default(temp_config_dir):
 
 def test_repo_clone_no_group_shows_error(mock_config):
     """Test that repo clone without -g shows help."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         result = runner.invoke(app, ["clone"])
@@ -441,7 +439,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = MagicMock(returncode=0)
@@ -491,7 +489,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = MagicMock(returncode=0)
@@ -543,7 +541,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = MagicMock(returncode=0)
@@ -576,7 +574,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["clone", "nonexistent-repo"])
@@ -601,7 +599,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = MagicMock(returncode=0)
@@ -643,7 +641,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = MagicMock(returncode=0)
@@ -689,7 +687,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = MagicMock(returncode=0)
@@ -716,7 +714,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = MagicMock(returncode=0)
@@ -756,7 +754,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
             mock_run.return_value = MagicMock(returncode=0)
@@ -790,7 +788,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.clone.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
@@ -859,7 +857,7 @@ repos = [
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
@@ -926,7 +924,7 @@ repos = [
         repo_dir.mkdir(parents=True)
         (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
@@ -984,7 +982,7 @@ repos = [
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
@@ -1023,7 +1021,7 @@ repos = []
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = config_path
 
         result = runner.invoke(app, ["sync"])
@@ -1055,7 +1053,7 @@ repos = [
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
@@ -1126,7 +1124,7 @@ repos = [
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
@@ -1200,7 +1198,7 @@ repos = [
     repo_dir.mkdir(parents=True)
     (repo_dir / ".git").mkdir()
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.sync.subprocess.run") as mock_run:
             mock_get_path.return_value = config_path
 
@@ -1280,7 +1278,7 @@ repos = [
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
             with patch("dbx_python_cli.commands.install.subprocess.run") as mock_run:
                 mock_get_path.return_value = config_path

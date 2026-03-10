@@ -8,7 +8,7 @@ from pathlib import Path
 
 import typer
 
-from dbx_python_cli.commands.repo_utils import (
+from dbx_python_cli.utils.repo import (
     get_config_path,
     get_default_config_path,
     get_config,

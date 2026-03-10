@@ -15,7 +15,7 @@ import time
 
 import typer
 
-from dbx_python_cli.commands.repo_utils import get_config
+from dbx_python_cli.utils.repo import get_config
 
 # Global variables to track if we started mongodb-runner, docker, or atlas-local
 _mongodb_runner_started = False

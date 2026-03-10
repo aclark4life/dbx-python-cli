@@ -7,8 +7,8 @@ from pathlib import Path
 
 import typer
 
-from dbx_python_cli.commands.repo_utils import get_base_dir, get_config, get_repo_groups
-from dbx_python_cli.commands.repo_utils import find_repo_by_name
+from dbx_python_cli.utils.repo import get_base_dir, get_config, get_repo_groups
+from dbx_python_cli.utils.repo import find_repo_by_name
 
 # Create a Typer app that will act as a single command
 app = typer.Typer(

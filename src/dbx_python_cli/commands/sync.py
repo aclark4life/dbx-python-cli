@@ -5,7 +5,7 @@ from pathlib import Path
 
 import typer
 
-from dbx_python_cli.commands import repo_utils as repo
+from dbx_python_cli.utils import repo
 
 app = typer.Typer(
     help="Sync repositories with upstream",
@@ -67,7 +67,7 @@ def sync_callback(
         dbx sync my-repo --force             # Force push after rebase
         dbx sync my-repo --dry-run           # Preview changes without syncing
     """
-    from dbx_python_cli.commands.repo_utils import find_all_repos, find_repo_by_name
+    from dbx_python_cli.utils.repo import find_all_repos, find_repo_by_name
 
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False

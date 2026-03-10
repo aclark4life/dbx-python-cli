@@ -87,7 +87,7 @@ def test_test_no_args_shows_error():
 
 def test_test_nonexistent_repo(mock_config, temp_repos_dir):
     """Test that test fails with nonexistent repository."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         result = runner.invoke(app, ["test", "nonexistent-repo"])
@@ -98,7 +98,7 @@ def test_test_nonexistent_repo(mock_config, temp_repos_dir):
 
 def test_test_runs_pytest_success(mock_config, temp_repos_dir):
     """Test that test runs pytest successfully."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 with patch.dict(
@@ -126,7 +126,7 @@ def test_test_runs_pytest_success(mock_config, temp_repos_dir):
 
 def test_test_runs_pytest_failure(mock_config, temp_repos_dir):
     """Test that test handles pytest failures."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 with patch.dict(
@@ -191,7 +191,7 @@ django = "tests/runtests.py"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 with patch.dict(
@@ -254,7 +254,7 @@ django = "tests/runtests.py"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             mock_get_path.return_value = config_path
             mock_venv.return_value = ("python", "venv")
@@ -267,7 +267,7 @@ django = "tests/runtests.py"
 
 def test_test_fallback_to_pytest_when_no_test_runner(mock_config, temp_repos_dir):
     """Test that test falls back to pytest when no custom test runner is configured."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 with patch.dict(
@@ -335,7 +335,7 @@ django = "tests/runtests.py"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 with patch.dict(
@@ -409,7 +409,7 @@ django = "tests/runtests.py"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 with patch(
@@ -445,7 +445,7 @@ django = "tests/runtests.py"
 
 def test_test_with_pytest_and_args(mock_config, temp_repos_dir):
     """Test that test passes arguments to pytest."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 with patch.dict(
@@ -498,7 +498,7 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 with patch.dict(
@@ -547,7 +547,7 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 with patch.dict(
@@ -594,7 +594,7 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 with patch.dict(
@@ -618,7 +618,7 @@ mongo-python-driver = {{ DRIVERS_TOOLS = "{{base_dir}}/{{group}}/drivers-evergre
 
 def test_test_with_group_flag(mock_config, temp_repos_dir):
     """Test that test with -g flag runs in the specified group's repo."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
                 with patch.dict(
@@ -646,7 +646,7 @@ def test_test_with_group_flag(mock_config, temp_repos_dir):
 
 def test_test_with_group_flag_repo_not_in_group(mock_config, temp_repos_dir):
     """Test that test with -g flag fails if repo not in specified group."""
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         mock_get_path.return_value = mock_config
 
         # Try to find mongo-python-driver in django group (it's in pymongo group)

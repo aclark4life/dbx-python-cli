@@ -4,7 +4,7 @@ import json
 
 import typer
 
-from dbx_python_cli.commands.repo_utils import get_base_dir, get_config, list_repos
+from dbx_python_cli.utils.repo import get_base_dir, get_config, list_repos
 
 # Create a Typer app that will act as a single command
 app = typer.Typer(

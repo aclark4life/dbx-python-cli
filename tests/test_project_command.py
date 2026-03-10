@@ -253,13 +253,11 @@ base_dir = "{base_dir_str}"
 """
     config_path.write_text(config_content)
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as mock_get_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.project.subprocess.run") as mock_run:
-            with patch(
-                "dbx_python_cli.commands.venv_utils._is_venv", return_value=False
-            ):
+            with patch("dbx_python_cli.utils.venv._is_venv", return_value=False):
                 with patch(
-                    "dbx_python_cli.commands.venv_utils._get_python_path",
+                    "dbx_python_cli.utils.venv._get_python_path",
                     return_value="/usr/bin/python",
                 ):
                     mock_get_path.return_value = config_path

@@ -19,13 +19,13 @@ from dbx_python_cli.commands.install import (
     install_frontend_if_exists,
     install_package,
 )
-from dbx_python_cli.commands.project_utils import (
+from dbx_python_cli.utils.project import (
     get_django_python_path,
     resolve_project_path,
     setup_django_command_env,
 )
-from dbx_python_cli.commands.repo_utils import get_base_dir, get_config
-from dbx_python_cli.commands.venv_utils import get_venv_info
+from dbx_python_cli.utils.repo import get_base_dir, get_config
+from dbx_python_cli.utils.venv import get_venv_info
 
 
 app = typer.Typer(

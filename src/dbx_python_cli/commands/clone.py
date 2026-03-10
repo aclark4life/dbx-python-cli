@@ -5,8 +5,8 @@ from pathlib import Path
 
 import typer
 
-from dbx_python_cli.commands import repo_utils as repo
-from dbx_python_cli.commands.repo_utils import switch_to_branch as _switch_to_branch
+from dbx_python_cli.utils import repo
+from dbx_python_cli.utils.repo import switch_to_branch as _switch_to_branch
 
 
 def auto_install_repo(
@@ -31,12 +31,12 @@ def auto_install_repo(
         install_package,
         run_build_commands,
     )
-    from dbx_python_cli.commands.repo_utils import (
+    from dbx_python_cli.utils.repo import (
         get_build_commands,
         get_install_dirs,
         should_skip_install,
     )
-    from dbx_python_cli.commands.venv_utils import get_venv_info
+    from dbx_python_cli.utils.venv import get_venv_info
 
     try:
         config = repo.get_config()

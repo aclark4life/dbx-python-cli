@@ -328,14 +328,15 @@ dbx-python-cli/
 │   │   ├── mongodb.py        # MongoDB runner integration
 │   │   ├── open.py           # Browser integration
 │   │   ├── project.py        # Django project management
-│   │   ├── project_utils.py  # Project utilities
 │   │   ├── remove.py         # Repository removal
-│   │   ├── repo_utils.py     # Repository utilities
 │   │   ├── status.py         # Git status commands
 │   │   ├── switch.py         # Git branch switching
 │   │   ├── sync.py           # Fork synchronization
-│   │   ├── test.py           # Test runner
-│   │   └── venv_utils.py     # Virtual environment utilities
+│   │   └── test.py           # Test runner
+│   ├── utils/                # Utility modules
+│   │   ├── project.py        # Project utilities
+│   │   ├── repo.py           # Repository utilities
+│   │   └── venv.py           # Virtual environment utilities
 │   └── templates/            # Django project templates
 │       ├── app_template/     # Django app template
 │       ├── frontend_template/ # Frontend template

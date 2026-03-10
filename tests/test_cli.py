@@ -50,7 +50,7 @@ def test_verbose_flag_with_test_command():
     """Test that verbose flag works with test command."""
     from unittest.mock import patch
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.test.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             result = runner.invoke(app, ["-v", "test", "--list"])
@@ -62,7 +62,7 @@ def test_verbose_flag_with_install_command():
     """Test that verbose flag works with install command."""
     from unittest.mock import patch
 
-    with patch("dbx_python_cli.commands.repo_utils.get_config_path") as _mock_path:
+    with patch("dbx_python_cli.utils.repo.get_config_path") as _mock_path:
         with patch("dbx_python_cli.commands.install.get_config") as mock_config:
             mock_config.return_value = {"repo": {"base_dir": "/tmp/test"}}
             result = runner.invoke(app, ["-v", "install", "--list"])

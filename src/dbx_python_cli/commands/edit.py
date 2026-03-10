@@ -7,7 +7,7 @@ from pathlib import Path
 
 import typer
 
-from dbx_python_cli.commands.repo_utils import (
+from dbx_python_cli.utils.repo import (
     find_repo_by_name,
     get_base_dir,
     get_config,

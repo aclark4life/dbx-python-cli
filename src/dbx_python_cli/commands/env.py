@@ -4,7 +4,7 @@ import subprocess
 
 import typer
 
-from dbx_python_cli.commands.repo_utils import (
+from dbx_python_cli.utils.repo import (
     get_base_dir,
     get_config,
     get_global_groups,
@@ -93,7 +93,7 @@ def init(
 
         if repo:
             # Create venv in individual repo directory
-            from dbx_python_cli.commands.repo_utils import find_repo_by_name
+            from dbx_python_cli.utils.repo import find_repo_by_name
 
             repo_info = find_repo_by_name(repo, base_dir)
             if not repo_info:
@@ -210,7 +210,7 @@ def list(ctx: typer.Context):
         base_dir = get_base_dir(config)
         groups = get_repo_groups(config)
         global_group_names = set(get_global_groups(config))
-        from dbx_python_cli.commands.repo_utils import find_all_repos
+        from dbx_python_cli.utils.repo import find_all_repos
 
         if verbose:
             typer.echo(f"[verbose] Using base directory: {base_dir}\n")
@@ -384,7 +384,7 @@ def remove(
 
         if repo:
             # Remove venv from individual repo directory
-            from dbx_python_cli.commands.repo_utils import find_repo_by_name
+            from dbx_python_cli.utils.repo import find_repo_by_name
 
             repo_info = find_repo_by_name(repo, base_dir)
             if not repo_info:
