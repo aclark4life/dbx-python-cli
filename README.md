@@ -38,59 +38,172 @@ This will install `dbx-python-cli` globally and make the `dbx` command available
 
 ## Quick Start
 
+### Step 1: Initialize Configuration
+
+First, initialize the configuration file:
+
 ```bash
-# Initialize configuration
 dbx config init
+```
 
-# Clone repositories by group (installs automatically)
+This creates a configuration file at `~/.config/dbx-python-cli/config.toml` with default settings.
+
+The default configuration includes:
+- Base directory: `~/Developer/mongodb`
+- Pre-configured repository groups (django, pymongo, langchain, etc.)
+
+You can edit this file to customize your setup.
+
+### Step 2: Clone Repositories
+
+Clone a group of related repositories:
+
+```bash
+# Clone the django group
 dbx clone -g django
+```
 
-# List available repositories
+This will clone all repositories in the django group to `~/Developer/mongodb/django/`.
+
+### Step 3: Install Dependencies
+
+> **Note:** The `dbx clone` command automatically runs `dbx install` after cloning, but you can also install repositories and repository groups manually.
+
+Install dependencies for a repository:
+
+```bash
+# Install dependencies for django-mongodb-backend
+dbx install django-mongodb-backend
+
+# Install with test extras
+dbx install django-mongodb-backend -e test
+
+# Install libmongocrypt (includes cmake build step for Queryable Encryption)
+dbx install libmongocrypt
+```
+
+> **Tip:** Extras and dependency groups can be configured in your `config.toml` file so you don't need to specify them on the command line each time.
+
+### Step 4: Run Tests
+
+Run tests for a repository:
+
+```bash
+# Run all tests
+dbx test django
+
+# Run a specific test module (note: django-mongodb-backend modules have trailing underscores)
+dbx test django encryption_
+
+# Run tests matching a keyword
+dbx test django encryption_ -k test_schema
+```
+
+### Working with Django Projects
+
+Create and manage Django projects with MongoDB backend:
+
+```bash
+# Create a new project
+dbx project add myproject
+
+# Install the project (defaults to newest project)
+dbx project install
+
+# Run migrations (defaults to newest project)
+dbx project migrate
+
+# Create a superuser (defaults to newest project)
+dbx project su
+
+# Run the project (defaults to newest project)
+dbx project run
+```
+
+> **Convenience Feature:** Most project commands default to the newest project when no name is specified. This makes it faster to work with your current project without typing the name repeatedly.
+
+### Common Workflows
+
+**List Everything:**
+
+```bash
+# List all cloned repositories
 dbx list
 
-# Install dependencies in a repository
-dbx install mongo-python-driver -e test
-
-# Install with multiple extras
-dbx install mongo-python-driver -e test -e aws
-
-# Install with dependency groups
-dbx install mongo-python-driver -e test --dependency-groups dev,test
-
-# Install all repositories in a group
-dbx install -g pymongo
-
-# Install all repos in a group with extras
-dbx install -g pymongo -e test --dependency-groups dev
-
-# Use a different group's venv for a single repo
-dbx install mongo-python-driver -g pymongo
-
-# Run tests in a repository
-dbx test mongo-python-driver
-
-# Run tests matching a keyword expression
-dbx test mongo-python-driver -k "test_connection"
-
-# Run just commands in a repository
-dbx just mongo-python-driver          # Show available just commands
-dbx just mongo-python-driver lint     # Run 'just lint'
-dbx just mongo-python-driver test -v  # Run 'just test -v'
-
-# View git branches in repositories
-dbx branch mongo-python-driver        # Show branches in a repo
-dbx branch mongo-python-driver -a     # Show all branches (including remote)
-dbx branch -g pymongo                 # Show branches in all repos in a group
-dbx branch -g pymongo -a              # Show all branches in all repos in a group
-dbx branch -p myproject               # Show branches in a project
-
-# Use verbose mode for more detailed output
-dbx -v install mongo-python-driver -e test
-dbx -v test mongo-python-driver
-dbx -v clone -g pymongo
-dbx -v just mongo-python-driver lint
-dbx -v branch -g pymongo
+# List all virtual environments
+dbx env list
 ```
+
+**Run Just Commands:**
+
+If a repository has a `justfile`, you can run just commands:
+
+```bash
+# Show available just commands
+dbx just mongo-python-driver
+
+# Run a specific just command
+dbx just mongo-python-driver lint
+
+# Run just command with arguments
+dbx just mongo-python-driver test -v
+```
+
+**Sync Repositories:**
+
+Keep your repositories up to date:
+
+```bash
+# Sync a single repository
+dbx sync django-mongodb-backend
+
+# Sync all repositories in a group
+dbx sync -g django
+```
+
+**View Git Branches:**
+
+View branches across repositories:
+
+```bash
+# View branches in a single repository
+dbx branch django-mongodb-backend
+
+# View all branches (including remote) with verbose output
+dbx -v branch django-mongodb-backend
+
+# View branches in all repositories in a group
+dbx branch -g django
+
+# View all branches in all repositories in a group
+dbx -v branch -g django
+```
+
+**Working with Multiple Groups:**
+
+You can work with multiple repository groups:
+
+```bash
+# Clone langchain group
+dbx clone -g langchain
+
+# Create venv for langchain
+dbx env init -g langchain
+
+# Install dependencies
+dbx install langchain-mongodb -g langchain
+```
+
+**Verbose Mode:**
+
+Use `-v` or `--verbose` for detailed output:
+
+```bash
+dbx -v install django-mongodb-backend
+dbx --verbose test django encryption_
+```
+
+For more details, see the [full documentation](https://dbx-python-cli.readthedocs.io/).
 
 ## Development
 
