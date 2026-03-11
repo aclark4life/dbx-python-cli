@@ -117,18 +117,33 @@ def branch_callback(
             typer.echo("\nClone repositories using: dbx clone -a")
             raise typer.Exit(1)
 
+        # Organize repos by group
+        repos_by_group = {}
+        for repo_info in target_repos:
+            group_name = repo_info["group"]
+            if group_name not in repos_by_group:
+                repos_by_group[group_name] = []
+            repos_by_group[group_name].append(repo_info)
+
         # Collect output in a buffer for pagination
         output_buffer = []
         output_buffer.append(
             f"Running git branch in {len(target_repos)} repository(ies) across {len(non_global_groups)} group(s):\n"
         )
 
-        for repo_info in target_repos:
-            output = _run_git_branch_to_string(
-                repo_info["path"], repo_info["name"], git_args, verbose
-            )
-            if output:
-                output_buffer.append(output)
+        # Process repos group by group
+        for group_name in sorted(repos_by_group.keys()):
+            group_repos = repos_by_group[group_name]
+            # Add group header
+            group_header = f"\n{'═' * 80}\n📁 GROUP: {group_name} ({len(group_repos)} repository(ies))\n{'═' * 80}"
+            output_buffer.append(group_header)
+
+            for repo_info in group_repos:
+                output = _run_git_branch_to_string(
+                    repo_info["path"], repo_info["name"], git_args, verbose
+                )
+                if output:
+                    output_buffer.append(output)
 
         # Paginate the output
         _paginate_output("\n".join(output_buffer))
