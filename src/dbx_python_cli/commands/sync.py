@@ -55,19 +55,23 @@ def sync_callback(
 
     Usage::
 
-        dbx sync <repo_name>            # Sync a single repository
-        dbx sync -g <group>             # Sync all repos in a group
-        dbx sync <repo_name> --force    # Force push after rebasing
-        dbx sync <repo_name> --dry-run  # Show what would be synced
-        dbx sync -g <group> --dry-run   # Preview group sync without changes
+        dbx sync <repo_name>                    # Sync a single repository
+        dbx sync -g <group>                     # Sync all repos in a group
+        dbx sync -g <group> <repo_name>         # Sync specific repo in a group
+        dbx sync <repo_name> --force            # Force push after rebasing
+        dbx sync <repo_name> --dry-run          # Show what would be synced
+        dbx sync -g <group> --dry-run           # Preview group sync without changes
+        dbx sync -g <group> <repo_name> --dry-run  # Preview single repo in group
 
     Examples::
 
-        dbx sync mongo-python-driver         # Sync single repo
-        dbx sync -g pymongo                  # Sync all repos in group
-        dbx sync my-repo --force             # Force push after rebase
-        dbx sync my-repo --dry-run           # Preview changes without syncing
-        dbx sync -g pymongo --dry-run        # Preview group sync
+        dbx sync mongo-python-driver                    # Sync single repo
+        dbx sync -g pymongo                             # Sync all repos in group
+        dbx sync -g pymongo mongo-python-driver         # Sync specific repo in pymongo group
+        dbx sync my-repo --force                        # Force push after rebase
+        dbx sync my-repo --dry-run                      # Preview changes without syncing
+        dbx sync -g pymongo --dry-run                   # Preview group sync
+        dbx sync -g pymongo mongo-python-driver --dry-run  # Preview specific repo
     """
     from dbx_python_cli.utils.repo import find_all_repos, find_repo_by_name
 
@@ -83,7 +87,44 @@ def sync_callback(
             typer.echo(f"[verbose] Using base directory: {base_dir}")
             typer.echo(f"[verbose] Available groups: {list(groups.keys())}\n")
 
-        # Handle group sync
+        # Handle sync with both group and repo name specified
+        if group and repo_name:
+            if group not in groups:
+                typer.echo(
+                    f"❌ Error: Group '{group}' not found in configuration.", err=True
+                )
+                typer.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
+                raise typer.Exit(1)
+
+            # Find the specific repo within the group
+            from dbx_python_cli.utils.repo import find_all_repos_by_name
+
+            matching_repos = find_all_repos_by_name(repo_name, base_dir)
+            repo_info = None
+            for r in matching_repos:
+                if r["group"] == group:
+                    repo_info = r
+                    break
+
+            if not repo_info:
+                typer.echo(
+                    f"❌ Error: Repository '{repo_name}' not found in group '{group}'",
+                    err=True,
+                )
+                typer.echo(f"\nClone the repository using: dbx clone -g {group}")
+                raise typer.Exit(1)
+
+            _sync_repository(
+                repo_info["path"], repo_info["name"], verbose, force, dry_run
+            )
+
+            if dry_run:
+                typer.echo("\n✨ Dry run complete!")
+            else:
+                typer.echo("\n✨ Done!")
+            return
+
+        # Handle group sync (all repos in group)
         if group:
             if group not in groups:
                 typer.echo(
@@ -125,6 +166,7 @@ def sync_callback(
             typer.echo("❌ Error: Repository name or group required", err=True)
             typer.echo("\nUsage: dbx sync <repo-name>")
             typer.echo("   or: dbx sync -g <group>")
+            typer.echo("   or: dbx sync -g <group> <repo-name>")
             raise typer.Exit(1)
 
         # Find the repository

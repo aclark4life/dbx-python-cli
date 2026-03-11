@@ -1301,6 +1301,79 @@ repos = ["git@github.com:mongodb/mongo-python-driver.git"]
             assert len(push_calls) == 0
 
 
+def test_repo_sync_single_repo_in_group(tmp_path, temp_repos_dir):
+    """Test syncing a single repository within a specific group."""
+    config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    repos_dir_str = str(temp_repos_dir).replace("\\", "/")
+    config_content = f"""
+[repo]
+base_dir = "{repos_dir_str}"
+
+[repo.groups.pymongo]
+repos = [
+    "git@github.com:mongodb/mongo-python-driver.git",
+    "git@github.com:mongodb/specifications.git"
+]
+"""
+    config_path.write_text(config_content)
+
+    # Create pymongo group directory with two repos
+    pymongo_dir = temp_repos_dir / "pymongo"
+    pymongo_dir.mkdir()
+
+    # Create mongo-python-driver repo
+    driver_repo = pymongo_dir / "mongo-python-driver"
+    driver_repo.mkdir()
+    (driver_repo / ".git").mkdir()
+
+    # Create specifications repo
+    specs_repo = pymongo_dir / "specifications"
+    specs_repo.mkdir()
+    (specs_repo / ".git").mkdir()
+
+    with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
+        mock_get_path.return_value = config_path
+
+        with patch("subprocess.run") as mock_run:
+            # Mock git commands
+            def mock_subprocess(*args, **kwargs):
+                cmd = args[0]
+                if "remote" in cmd:
+                    return MagicMock(returncode=0, stdout="origin\nupstream\n")
+                elif "rev-parse" in cmd and "--abbrev-ref" in cmd:
+                    return MagicMock(returncode=0, stdout="main\n")
+                elif "symbolic-ref" in cmd:
+                    return MagicMock(
+                        returncode=0, stdout="refs/remotes/upstream/main\n"
+                    )
+                elif "rev-list" in cmd:
+                    return MagicMock(returncode=0, stdout="abc123\n")
+                elif "log" in cmd:
+                    return MagicMock(returncode=0, stdout="commit abc123\n")
+                return MagicMock(returncode=0, stdout="")
+
+            mock_run.side_effect = mock_subprocess
+
+            # Sync only mongo-python-driver in pymongo group
+            result = runner.invoke(
+                app, ["sync", "-g", "pymongo", "mongo-python-driver", "--dry-run"]
+            )
+            assert result.exit_code == 0
+            assert "Checking mongo-python-driver" in result.stdout
+            assert "Dry run complete!" in result.stdout
+
+            # Should NOT mention specifications
+            assert "specifications" not in result.stdout.lower()
+
+            # Verify no rebase or push commands were executed (dry-run)
+            calls = mock_run.call_args_list
+            rebase_calls = [call for call in calls if "rebase" in call[0][0]]
+            push_calls = [call for call in calls if "push" in call[0][0]]
+            assert len(rebase_calls) == 0
+            assert len(push_calls) == 0
+
+
 def test_install_multiple_groups_csv(tmp_path):
     """Test installing group with dependency groups using multiple -g flags."""
     config_path = tmp_path / ".config" / "dbx-python-cli" / "config.toml"
