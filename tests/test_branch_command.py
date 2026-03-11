@@ -282,10 +282,10 @@ def test_branch_with_group_and_verbose(tmp_path, temp_repos_dir, mock_config):
                     assert "Running git branch in 2 repository(ies)" in result.stdout
                     assert "git branch -a" in result.stdout
                     assert mock_run.call_count == 2
-                    # Check that both calls used -a flag
+                    # Check that both calls used -a flag and color
                     for call in mock_run.call_args_list:
                         args = call[0][0]
-                        assert args == ["git", "--no-pager", "branch", "-a"]
+                        assert args == ["git", "--no-pager", "-c", "color.branch=always", "branch", "-a"]
 
 
 def test_branch_all_groups(tmp_path, temp_repos_dir, mock_config):

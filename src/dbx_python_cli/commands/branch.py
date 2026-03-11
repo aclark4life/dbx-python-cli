@@ -232,8 +232,8 @@ def _run_git_branch_to_string(
     if not (repo_path / ".git").exists():
         return f"⚠️  {name}: Not a git repository (skipping)\n"
 
-    # Build git branch command with --no-pager to avoid pager issues
-    git_cmd = ["git", "--no-pager", "branch"]
+    # Build git branch command with --no-pager and force color output
+    git_cmd = ["git", "--no-pager", "-c", "color.branch=always", "branch"]
     separator = "─" * 60
 
     output_lines = []
