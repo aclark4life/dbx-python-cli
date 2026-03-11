@@ -7,7 +7,7 @@ from pathlib import Path
 import typer
 
 from dbx_python_cli.utils.repo import get_base_dir, get_config, get_repo_groups
-from dbx_python_cli.utils.repo import find_all_repos, find_repo_by_name
+from dbx_python_cli.utils.repo import find_all_repos, find_repo_by_name, get_global_groups
 
 # Create a Typer app that will act as a single command
 app = typer.Typer(
@@ -36,6 +36,12 @@ def branch_callback(
         "-g",
         help="Run git branch in all repositories in a group",
     ),
+    all_groups: bool = typer.Option(
+        False,
+        "--all",
+        "-a",
+        help="Run git branch in all repositories across all groups",
+    ),
 ):
     """Run git branch in a cloned repository or group of repositories.
 
@@ -43,6 +49,7 @@ def branch_callback(
 
         dbx branch <repo_name> [git_args...]
         dbx branch -g <group_name> [git_args...]
+        dbx branch -a [git_args...]
 
     Examples::
 
@@ -53,6 +60,8 @@ def branch_callback(
         dbx branch -g pymongo                          # Show branches for all repos in group
         dbx -v branch -g pymongo                       # Show all branches for all repos in group
         dbx branch -g pymongo -d old-feature           # Delete 'old-feature' in all repos
+        dbx branch -a                                  # Show branches for all repos in all groups
+        dbx -v branch -a                               # Show all branches for all repos in all groups
     """
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
@@ -80,6 +89,36 @@ def branch_callback(
     except Exception as e:
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
+
+    # Handle all groups option
+    if all_groups:
+        groups = get_repo_groups(config)
+        global_group_names = get_global_groups(config)
+
+        # Get all non-global groups
+        non_global_groups = [g for g in groups.keys() if g not in global_group_names]
+
+        if not non_global_groups:
+            typer.echo("❌ Error: No groups found in configuration.", err=True)
+            raise typer.Exit(1)
+
+        # Find all repos across all non-global groups
+        all_repos = find_all_repos(base_dir)
+        target_repos = [r for r in all_repos if r["group"] in non_global_groups]
+
+        if not target_repos:
+            typer.echo("❌ Error: No repositories found in any group.", err=True)
+            typer.echo("\nClone repositories using: dbx clone -a")
+            raise typer.Exit(1)
+
+        typer.echo(
+            f"Running git branch in {len(target_repos)} repository(ies) across {len(non_global_groups)} group(s):\n"
+        )
+
+        for repo_info in target_repos:
+            _run_git_branch(repo_info["path"], repo_info["name"], git_args, verbose)
+
+        return
 
     # Handle group option
     if group:
@@ -111,11 +150,12 @@ def branch_callback(
 
         return
 
-    # Require repo_name if not using group
+    # Require repo_name if not using group or all_groups
     if not repo_name:
-        typer.echo("❌ Error: Repository name or group is required", err=True)
+        typer.echo("❌ Error: Repository name, group, or --all is required", err=True)
         typer.echo("\nUsage: dbx branch <repo_name> [git_args...]")
         typer.echo("   or: dbx branch -g <group> [git_args...]")
+        typer.echo("   or: dbx branch -a [git_args...]")
         raise typer.Exit(1)
 
     # Find the repository

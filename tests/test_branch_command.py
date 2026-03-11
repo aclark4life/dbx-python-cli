@@ -120,19 +120,19 @@ def test_branch_without_args(tmp_path, temp_repos_dir, mock_config):
 
 
 def test_branch_with_args(tmp_path, temp_repos_dir, mock_config):
-    """Test running branch with arguments."""
+    """Test running branch with arguments (use -r for remote branches)."""
     with patch(
         "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
     ):
         with patch("dbx_python_cli.commands.branch.get_config", return_value={}):
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0)
-                result = runner.invoke(app, ["branch", "mongo-python-driver", "-a"])
+                result = runner.invoke(app, ["branch", "mongo-python-driver", "-r"])
                 assert result.exit_code == 0
-                assert "git branch -a" in result.stdout
+                assert "git branch -r" in result.stdout
                 mock_run.assert_called_once()
                 args = mock_run.call_args[0][0]
-                assert args == ["git", "--no-pager", "branch", "-a"]
+                assert args == ["git", "--no-pager", "branch", "-r"]
 
 
 def test_branch_with_group(tmp_path, temp_repos_dir, mock_config):
@@ -207,19 +207,33 @@ def test_verbose_flag_with_branch_command(tmp_path, temp_repos_dir, mock_config)
 
 
 def test_branch_with_all_flag(tmp_path, temp_repos_dir, mock_config):
-    """Test running branch with -a/--all flag."""
+    """Test that -a triggers all-groups mode (use -v for showing all branches)."""
+    config = {
+        "repo": {
+            "base_dir": str(temp_repos_dir),
+            "groups": {
+                "pymongo": {
+                    "repos": ["https://github.com/mongodb/mongo-python-driver.git"]
+                }
+            },
+        }
+    }
     with patch(
         "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
     ):
-        with patch("dbx_python_cli.commands.branch.get_config", return_value={}):
-            with patch("subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
-                result = runner.invoke(app, ["branch", "mongo-python-driver", "-a"])
-                assert result.exit_code == 0
-                assert "git branch -a" in result.stdout
-                mock_run.assert_called_once()
-                args = mock_run.call_args[0][0]
-                assert args == ["git", "--no-pager", "branch", "-a"]
+        with patch("dbx_python_cli.commands.branch.get_config", return_value=config):
+            with patch(
+                "dbx_python_cli.commands.branch.get_repo_groups",
+                return_value=config["repo"]["groups"],
+            ):
+                with patch("dbx_python_cli.commands.branch.get_global_groups", return_value=[]):
+                    with patch("subprocess.run") as mock_run:
+                        mock_run.return_value = MagicMock(returncode=0)
+                        result = runner.invoke(app, ["branch", "-a"])
+                        assert result.exit_code == 0
+                        # Should show branches for all groups
+                        assert "Running git branch in" in result.stdout
+                        assert "group(s)" in result.stdout
 
 
 def test_verbose_flag_shows_all_branches(tmp_path, temp_repos_dir, mock_config):
@@ -238,8 +252,8 @@ def test_verbose_flag_shows_all_branches(tmp_path, temp_repos_dir, mock_config):
                 assert args == ["git", "--no-pager", "branch", "-a"]
 
 
-def test_branch_with_group_and_all_flag(tmp_path, temp_repos_dir, mock_config):
-    """Test running branch with a group and -a flag."""
+def test_branch_with_group_and_verbose(tmp_path, temp_repos_dir, mock_config):
+    """Test running branch with a group and verbose mode (shows all branches)."""
     config = {
         "repo": {
             "base_dir": str(temp_repos_dir),
@@ -263,7 +277,7 @@ def test_branch_with_group_and_all_flag(tmp_path, temp_repos_dir, mock_config):
             ):
                 with patch("subprocess.run") as mock_run:
                     mock_run.return_value = MagicMock(returncode=0)
-                    result = runner.invoke(app, ["branch", "-g", "pymongo", "-a"])
+                    result = runner.invoke(app, ["-v", "branch", "-g", "pymongo"])
                     assert result.exit_code == 0
                     assert "Running git branch in 2 repository(ies)" in result.stdout
                     assert "git branch -a" in result.stdout
@@ -272,3 +286,84 @@ def test_branch_with_group_and_all_flag(tmp_path, temp_repos_dir, mock_config):
                     for call in mock_run.call_args_list:
                         args = call[0][0]
                         assert args == ["git", "--no-pager", "branch", "-a"]
+
+
+def test_branch_all_groups(tmp_path, temp_repos_dir, mock_config):
+    """Test running branch with -a flag to show branches for all groups."""
+    config = {
+        "repo": {
+            "base_dir": str(temp_repos_dir),
+            "groups": {
+                "pymongo": {
+                    "repos": [
+                        "https://github.com/mongodb/mongo-python-driver.git",
+                        "https://github.com/mongodb/specifications.git",
+                    ]
+                },
+                "django": {
+                    "repos": [
+                        "https://github.com/mongodb-labs/django-mongodb-backend.git",
+                    ]
+                },
+            },
+        }
+    }
+
+    # Create django group directory and repo
+    django_dir = temp_repos_dir / "django"
+    django_dir.mkdir()
+    django_repo = django_dir / "django-mongodb-backend"
+    django_repo.mkdir()
+    (django_repo / ".git").mkdir()
+
+    with patch(
+        "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
+    ):
+        with patch("dbx_python_cli.commands.branch.get_config", return_value=config):
+            with patch(
+                "dbx_python_cli.commands.branch.get_repo_groups",
+                return_value=config["repo"]["groups"],
+            ):
+                with patch("dbx_python_cli.commands.branch.get_global_groups", return_value=[]):
+                    with patch("subprocess.run") as mock_run:
+                        mock_run.return_value = MagicMock(returncode=0)
+                        result = runner.invoke(app, ["branch", "-a"])
+                        assert result.exit_code == 0
+                        # Should run on all repos across all groups (2 pymongo + 1 django = 3)
+                        assert "Running git branch in 3 repository(ies) across 2 group(s)" in result.stdout
+                        assert mock_run.call_count == 3
+
+
+def test_branch_all_groups_excludes_global(tmp_path, temp_repos_dir, mock_config):
+    """Test that -a excludes global groups."""
+    config = {
+        "repo": {
+            "base_dir": str(temp_repos_dir),
+            "global_groups": ["global"],
+            "groups": {
+                "global": {
+                    "repos": ["https://github.com/mongodb/mongo-python-driver.git"]
+                },
+                "pymongo": {
+                    "repos": ["https://github.com/mongodb/specifications.git"]
+                },
+            },
+        }
+    }
+
+    with patch(
+        "dbx_python_cli.commands.branch.get_base_dir", return_value=temp_repos_dir
+    ):
+        with patch("dbx_python_cli.commands.branch.get_config", return_value=config):
+            with patch(
+                "dbx_python_cli.commands.branch.get_repo_groups",
+                return_value=config["repo"]["groups"],
+            ):
+                with patch("dbx_python_cli.commands.branch.get_global_groups", return_value=["global"]):
+                    with patch("subprocess.run") as mock_run:
+                        mock_run.return_value = MagicMock(returncode=0)
+                        result = runner.invoke(app, ["branch", "-a"])
+                        assert result.exit_code == 0
+                        # Should only run on pymongo group (2 repos), not global
+                        assert "Running git branch in 2 repository(ies) across 1 group(s)" in result.stdout
+                        assert mock_run.call_count == 2
