@@ -1288,7 +1288,7 @@ repos = ["git@github.com:mongodb/mongo-python-driver.git"]
 
             mock_run.side_effect = mock_subprocess
 
-            result = runner.invoke(app, ["sync", "--dry-run", "mongo-python-driver"])
+            result = runner.invoke(app, ["sync", "mongo-python-driver", "--dry-run"])
             assert result.exit_code == 0
             assert "Checking mongo-python-driver" in result.stdout
             assert "Dry run complete!" in result.stdout

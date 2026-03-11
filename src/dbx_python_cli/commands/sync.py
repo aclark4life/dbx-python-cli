@@ -12,7 +12,7 @@ app = typer.Typer(
     no_args_is_help=True,
     invoke_without_command=True,
     context_settings={
-        "allow_interspersed_args": False,
+        "allow_interspersed_args": True,
         "help_option_names": ["-h", "--help"],
     },
 )
@@ -59,6 +59,7 @@ def sync_callback(
         dbx sync -g <group>             # Sync all repos in a group
         dbx sync <repo_name> --force    # Force push after rebasing
         dbx sync <repo_name> --dry-run  # Show what would be synced
+        dbx sync -g <group> --dry-run   # Preview group sync without changes
 
     Examples::
 
@@ -66,6 +67,7 @@ def sync_callback(
         dbx sync -g pymongo                  # Sync all repos in group
         dbx sync my-repo --force             # Force push after rebase
         dbx sync my-repo --dry-run           # Preview changes without syncing
+        dbx sync -g pymongo --dry-run        # Preview group sync
     """
     from dbx_python_cli.utils.repo import find_all_repos, find_repo_by_name
 
