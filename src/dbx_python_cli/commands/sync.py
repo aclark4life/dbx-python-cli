@@ -134,6 +134,11 @@ def sync_callback(
 
         _sync_repository(repo_info["path"], repo_info["name"], verbose, force, dry_run)
 
+        if dry_run:
+            typer.echo("\n✨ Dry run complete!")
+        else:
+            typer.echo("\n✨ Done!")
+
     except Exception as e:
         typer.echo(f"❌ Error: {e}", err=True)
         raise typer.Exit(1)
