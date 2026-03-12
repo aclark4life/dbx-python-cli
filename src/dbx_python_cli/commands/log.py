@@ -1,13 +1,12 @@
 """Log command for showing git commit logs."""
 
 import json
-import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import typer
 
+from dbx_python_cli.utils.output import paginate_output, should_use_pager
 from dbx_python_cli.utils.repo import get_base_dir, get_config, get_repo_groups
 from dbx_python_cli.utils.repo import find_all_repos, find_repo_by_name
 
@@ -122,7 +121,8 @@ def log_callback(
             if log_output:
                 output_parts.append(log_output)
 
-        _paginate_output("\n".join(output_parts))
+        use_pager = should_use_pager(ctx, command_default=True)
+        paginate_output("\n".join(output_parts), use_pager)
         return
 
     # Handle project option
@@ -138,7 +138,8 @@ def log_callback(
 
         log_output = _get_git_log_output(project_path, project, git_args, verbose)
         if log_output:
-            _paginate_output(log_output)
+            use_pager = should_use_pager(ctx, command_default=True)
+            paginate_output(log_output, use_pager)
         return
 
     # Require repo_name if not using group and not using project
@@ -159,7 +160,8 @@ def log_callback(
     repo_path = Path(repo["path"])
     log_output = _get_git_log_output(repo_path, repo_name, git_args, verbose)
     if log_output:
-        _paginate_output(log_output)
+        use_pager = should_use_pager(ctx, command_default=True)
+        paginate_output(log_output, use_pager)
 
 
 def _get_git_log_output(
@@ -203,11 +205,4 @@ def _get_git_log_output(
     return "\n".join(output_parts)
 
 
-def _paginate_output(output: str):
-    """Paginate output using less if available and stdout is a tty."""
-    # Paginate with colors when writing to a terminal; plain-print otherwise
-    # (piped output, CI, tests, etc.) so ANSI codes are never double-escaped.
-    if sys.stdout.isatty() and shutil.which("less"):
-        subprocess.run(["less", "-R"], input=output, text=True)
-    else:
-        typer.echo(output)
+

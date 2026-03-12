@@ -82,6 +82,7 @@ Global Options
 Available for all commands:
 
 - ``-v, --verbose`` - Enable verbose output
+- ``-p, --pager`` - Use a pager (less) for command output
 - ``-h, --help`` - Show help message
 - ``--version`` - Show version information
 

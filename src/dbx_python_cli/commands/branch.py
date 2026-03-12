@@ -1,13 +1,12 @@
 """Branch command for running git branch in repositories."""
 
 import json
-import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import typer
 
+from dbx_python_cli.utils.output import paginate_output, should_use_pager
 from dbx_python_cli.utils.repo import get_base_dir, get_config, get_repo_groups
 from dbx_python_cli.utils.repo import (
     find_all_repos,
@@ -145,8 +144,9 @@ def branch_callback(
                 if output:
                     output_buffer.append(output)
 
-        # Paginate the output
-        _paginate_output("\n".join(output_buffer))
+        # Paginate the output - always use pager for -a flag
+        use_pager = should_use_pager(ctx, command_default=True)
+        paginate_output("\n".join(output_buffer), use_pager)
         return
 
     # Handle group option
@@ -183,8 +183,9 @@ def branch_callback(
             if output:
                 output_buffer.append(output)
 
-        # Paginate the output
-        _paginate_output("\n".join(output_buffer))
+        # Paginate the output - always use pager for -g flag
+        use_pager = should_use_pager(ctx, command_default=True)
+        paginate_output("\n".join(output_buffer), use_pager)
         return
 
     # Require repo_name if not using group or all_groups
@@ -289,11 +290,4 @@ def _run_git_branch_to_string(
     return "\n".join(output_lines)
 
 
-def _paginate_output(output: str):
-    """Display output using a pager if available and stdout is a terminal."""
-    # Paginate with colors when writing to a terminal; plain-print otherwise
-    # (piped output, CI, tests, etc.) so ANSI codes are never double-escaped.
-    if sys.stdout.isatty() and shutil.which("less"):
-        subprocess.run(["less", "-R"], input=output, text=True)
-    else:
-        typer.echo(output)
+

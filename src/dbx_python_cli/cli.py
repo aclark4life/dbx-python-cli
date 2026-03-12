@@ -99,6 +99,12 @@ def main(
         "-v",
         help="Show more detailed output.",
     ),
+    pager: bool = typer.Option(
+        False,
+        "--pager",
+        "-p",
+        help="Use a pager (less) for command output.",
+    ),
     backend: str = typer.Option(
         None,
         "--backend",
@@ -114,6 +120,7 @@ def main(
     # Store flags in context for subcommands to access
     ctx.obj = {
         "verbose": verbose,
+        "pager": pager,
         "mongodb_backend": backend,
         "mongodb_edition": edition,
     }

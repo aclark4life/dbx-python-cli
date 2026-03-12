@@ -8,6 +8,7 @@ from pathlib import Path
 
 import typer
 
+from dbx_python_cli.utils.output import paginate_output, should_use_pager
 from dbx_python_cli.utils.repo import (
     get_config_path,
     get_default_config_path,
@@ -190,7 +191,7 @@ def edit():
 
 
 @app.command()
-def show():
+def show(ctx: typer.Context):
     """Display the current configuration.
 
     Shows the active configuration being used by dbx, including the config file
@@ -343,9 +344,6 @@ def show():
 
     output = "\n".join(buf)
 
-    # Paginate with colors when writing to a terminal; plain-print otherwise
-    # (piped output, CI, tests, etc.) so ANSI codes are never double-escaped.
-    if sys.stdout.isatty() and shutil.which("less"):
-        subprocess.run(["less", "-R"], input=output, text=True)
-    else:
-        typer.echo(output)
+    # Use pager if requested or by default for config show
+    use_pager = should_use_pager(ctx, command_default=True)
+    paginate_output(output, use_pager)

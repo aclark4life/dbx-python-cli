@@ -206,6 +206,16 @@ dbx -v install django-mongodb-backend
 dbx --verbose test django encryption_
 ```
 
+**Pager Mode:**
+
+Use `-p` or `--pager` to view output through a pager (less):
+
+```bash
+dbx -p branch -g pymongo
+dbx -p log mongo-python-driver
+dbx -p config show
+```
+
 For more details, see the [full documentation](https://dbx-python-cli.readthedocs.io/).
 
 ## Development
