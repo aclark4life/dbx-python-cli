@@ -90,14 +90,12 @@ def test_edit_basic(tmp_path, temp_repos_dir, mock_config):
         "dbx_python_cli.commands.edit.get_base_dir", return_value=temp_repos_dir
     ):
         with patch("dbx_python_cli.commands.edit.get_config", return_value=mock_config):
-            with patch.dict("os.environ", {"EDITOR": "vim"}, clear=False):
+            with patch("dbx_python_cli.commands.edit.get_editor", return_value="vim"):
                 with patch("dbx_python_cli.commands.edit.subprocess.run") as mock_run:
                     # Mock successful editor execution
                     mock_run.return_value = MagicMock(returncode=0)
 
-                    result = runner.invoke(
-                        app, ["edit", "mongo-python-driver"], env={"EDITOR": "vim"}
-                    )
+                    result = runner.invoke(app, ["edit", "mongo-python-driver"])
                     assert result.exit_code == 0
                     assert "mongo-python-driver" in result.stdout
                     assert "vim" in result.stdout
@@ -110,19 +108,17 @@ def test_edit_basic(tmp_path, temp_repos_dir, mock_config):
 
 
 def test_edit_with_custom_editor(tmp_path, temp_repos_dir, mock_config):
-    """Test edit with custom EDITOR environment variable."""
+    """Test edit with custom editor from config."""
     with patch(
         "dbx_python_cli.commands.edit.get_base_dir", return_value=temp_repos_dir
     ):
         with patch("dbx_python_cli.commands.edit.get_config", return_value=mock_config):
-            with patch.dict("os.environ", {"EDITOR": "nvim"}, clear=False):
+            with patch("dbx_python_cli.commands.edit.get_editor", return_value="nvim"):
                 with patch("dbx_python_cli.commands.edit.subprocess.run") as mock_run:
                     # Mock successful editor execution
                     mock_run.return_value = MagicMock(returncode=0)
 
-                    result = runner.invoke(
-                        app, ["edit", "mongo-python-driver"], env={"EDITOR": "nvim"}
-                    )
+                    result = runner.invoke(app, ["edit", "mongo-python-driver"])
                     assert result.exit_code == 0
                     assert "nvim" in result.stdout
 
@@ -138,18 +134,15 @@ def test_edit_editor_not_found(tmp_path, temp_repos_dir, mock_config):
         "dbx_python_cli.commands.edit.get_base_dir", return_value=temp_repos_dir
     ):
         with patch("dbx_python_cli.commands.edit.get_config", return_value=mock_config):
-            with patch.dict(
-                "os.environ", {"EDITOR": "nonexistent-editor"}, clear=False
+            with patch(
+                "dbx_python_cli.commands.edit.get_editor",
+                return_value="nonexistent-editor",
             ):
                 with patch("dbx_python_cli.commands.edit.subprocess.run") as mock_run:
                     # Mock FileNotFoundError when editor is not found
                     mock_run.side_effect = FileNotFoundError("Editor not found")
 
-                    result = runner.invoke(
-                        app,
-                        ["edit", "mongo-python-driver"],
-                        env={"EDITOR": "nonexistent-editor"},
-                    )
+                    result = runner.invoke(app, ["edit", "mongo-python-driver"])
                     assert result.exit_code == 1
                     # The error message is written to stderr, but Typer's CliRunner captures it in output
                     output = result.stdout + (result.stderr or "")
@@ -162,16 +155,14 @@ def test_edit_editor_fails(tmp_path, temp_repos_dir, mock_config):
         "dbx_python_cli.commands.edit.get_base_dir", return_value=temp_repos_dir
     ):
         with patch("dbx_python_cli.commands.edit.get_config", return_value=mock_config):
-            with patch.dict("os.environ", {"EDITOR": "vim"}, clear=False):
+            with patch("dbx_python_cli.commands.edit.get_editor", return_value="vim"):
                 with patch("dbx_python_cli.commands.edit.subprocess.run") as mock_run:
                     # Mock CalledProcessError when editor fails
                     from subprocess import CalledProcessError
 
                     mock_run.side_effect = CalledProcessError(1, "vim")
 
-                    result = runner.invoke(
-                        app, ["edit", "mongo-python-driver"], env={"EDITOR": "vim"}
-                    )
+                    result = runner.invoke(app, ["edit", "mongo-python-driver"])
                     assert result.exit_code == 1
                     # The error message is written to stderr, but we just verify the exit code
                     output = result.stdout + (result.stderr or "")
@@ -184,16 +175,57 @@ def test_verbose_flag_with_edit_command(tmp_path, temp_repos_dir, mock_config):
         "dbx_python_cli.commands.edit.get_base_dir", return_value=temp_repos_dir
     ):
         with patch("dbx_python_cli.commands.edit.get_config", return_value=mock_config):
-            with patch.dict("os.environ", {"EDITOR": "vim"}, clear=False):
+            with patch("dbx_python_cli.commands.edit.get_editor", return_value="vim"):
                 with patch("dbx_python_cli.commands.edit.subprocess.run") as mock_run:
                     mock_run.return_value = MagicMock(returncode=0)
 
                     result = runner.invoke(
-                        app,
-                        ["--verbose", "edit", "mongo-python-driver"],
-                        env={"EDITOR": "vim"},
+                        app, ["--verbose", "edit", "mongo-python-driver"]
                     )
                     assert result.exit_code == 0
                     assert "[verbose]" in result.stdout
                     assert "Repository path:" in result.stdout
                     assert "Editor:" in result.stdout
+
+
+def test_get_editor_priority():
+    """Test get_editor function priority order."""
+    from dbx_python_cli.utils.repo import get_editor
+
+    # Test 1: Repo-specific editor (highest priority)
+    config = {
+        "repo": {
+            "editor": "global-editor",
+            "groups": {
+                "pymongo": {
+                    "editor": {"mongo-python-driver": "repo-specific-editor"},
+                }
+            },
+        }
+    }
+    assert (
+        get_editor(config, "pymongo", "mongo-python-driver") == "repo-specific-editor"
+    )
+
+    # Test 2: Group-level editor (when no repo-specific)
+    config = {
+        "repo": {
+            "editor": "global-editor",
+            "groups": {"pymongo": {"editor": "group-editor"}},
+        }
+    }
+    assert get_editor(config, "pymongo", "mongo-python-driver") == "group-editor"
+
+    # Test 3: Global editor (when no group or repo-specific)
+    config = {"repo": {"editor": "global-editor", "groups": {"pymongo": {}}}}
+    assert get_editor(config, "pymongo", "mongo-python-driver") == "global-editor"
+
+    # Test 4: EDITOR environment variable (when no config)
+    config = {"repo": {"groups": {"pymongo": {}}}}
+    with patch.dict("os.environ", {"EDITOR": "env-editor"}, clear=True):
+        assert get_editor(config, "pymongo", "mongo-python-driver") == "env-editor"
+
+    # Test 5: Default to vim (when nothing is set)
+    config = {"repo": {"groups": {"pymongo": {}}}}
+    with patch.dict("os.environ", {}, clear=True):
+        assert get_editor(config, "pymongo", "mongo-python-driver") == "vim"

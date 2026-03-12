@@ -231,6 +231,57 @@ def get_python_version(config, group_name):
     return groups[group_name].get("python_version")
 
 
+def get_editor(config, group_name=None, repo_name=None):
+    """
+    Get the editor to use for opening repositories.
+
+    Priority order:
+    1. Repo-specific editor setting (if repo_name provided)
+    2. Group-level editor setting (if group_name provided)
+    3. Global editor setting in config
+    4. EDITOR environment variable
+    5. Default to 'vim'
+
+    Args:
+        config: Configuration dictionary
+        group_name: Optional name of the group (e.g., 'django')
+        repo_name: Optional name of the repository (e.g., 'django')
+
+    Returns:
+        str: Editor command to use
+    """
+    import os
+
+    # Check repo-specific editor setting
+    if group_name and repo_name:
+        groups = get_repo_groups(config)
+        if group_name in groups:
+            editor_config = groups[group_name].get("editor", {})
+            if isinstance(editor_config, dict) and repo_name in editor_config:
+                return editor_config[repo_name]
+
+    # Check group-level editor setting
+    if group_name:
+        groups = get_repo_groups(config)
+        if group_name in groups:
+            group_editor = groups[group_name].get("editor")
+            if isinstance(group_editor, str):
+                return group_editor
+
+    # Check global editor setting
+    global_editor = config.get("repo", {}).get("editor")
+    if global_editor:
+        return global_editor
+
+    # Fall back to EDITOR environment variable
+    env_editor = os.environ.get("EDITOR")
+    if env_editor:
+        return env_editor
+
+    # Final fallback to vim
+    return "vim"
+
+
 def get_preferred_branch(config, group_name, repo_name):
     """
     Get the preferred branch to switch to after cloning a repository.

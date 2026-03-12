@@ -1,7 +1,6 @@
 """Edit command for opening repositories in an editor."""
 
 import json
-import os
 import subprocess
 from pathlib import Path
 
@@ -11,6 +10,7 @@ from dbx_python_cli.utils.repo import (
     find_repo_by_name,
     get_base_dir,
     get_config,
+    get_editor,
 )
 
 # Create a Typer app that will act as a single command
@@ -32,8 +32,12 @@ def edit_callback(
 ):
     """Open a repository in your editor.
 
-    Uses the EDITOR environment variable to determine which editor to use.
-    Falls back to 'vim' if EDITOR is not set.
+    The editor is determined by the following priority:
+    1. Repo-specific editor setting in config.toml
+    2. Group-level editor setting in config.toml
+    3. Global editor setting in config.toml
+    4. EDITOR environment variable
+    5. Default to 'vim'
 
     Usage::
 
@@ -41,7 +45,7 @@ def edit_callback(
 
     Examples::
 
-        dbx edit mongo-python-driver    # Open repo in editor
+        dbx edit mongo-python-driver    # Open repo in configured editor
     """
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False
@@ -67,12 +71,14 @@ def edit_callback(
             raise typer.Exit(1)
 
         repo_path = Path(repo["path"])
+        group_name = repo["group"]
 
-        # Get the editor from environment variable, default to vim
-        editor = os.environ.get("EDITOR", "vim")
+        # Get the editor to use
+        editor = get_editor(config, group_name, repo_name)
 
         if verbose:
             typer.echo(f"[verbose] Repository path: {repo_path}")
+            typer.echo(f"[verbose] Group: {group_name}")
             typer.echo(f"[verbose] Editor: {editor}")
 
         typer.echo(f"📝 Opening {repo_name} in {editor}...")
@@ -86,7 +92,7 @@ def edit_callback(
             raise typer.Exit(1)
         except FileNotFoundError:
             typer.echo(
-                f"❌ Error: Editor '{editor}' not found. Please set the EDITOR environment variable.",
+                f"❌ Error: Editor '{editor}' not found. Please make sure it is installed and in your PATH.",
                 err=True,
             )
             raise typer.Exit(1)
