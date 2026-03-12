@@ -122,12 +122,16 @@ def sync_callback(
                 typer.echo("\nClone repositories using: dbx clone -a")
                 raise typer.Exit(1)
 
-            # Capture output for pagination (both stdout and stderr)
-            output_buffer = io.StringIO()
-            old_stdout = sys.stdout
-            old_stderr = sys.stderr
-            sys.stdout = output_buffer
-            sys.stderr = output_buffer
+            # Check if pager is requested
+            use_pager = should_use_pager(ctx, command_default=False)
+
+            # Only capture output if pager is requested
+            if use_pager:
+                output_buffer = io.StringIO()
+                old_stdout = sys.stdout
+                old_stderr = sys.stderr
+                sys.stdout = output_buffer
+                sys.stderr = output_buffer
 
             try:
                 typer.echo(
@@ -146,13 +150,14 @@ def sync_callback(
                 else:
                     typer.echo(f"\n✨ Done! Synced {len(target_repos)} repository(ies)")
             finally:
-                sys.stdout = old_stdout
-                sys.stderr = old_stderr
+                if use_pager:
+                    sys.stdout = old_stdout
+                    sys.stderr = old_stderr
 
-            # Display output with optional pagination
-            output = output_buffer.getvalue()
-            use_pager = should_use_pager(ctx, command_default=False)
-            paginate_output(output, use_pager)
+            # Display output with pagination if requested
+            if use_pager:
+                output = output_buffer.getvalue()
+                paginate_output(output, use_pager)
             return
 
         # Handle sync with both group and repo name specified
@@ -212,12 +217,16 @@ def sync_callback(
                 typer.echo(f"\nClone repositories using: dbx clone -g {group}")
                 raise typer.Exit(1)
 
-            # Capture output for pagination (both stdout and stderr)
-            output_buffer = io.StringIO()
-            old_stdout = sys.stdout
-            old_stderr = sys.stderr
-            sys.stdout = output_buffer
-            sys.stderr = output_buffer
+            # Check if pager is requested
+            use_pager = should_use_pager(ctx, command_default=False)
+
+            # Only capture output if pager is requested
+            if use_pager:
+                output_buffer = io.StringIO()
+                old_stdout = sys.stdout
+                old_stderr = sys.stderr
+                sys.stdout = output_buffer
+                sys.stderr = output_buffer
 
             try:
                 typer.echo(
@@ -236,13 +245,14 @@ def sync_callback(
                 else:
                     typer.echo(f"\n✨ Done! Synced {len(group_repos)} repository(ies)")
             finally:
-                sys.stdout = old_stdout
-                sys.stderr = old_stderr
+                if use_pager:
+                    sys.stdout = old_stdout
+                    sys.stderr = old_stderr
 
-            # Display output with optional pagination
-            output = output_buffer.getvalue()
-            use_pager = should_use_pager(ctx, command_default=False)
-            paginate_output(output, use_pager)
+            # Display output with pagination if requested
+            if use_pager:
+                output = output_buffer.getvalue()
+                paginate_output(output, use_pager)
             return
 
         # Handle single repo sync
