@@ -89,20 +89,23 @@ def test_log_basic(tmp_path, temp_repos_dir, mock_config):
     with patch("dbx_python_cli.commands.log.get_base_dir", return_value=temp_repos_dir):
         with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.log.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
+                mock_run.return_value = MagicMock(returncode=0, stdout="test log output")
                 result = runner.invoke(app, ["log", "mongo-python-driver"])
                 assert result.exit_code == 0
                 assert "mongo-python-driver" in result.stdout
                 # Verify git log was called with correct arguments
-                mock_run.assert_called_once()
-                call_args = mock_run.call_args
-                assert call_args[0][0] == [
+                # Should be called twice: once for git log, once for pagination (or just echo)
+                assert mock_run.call_count >= 1
+                # Check the first call (git log)
+                first_call = mock_run.call_args_list[0]
+                assert first_call[0][0] == [
                     "git",
                     "--no-pager",
                     "log",
+                    "--color=always",
                     "-n",
-                    "1",
-                ]  # Default 1 commit
+                    "10",
+                ]  # Default 10 commits
 
 
 def test_log_with_number(tmp_path, temp_repos_dir, mock_config):
@@ -110,12 +113,19 @@ def test_log_with_number(tmp_path, temp_repos_dir, mock_config):
     with patch("dbx_python_cli.commands.log.get_base_dir", return_value=temp_repos_dir):
         with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.log.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
+                mock_run.return_value = MagicMock(returncode=0, stdout="test log output")
                 result = runner.invoke(app, ["log", "mongo-python-driver", "-n", "5"])
                 assert result.exit_code == 0
                 # Verify git log was called with -n 5
-                call_args = mock_run.call_args
-                assert call_args[0][0] == ["git", "--no-pager", "log", "-n", "5"]
+                first_call = mock_run.call_args_list[0]
+                assert first_call[0][0] == [
+                    "git",
+                    "--no-pager",
+                    "log",
+                    "--color=always",
+                    "-n",
+                    "5",
+                ]
 
 
 def test_log_with_oneline(tmp_path, temp_repos_dir, mock_config):
@@ -123,16 +133,17 @@ def test_log_with_oneline(tmp_path, temp_repos_dir, mock_config):
     with patch("dbx_python_cli.commands.log.get_base_dir", return_value=temp_repos_dir):
         with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.log.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
+                mock_run.return_value = MagicMock(returncode=0, stdout="test log output")
                 result = runner.invoke(app, ["log", "mongo-python-driver", "--oneline"])
                 assert result.exit_code == 0
                 assert "oneline" in result.stdout
                 # Verify git log was called with --oneline
-                call_args = mock_run.call_args
-                assert call_args[0][0] == [
+                first_call = mock_run.call_args_list[0]
+                assert first_call[0][0] == [
                     "git",
                     "--no-pager",
                     "log",
+                    "--color=always",
                     "--oneline",
                 ]
 
@@ -142,12 +153,12 @@ def test_log_with_group(tmp_path, temp_repos_dir, mock_config):
     with patch("dbx_python_cli.commands.log.get_base_dir", return_value=temp_repos_dir):
         with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.log.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
+                mock_run.return_value = MagicMock(returncode=0, stdout="test log output")
                 result = runner.invoke(app, ["log", "-g", "pymongo"])
                 assert result.exit_code == 0
                 assert "pymongo" in result.stdout
-                # Should call git log twice (2 repos in group)
-                assert mock_run.call_count == 2
+                # Should call git log twice (2 repos in group) plus pagination
+                assert mock_run.call_count >= 2
 
 
 def test_log_with_nonexistent_group(tmp_path, temp_repos_dir, mock_config):
@@ -189,7 +200,7 @@ def test_verbose_flag_with_log_command(tmp_path, temp_repos_dir, mock_config):
     with patch("dbx_python_cli.commands.log.get_base_dir", return_value=temp_repos_dir):
         with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.log.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
+                mock_run.return_value = MagicMock(returncode=0, stdout="test log output")
                 result = runner.invoke(app, ["--verbose", "log", "mongo-python-driver"])
                 assert result.exit_code == 0
                 assert "[verbose]" in result.stdout
@@ -200,17 +211,18 @@ def test_log_with_number_and_oneline(tmp_path, temp_repos_dir, mock_config):
     with patch("dbx_python_cli.commands.log.get_base_dir", return_value=temp_repos_dir):
         with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.log.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
+                mock_run.return_value = MagicMock(returncode=0, stdout="test log output")
                 result = runner.invoke(
                     app, ["log", "mongo-python-driver", "-n", "20", "--oneline"]
                 )
                 assert result.exit_code == 0
                 # Verify git log was called with both options
-                call_args = mock_run.call_args
-                assert call_args[0][0] == [
+                first_call = mock_run.call_args_list[0]
+                assert first_call[0][0] == [
                     "git",
                     "--no-pager",
                     "log",
+                    "--color=always",
                     "-n",
                     "20",
                     "--oneline",
@@ -222,10 +234,19 @@ def test_log_with_group_and_number(tmp_path, temp_repos_dir, mock_config):
     with patch("dbx_python_cli.commands.log.get_base_dir", return_value=temp_repos_dir):
         with patch("dbx_python_cli.commands.log.get_config", return_value=mock_config):
             with patch("dbx_python_cli.commands.log.subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
+                mock_run.return_value = MagicMock(returncode=0, stdout="test log output")
                 result = runner.invoke(app, ["log", "-g", "pymongo", "-n", "3"])
                 assert result.exit_code == 0
-                # Should call git log twice with -n3
-                assert mock_run.call_count == 2
-                for call in mock_run.call_args_list:
-                    assert call[0][0] == ["git", "--no-pager", "log", "-n", "3"]
+                # Should call git log twice with -n3 (plus pagination)
+                assert mock_run.call_count >= 2
+                # Check the first two calls are git log commands
+                for i in range(2):
+                    call = mock_run.call_args_list[i]
+                    assert call[0][0] == [
+                        "git",
+                        "--no-pager",
+                        "log",
+                        "--color=always",
+                        "-n",
+                        "3",
+                    ]

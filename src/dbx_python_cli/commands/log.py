@@ -1,7 +1,9 @@
 """Log command for showing git commit logs."""
 
 import json
+import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import typer
@@ -28,7 +30,7 @@ def log_callback(
     repo_name: str = typer.Argument(None, help="Repository name to show logs for"),
     git_args: list[str] = typer.Argument(
         None,
-        help="Git log arguments to run (e.g., '-n 5', '--oneline', '--graph'). If not provided, runs 'git log -n 1'.",
+        help="Git log arguments to run (e.g., '-n 5', '--oneline', '--graph'). If not provided, runs 'git log -n 10'.",
     ),
     group: str = typer.Option(
         None,
@@ -73,9 +75,9 @@ def log_callback(
         git_args.insert(0, repo_name)
         repo_name = None
 
-    # If no args provided, default to showing last 1 commit
+    # If no args provided, default to showing last 10 commits
     if not git_args:
-        git_args = ["-n", "1"]
+        git_args = ["-n", "10"]
 
     try:
         config = get_config()
@@ -108,13 +110,19 @@ def log_callback(
             typer.echo(f"\nClone repositories using: dbx clone -g {group}")
             raise typer.Exit(1)
 
-        typer.echo(
+        # Collect output from all repos
+        output_parts = [
             f"Showing logs for {len(group_repos)} repository(ies) in group '{group}':\n"
-        )
+        ]
 
         for repo_info in group_repos:
-            _run_git_log(repo_info["path"], repo_info["name"], git_args, verbose)
+            log_output = _get_git_log_output(
+                repo_info["path"], repo_info["name"], git_args, verbose
+            )
+            if log_output:
+                output_parts.append(log_output)
 
+        _paginate_output("\n".join(output_parts))
         return
 
     # Handle project option
@@ -128,7 +136,9 @@ def log_callback(
             )
             raise typer.Exit(1)
 
-        _run_git_log(project_path, project, git_args, verbose)
+        log_output = _get_git_log_output(project_path, project, git_args, verbose)
+        if log_output:
+            _paginate_output(log_output)
         return
 
     # Require repo_name if not using group and not using project
@@ -147,40 +157,57 @@ def log_callback(
         raise typer.Exit(1)
 
     repo_path = Path(repo["path"])
-    _run_git_log(repo_path, repo_name, git_args, verbose)
+    log_output = _get_git_log_output(repo_path, repo_name, git_args, verbose)
+    if log_output:
+        _paginate_output(log_output)
 
 
-def _run_git_log(
+def _get_git_log_output(
     repo_path: Path, name: str, git_args: list[str], verbose: bool = False
-):
-    """Run git log in a repository or project."""
+) -> str:
+    """Get git log output from a repository or project."""
     # Check if it's a git repository
     if not (repo_path / ".git").exists():
-        typer.echo(f"⚠️  {name}: Not a git repository (skipping)", err=True)
-        return
+        return f"⚠️  {name}: Not a git repository (skipping)\n"
 
     # Build git log command
-    git_cmd = ["git", "--no-pager", "log"] + git_args
+    git_cmd = ["git", "--no-pager", "log", "--color=always"] + git_args
 
-    # Display what we're doing
+    # Build header
     separator = "─" * 60
-    typer.echo(separator)
+    output_parts = [separator]
     if git_args:
-        typer.echo(f"📜 {name}: git log {' '.join(git_args)}")
+        output_parts.append(f"📜 {name}: git log {' '.join(git_args)}")
     else:
-        typer.echo(f"📜 {name}: git log")
-    typer.echo(separator)
+        output_parts.append(f"📜 {name}: git log")
+    output_parts.append(separator)
 
     if verbose:
-        typer.echo(f"[verbose] Running command: {' '.join(git_cmd)}")
-        typer.echo(f"[verbose] Working directory: {repo_path}\n")
+        output_parts.append(f"[verbose] Running command: {' '.join(git_cmd)}")
+        output_parts.append(f"[verbose] Working directory: {repo_path}\n")
 
-    # Run git log in the repository
+    # Run git log in the repository and capture output
     result = subprocess.run(
         git_cmd,
         cwd=str(repo_path),
         check=False,
+        capture_output=True,
+        text=True,
     )
 
     if result.returncode != 0:
-        typer.echo(f"⚠️  {name}: git log failed", err=True)
+        output_parts.append(f"⚠️  {name}: git log failed")
+    else:
+        output_parts.append(result.stdout)
+
+    return "\n".join(output_parts)
+
+
+def _paginate_output(output: str):
+    """Paginate output using less if available and stdout is a tty."""
+    # Paginate with colors when writing to a terminal; plain-print otherwise
+    # (piped output, CI, tests, etc.) so ANSI codes are never double-escaped.
+    if sys.stdout.isatty() and shutil.which("less"):
+        subprocess.run(["less", "-R"], input=output, text=True)
+    else:
+        typer.echo(output)
