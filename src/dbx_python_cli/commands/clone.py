@@ -258,11 +258,39 @@ def clone_callback(
                 typer.echo("\nUse 'dbx list' to see available groups and repositories")
                 raise typer.Exit(1)
 
-            # Clone single repo
-            repos_to_clone = {found_group: [found_repo]}
+            # If the repo is in a global group, clone it to the first non-global group instead
+            global_group_names = repo.get_global_groups(config)
+            target_group = found_group
 
-            if verbose:
+            if found_group in global_group_names:
+                # Get group priority to determine which group to clone to
+                group_priority = repo.get_group_priority(config)
+
+                # Find the first non-global group from priority list
+                for priority_group in group_priority:
+                    if (
+                        priority_group in groups
+                        and priority_group not in global_group_names
+                    ):
+                        target_group = priority_group
+                        break
+                else:
+                    # If no prioritized group found, use the first non-global group
+                    for group_name in groups.keys():
+                        if group_name not in global_group_names:
+                            target_group = group_name
+                            break
+
+                if verbose:
+                    typer.echo(
+                        f"[verbose] Found '{repo_name}' in global group '{found_group}', "
+                        f"cloning to '{target_group}' instead"
+                    )
+            elif verbose:
                 typer.echo(f"[verbose] Found '{repo_name}' in group '{found_group}'")
+
+            # Clone single repo
+            repos_to_clone = {target_group: [found_repo]}
 
         # Handle clone all groups
         elif all_groups:

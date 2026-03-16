@@ -288,6 +288,45 @@ def test_clone_global_group_itself_not_doubled(tmp_path):
             assert len(mpd_calls) == 1
 
 
+def test_clone_global_repo_by_name_uses_first_group(tmp_path):
+    """Cloning a global repo by name clones it to the first non-global group."""
+    config = _make_config(
+        tmp_path,
+        global_groups={"global": ["git@github.com:mongodb/mongo-python-driver.git"]},
+        extra_groups={
+            "pymongo": ["git@github.com:mongodb/specifications.git"],
+            "django": ["git@github.com:mongodb-forks/django.git"],
+        },
+    )
+    # Add group_priority to config
+    config["repo"]["group_priority"] = ["pymongo", "django"]
+
+    with patch("dbx_python_cli.commands.clone.repo.get_config", return_value=config):
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+
+            result = runner.invoke(
+                app, ["clone", "--no-install", "mongo-python-driver"]
+            )
+            assert result.exit_code == 0
+
+            clone_calls = [
+                c
+                for c in mock_run.call_args_list
+                if c.args and c.args[0][:2] == ["git", "clone"]
+            ]
+            # Should clone mongo-python-driver exactly once
+            mpd_calls = [
+                c for c in clone_calls if "mongo-python-driver" in c.args[0][2]
+            ]
+            assert len(mpd_calls) == 1
+
+            # Check destination path - should be in pymongo/ (first priority group)
+            dest_path = mpd_calls[0].args[0][3]
+            assert str(tmp_path / "pymongo") in dest_path
+            assert str(tmp_path / "global") not in dest_path
+
+
 def test_clone_all_groups(tmp_path):
     """Test cloning all groups with -a flag."""
     config = _make_config(
