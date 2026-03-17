@@ -1,11 +1,13 @@
 """
 Wagtail CMS configuration for {{ project_name }}.
 
-Import this in {{ project_name }}.py to enable Wagtail:
-  from .wagtail import *  # noqa
+To enable Wagtail, uncomment the three lines in {{ project_name }}.py:
+  from .wagtail import *
+  INSTALLED_APPS += WAGTAIL_INSTALLED_APPS
+  MIDDLEWARE += WAGTAIL_MIDDLEWARE
 """
 
-INSTALLED_APPS += [  # noqa: F405, F821
+WAGTAIL_INSTALLED_APPS = [
     "{{ project_name }}.settings.apps.wagtail.CustomWagtailConfig",
     "{{ project_name }}.settings.apps.wagtail.CustomWagtailAdminConfig",
     "{{ project_name }}.settings.apps.wagtail.CustomWagtailDocsConfig",
@@ -19,7 +21,7 @@ INSTALLED_APPS += [  # noqa: F405, F821
     "taggit",
 ]
 
-MIDDLEWARE += [  # noqa: F405, F821
+WAGTAIL_MIDDLEWARE = [
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
@@ -27,5 +29,5 @@ WAGTAIL_SITE_NAME = "{{ project_name }}"
 
 WAGTAILADMIN_BASE_URL = "http://localhost:8000"
 
-MEDIA_ROOT = base_dir / "media"  # noqa: F405, F821
+MEDIA_ROOT = base_dir / "media"  # noqa: F821
 MEDIA_URL = "/media/"
