@@ -6,14 +6,14 @@ Import this in {{ project_name }}.py to enable Wagtail:
 """
 
 INSTALLED_APPS += [  # noqa: F405, F821
-    "{{ project_name }}.wagtail.CustomWagtailConfig",
-    "{{ project_name }}.wagtail.CustomWagtailAdminConfig",
-    "{{ project_name }}.wagtail.CustomWagtailDocsConfig",
-    "{{ project_name }}.wagtail.CustomWagtailImagesConfig",
-    "{{ project_name }}.wagtail.CustomWagtailSearchConfig",
-    "{{ project_name }}.wagtail.CustomWagtailSnippetsConfig",
-    "{{ project_name }}.wagtail.CustomWagtailFormsConfig",
-    "{{ project_name }}.wagtail.CustomWagtailRedirectsConfig",
+    "{{ project_name }}.settings.apps.wagtail.CustomWagtailConfig",
+    "{{ project_name }}.settings.apps.wagtail.CustomWagtailAdminConfig",
+    "{{ project_name }}.settings.apps.wagtail.CustomWagtailDocsConfig",
+    "{{ project_name }}.settings.apps.wagtail.CustomWagtailImagesConfig",
+    "{{ project_name }}.settings.apps.wagtail.CustomWagtailSearchConfig",
+    "{{ project_name }}.settings.apps.wagtail.CustomWagtailSnippetsConfig",
+    "{{ project_name }}.settings.apps.wagtail.CustomWagtailFormsConfig",
+    "{{ project_name }}.settings.apps.wagtail.CustomWagtailRedirectsConfig",
     "wagtail.embeds",
     "modelcluster",
     "taggit",

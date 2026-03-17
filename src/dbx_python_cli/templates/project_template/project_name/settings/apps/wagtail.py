@@ -6,7 +6,7 @@ field type as the rest of the project (ObjectIdAutoField for MongoDB,
 BigAutoField for PostgreSQL).
 
 This module is referenced by settings/wagtail.py via dotted app paths —
-no import in apps.py is required.
+it is only loaded when Wagtail is enabled.
 """
 
 from django.conf import settings
