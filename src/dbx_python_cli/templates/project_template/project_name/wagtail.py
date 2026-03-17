@@ -1,0 +1,68 @@
+"""
+Wagtail app configurations for {{ project_name }}.
+
+These custom configs set default_auto_field so Wagtail models use the same
+field type as the rest of the project (ObjectIdAutoField for MongoDB,
+BigAutoField for PostgreSQL).
+
+This module is referenced by settings/wagtail.py via dotted app paths —
+no import in apps.py is required.
+"""
+
+from django.conf import settings
+from wagtail.admin.apps import WagtailAdminAppConfig
+from wagtail.apps import WagtailAppConfig
+from wagtail.contrib.forms.apps import WagtailFormsAppConfig
+from wagtail.contrib.redirects.apps import WagtailRedirectsAppConfig
+from wagtail.documents.apps import WagtailDocsAppConfig
+from wagtail.images.apps import WagtailImagesAppConfig
+from wagtail.search.apps import WagtailSearchAppConfig
+from wagtail.snippets.apps import WagtailSnippetsAppConfig
+
+
+class CustomWagtailConfig(WagtailAppConfig):
+    @property
+    def default_auto_field(self):
+        return getattr(settings, "DEFAULT_AUTO_FIELD", "django.db.models.BigAutoField")
+
+
+class CustomWagtailAdminConfig(WagtailAdminAppConfig):
+    @property
+    def default_auto_field(self):
+        return getattr(settings, "DEFAULT_AUTO_FIELD", "django.db.models.BigAutoField")
+
+
+class CustomWagtailDocsConfig(WagtailDocsAppConfig):
+    @property
+    def default_auto_field(self):
+        return getattr(settings, "DEFAULT_AUTO_FIELD", "django.db.models.BigAutoField")
+
+
+class CustomWagtailImagesConfig(WagtailImagesAppConfig):
+    @property
+    def default_auto_field(self):
+        return getattr(settings, "DEFAULT_AUTO_FIELD", "django.db.models.BigAutoField")
+
+
+class CustomWagtailSearchConfig(WagtailSearchAppConfig):
+    @property
+    def default_auto_field(self):
+        return getattr(settings, "DEFAULT_AUTO_FIELD", "django.db.models.BigAutoField")
+
+
+class CustomWagtailSnippetsConfig(WagtailSnippetsAppConfig):
+    @property
+    def default_auto_field(self):
+        return getattr(settings, "DEFAULT_AUTO_FIELD", "django.db.models.BigAutoField")
+
+
+class CustomWagtailFormsConfig(WagtailFormsAppConfig):
+    @property
+    def default_auto_field(self):
+        return getattr(settings, "DEFAULT_AUTO_FIELD", "django.db.models.BigAutoField")
+
+
+class CustomWagtailRedirectsConfig(WagtailRedirectsAppConfig):
+    @property
+    def default_auto_field(self):
+        return getattr(settings, "DEFAULT_AUTO_FIELD", "django.db.models.BigAutoField")
