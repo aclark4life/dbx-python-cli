@@ -174,6 +174,66 @@ def ensure_group_venv(
     return True
 
 
+def ensure_repo_venv(
+    repo_path: Path,
+    repo_name: str,
+    verbose: bool = False,
+    python_version: str = None,
+) -> bool:
+    """
+    Ensure a repo-level virtual environment exists, creating one if needed.
+
+    Args:
+        repo_path: Path to the repository directory
+        repo_name: Name of the repository
+        verbose: Whether to show verbose output
+        python_version: Python version to use (e.g., '3.13'), or None for system default
+
+    Returns:
+        True if venv exists or was created successfully, False otherwise
+    """
+    venv_path = repo_path / ".venv"
+
+    if venv_path.exists():
+        typer.echo(f"  🐍 Using existing venv: {venv_path}")
+        return True
+
+    if python_version:
+        typer.echo(
+            f"  🐍 Creating virtual environment for repository '{repo_name}' (Python {python_version})..."
+        )
+    else:
+        typer.echo(f"  🐍 Creating virtual environment for repository '{repo_name}'...")
+
+    venv_cmd = ["uv", "venv", str(venv_path), "--no-python-downloads"]
+    if python_version:
+        venv_cmd.extend(["--python", python_version])
+
+    if verbose:
+        typer.echo(f"  [verbose] Running command: {' '.join(venv_cmd)}")
+        typer.echo(f"  [verbose] Working directory: {repo_path}")
+
+    result = subprocess.run(
+        venv_cmd,
+        cwd=str(repo_path),
+        check=False,
+        capture_output=not verbose,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        typer.echo(
+            f"  ⚠️  Failed to create virtual environment for repository '{repo_name}'",
+            err=True,
+        )
+        if not verbose and result.stderr:
+            typer.echo(result.stderr, err=True)
+        return False
+
+    typer.echo(f"  ✅ Virtual environment created at {venv_path}")
+    return True
+
+
 app = typer.Typer(
     help="Clone repositories",
     no_args_is_help=True,
@@ -673,18 +733,34 @@ def clone_callback(
         if not no_install and cloned_repos:
             typer.echo("\n📦 Installing cloned repositories...")
 
-            # Ensure each group has a venv before installing
-            unique_groups: dict[str, Path] = {}
-            for repo_info in cloned_repos:
-                gname = repo_info["group"]
-                if gname not in unique_groups:
-                    unique_groups[gname] = base_dir / gname
+            # Determine if we're cloning a single repo or groups
+            # Single repo clone: create repo-level venv
+            # Group clone (-g or --all): create group-level venv
+            is_single_repo_clone = repo_name is not None
 
-            for gname, gdir in unique_groups.items():
-                python_version = repo.get_python_version(config, gname)
-                ensure_group_venv(
-                    gdir, gname, verbose=verbose, python_version=python_version
-                )
+            if is_single_repo_clone:
+                # Create repo-level venvs for single repo clones
+                for repo_info in cloned_repos:
+                    python_version = repo.get_python_version(config, repo_info["group"])
+                    ensure_repo_venv(
+                        repo_info["path"],
+                        repo_info["name"],
+                        verbose=verbose,
+                        python_version=python_version,
+                    )
+            else:
+                # Create group-level venvs for group clones
+                unique_groups: dict[str, Path] = {}
+                for repo_info in cloned_repos:
+                    gname = repo_info["group"]
+                    if gname not in unique_groups:
+                        unique_groups[gname] = base_dir / gname
+
+                for gname, gdir in unique_groups.items():
+                    python_version = repo.get_python_version(config, gname)
+                    ensure_group_venv(
+                        gdir, gname, verbose=verbose, python_version=python_version
+                    )
 
             installed_count = 0
             skipped_count = 0
