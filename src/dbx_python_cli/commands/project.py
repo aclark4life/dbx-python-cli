@@ -804,7 +804,7 @@ def run_project(
     try:
         subprocess.run(
             [python_path, "-m", "django", "migrate"],
-            cwd=proj.project_path.parent,
+            cwd=proj.project_path,
             env=migrate_env,
             check=True,
         )
@@ -830,7 +830,7 @@ def run_project(
             "--username=admin",
             f"--email={su_email}",
         ],
-        cwd=proj.project_path.parent,
+        cwd=proj.project_path,
         env=su_env,
     )
     if su_result.returncode == 0:
@@ -986,7 +986,7 @@ def manage(
     try:
         subprocess.run(
             [python_path, "-m", "django", *cmd_args],
-            cwd=proj.project_path.parent,
+            cwd=proj.project_path,
             env=env,
             check=True,
         )
@@ -1079,7 +1079,7 @@ def create_superuser(
                 f"--username={username}",
                 f"--email={email}",
             ],
-            cwd=proj.project_path.parent,
+            cwd=proj.project_path,
             env=env,
             check=True,
         )
@@ -1158,7 +1158,7 @@ def migrate_project(
     try:
         subprocess.run(
             cmd,
-            cwd=proj.project_path.parent,
+            cwd=proj.project_path,
             env=env,
             check=True,
         )
