@@ -371,9 +371,13 @@ def add_project(
             name,
         ]
 
-        # When using --base-dir override, create project in current directory (.)
-        # Otherwise, let django-admin create the directory
-        if use_base_dir_override:
+        # When using --base-dir override, or when project_path.parent is base_dir
+        # (flat mode), create the project dir first and run django-admin in it with
+        # "." so that base_dir never ends up on sys.path (which would let the cloned
+        # django/ repo shadow the installed package).
+        _flat = is_flat_mode(get_config())
+        if use_base_dir_override or _flat:
+            project_path.mkdir(parents=True, exist_ok=True)
             cmd.append(".")
             cwd = str(project_path)
         else:
