@@ -29,7 +29,7 @@ DATABASES = {
 # Add MQL Panel to debug toolbar
 DEBUG_TOOLBAR_PANELS.insert(  # noqa: F405
     DEBUG_TOOLBAR_PANELS.index("debug_toolbar.panels.staticfiles.StaticFilesPanel"),  # noqa: F405
-    "django_mongodb_extensions.debug_toolbar.panels.MQLPanel",
+    "django_mongodb_extensions.mql_panel.MQLPanel",
 )
 
 # Custom migration directories for MongoDB
