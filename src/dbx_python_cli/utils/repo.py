@@ -59,6 +59,15 @@ def get_repo_dir(base_dir, group, repo_name, flat=False):
     return base_dir / repo_name if flat else base_dir / group / repo_name
 
 
+def get_projects_dir(base_dir, flat=False):
+    """Return the directory where Django projects live.
+
+    In flat mode projects live directly in base_dir.
+    In grouped mode they live in base_dir/projects/.
+    """
+    return base_dir if flat else base_dir / "projects"
+
+
 def get_repo_groups(config):
     """Get repository groups from config."""
     return config.get("repo", {}).get("groups", {})
@@ -525,9 +534,14 @@ def find_all_repos(base_dir, config=None):
         # Assign config group names so -g filtering still works.
         repo_to_group = _build_repo_group_map(config)
         for repo_dir in sorted(base_dir.iterdir()):
-            if repo_dir.is_dir() and (repo_dir / ".git").exists():
+            if not repo_dir.is_dir():
+                continue
+            if (repo_dir / ".git").exists():
                 group = repo_to_group.get(repo_dir.name, "")
                 repos.append({"name": repo_dir.name, "path": repo_dir, "group": group})
+            elif (repo_dir / "pyproject.toml").exists():
+                # Django projects: no .git, live directly in base_dir in flat mode
+                repos.append({"name": repo_dir.name, "path": repo_dir, "group": ""})
         return repos
 
     # Grouped layout: base_dir/<group>/<repo>

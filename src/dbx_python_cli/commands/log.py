@@ -7,7 +7,13 @@ from pathlib import Path
 import typer
 
 from dbx_python_cli.utils.output import paginate_output, should_use_pager
-from dbx_python_cli.utils.repo import get_base_dir, get_config, get_repo_groups
+from dbx_python_cli.utils.repo import (
+    get_base_dir,
+    get_config,
+    get_projects_dir,
+    get_repo_groups,
+    is_flat_mode,
+)
 from dbx_python_cli.utils.repo import find_all_repos, find_repo_by_name
 
 # Create a Typer app that will act as a single command
@@ -127,7 +133,7 @@ def log_callback(
 
     # Handle project option
     if project:
-        projects_dir = base_dir / "projects"
+        projects_dir = get_projects_dir(base_dir, is_flat_mode(config))
         project_path = projects_dir / project
 
         if not project_path.exists():

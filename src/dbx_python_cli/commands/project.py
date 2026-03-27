@@ -24,7 +24,12 @@ from dbx_python_cli.utils.project import (
     resolve_project_path,
     setup_django_command_env,
 )
-from dbx_python_cli.utils.repo import get_base_dir, get_config
+from dbx_python_cli.utils.repo import (
+    get_base_dir,
+    get_config,
+    get_projects_dir,
+    is_flat_mode,
+)
 from dbx_python_cli.utils.venv import get_venv_info
 
 
@@ -49,7 +54,7 @@ def list_projects():
     """List all projects in the projects directory."""
     config = get_config()
     base_dir = get_base_dir(config)
-    projects_dir = base_dir / "projects"
+    projects_dir = get_projects_dir(base_dir, is_flat_mode(config))
 
     if not projects_dir.exists():
         typer.echo(f"Projects directory: {projects_dir}\n")
@@ -273,7 +278,7 @@ def add_project(
                 name = generate_random_project_name()
                 typer.echo(f"🎲 Generated random project name: {name}")
             base_dir = get_base_dir(config)
-            projects_dir = base_dir / "projects"
+            projects_dir = get_projects_dir(base_dir, is_flat_mode(config))
             projects_dir.mkdir(parents=True, exist_ok=True)
             project_path = projects_dir / name
         else:
@@ -460,7 +465,7 @@ def add_project(
 
             # Get the virtual environment info, checking most specific to least specific:
             # project → projects group → django group → base
-            projects_dir = repos_base_dir / "projects"
+            projects_dir = get_projects_dir(repos_base_dir, is_flat_mode(repos_config))
             django_group_path = repos_base_dir / "django"
             fallback_paths = [django_group_path] if django_group_path.exists() else None
             python_path, venv_type = get_venv_info(
@@ -666,7 +671,13 @@ def remove_project(
     typer.echo(f"🗑️ Removed project {proj.name}")
 
     # If using default projects directory, check if it's now empty and remove it
-    if directory is None and proj.projects_dir is not None:
+    # Skip in flat mode — projects_dir IS base_dir and must never be deleted
+    _config = get_config()
+    if (
+        directory is None
+        and proj.projects_dir is not None
+        and not is_flat_mode(_config)
+    ):
         # Check if projects_dir is empty (no directories with pyproject.toml)
         remaining_projects = []
         if proj.projects_dir.exists():

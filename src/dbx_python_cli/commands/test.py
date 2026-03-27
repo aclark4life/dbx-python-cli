@@ -14,6 +14,7 @@ from dbx_python_cli.utils.repo import (
     find_all_repos_by_name,
     get_base_dir,
     get_config,
+    get_projects_dir,
     get_repo_dir,
     get_test_env_vars,
     get_test_runner,
@@ -360,7 +361,7 @@ def test_callback(
 
         # For the django repo: ensure django_test project exists and is importable
         if test_runner and repo_name == "django":
-            django_test_path = base_dir / "projects" / "django_test"
+            django_test_path = get_projects_dir(base_dir, flat) / "django_test"
             if not (django_test_path / "manage.py").exists():
                 typer.echo("📦 django_test project not found, creating it...")
                 try:

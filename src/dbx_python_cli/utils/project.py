@@ -14,7 +14,12 @@ from typing import Optional
 import typer
 
 from dbx_python_cli.commands.mongodb import ensure_mongodb
-from dbx_python_cli.utils.repo import get_base_dir, get_config
+from dbx_python_cli.utils.repo import (
+    get_base_dir,
+    get_config,
+    get_projects_dir,
+    is_flat_mode,
+)
 from dbx_python_cli.utils.venv import get_venv_info
 
 
@@ -94,10 +99,9 @@ def resolve_project_path(
     projects_dir = None
 
     if directory is None:
-        # Use base_dir/projects/ as default
         config = get_config()
         base_dir = get_base_dir(config)
-        projects_dir = base_dir / "projects"
+        projects_dir = get_projects_dir(base_dir, is_flat_mode(config))
 
         # If no name provided, find the newest project
         if name is None:
