@@ -487,6 +487,8 @@ def clone_callback(
 
         # Track successfully cloned repos for auto-install
         cloned_repos = []
+        # Capture before inner loops overwrite the repo_name variable
+        is_single_repo_clone = repo_name is not None
 
         # Process each group
         for group_name, repos in repos_to_clone.items():
@@ -734,10 +736,8 @@ def clone_callback(
         if not no_install and cloned_repos:
             typer.echo("\n📦 Installing cloned repositories...")
 
-            # Determine if we're cloning a single repo or groups
             # Single repo clone: create repo-level venv
-            # Group clone (-g or --all): create group-level venv
-            is_single_repo_clone = repo_name is not None
+            # Group clone (-g or --all): create group-level venv (base_dir/.venv in flat mode)
 
             if is_single_repo_clone:
                 # Create repo-level venvs for single repo clones
