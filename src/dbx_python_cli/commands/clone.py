@@ -6,7 +6,11 @@ from pathlib import Path
 import typer
 
 from dbx_python_cli.utils import repo
-from dbx_python_cli.utils.repo import get_group_dir, is_flat_mode, switch_to_branch as _switch_to_branch
+from dbx_python_cli.utils.repo import (
+    get_group_dir,
+    is_flat_mode,
+    switch_to_branch as _switch_to_branch,
+)
 
 
 def auto_install_repo(

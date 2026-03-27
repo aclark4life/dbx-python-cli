@@ -153,7 +153,7 @@ def init(
             # Create venv in group directory
             if flat:
                 typer.echo(
-                    f"Note: flat mode is enabled — group venvs are not used. Creating base venv instead.",
+                    "Note: flat mode is enabled — group venvs are not used. Creating base venv instead.",
                     err=True,
                 )
                 venv_path = base_dir / ".venv"
@@ -308,7 +308,9 @@ def list(ctx: typer.Context):
                             text=True,
                         )
                         version = (
-                            result.stdout.strip() if result.returncode == 0 else "unknown"
+                            result.stdout.strip()
+                            if result.returncode == 0
+                            else "unknown"
                         )
                         typer.echo(f"    ✅ {group_name}: {venv_path} ({version})")
                     else:
@@ -509,7 +511,8 @@ def remove(
                 group_dir = get_group_dir(base_dir, group, flat)
                 if not flat and not group_dir.exists():
                     typer.echo(
-                        f"❌ Error: Group directory '{group_dir}' does not exist.", err=True
+                        f"❌ Error: Group directory '{group_dir}' does not exist.",
+                        err=True,
                     )
                     raise typer.Exit(1)
 
