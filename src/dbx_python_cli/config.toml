@@ -11,18 +11,18 @@
 # MongoDB backend configuration
 [project.mongodb]
 # Choose which MongoDB backend to use when MONGODB_URI is not set:
-# - "mongodb-runner": Uses npx mongodb-runner (default, standard MongoDB)
+# - "runner": Uses npx mongodb-runner (default, standard MongoDB)
 # - "docker": Uses Docker with official MongoDB images
 # - "atlas-local": Uses Docker with mongodb/mongodb-atlas-local image (includes Atlas Search & Vector Search)
-backend = "mongodb-runner"
+backend = "runner"
 
-# MongoDB edition (applies to both mongodb-runner and docker backends)
+# MongoDB edition (applies to both runner and docker backends)
 # - "community": MongoDB Community Server (default, free)
 # - "enterprise": MongoDB Enterprise Server (requires license)
 edition = "community"
 
-# mongodb-runner configuration (only used when backend = "mongodb-runner")
-[project.mongodb.mongodb_runner]
+# runner configuration (only used when backend = "runner")
+[project.mongodb.runner]
 # Topology type: "standalone", "replset", or "sharded"
 topology = "standalone"
 # Number of shards (only for sharded topology)
