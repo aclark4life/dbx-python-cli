@@ -70,13 +70,12 @@ QE_INSTALLED_APPS = [
 #     # },
 # }
 #
-# # Database router for encrypted models
-# # The EncryptedRouter is already included in {{ project_name }}/routers.py
-# # It automatically routes models with encrypted fields to the "encrypted" database
-# DATABASE_ROUTERS = [
-#     "django_mongodb_backend.routers.MongoRouter",
-#     "{{ project_name }}.routers.EncryptedRouter",
-# ]
+# Database router for encrypted models
+# The EncryptedRouter routes models with encrypted fields to the "encrypted" database
+DATABASE_ROUTERS = [
+    "django_mongodb_backend.routers.MongoRouter",
+    "{{ project_name }}.routers.EncryptedRouter",
+]
 #
 # # After configuring, run:
 # # python manage.py migrate --database encrypted
