@@ -991,20 +991,21 @@ def manage(
         proj, ctx, mongodb_uri=mongodb_uri, settings=settings
     )
 
-    # Build command - use python -m django to ensure we use the correct venv's Django
+    # Build command - use manage.py so project-specific management commands are discovered
+    manage_py = proj.project_path / "manage.py"
     cmd_args = []
     if command:
         cmd_args.append(command)
         if database:
             cmd_args.append(f"--database={database}")
         cmd_args.extend(args)
-        typer.echo(f"⚙️  Running: {python_path} -m django {' '.join(cmd_args)}")
+        typer.echo(f"⚙️  Running: {python_path} manage.py {' '.join(cmd_args)}")
     else:
-        typer.echo(f"ℹ️  Running: {python_path} -m django")
+        typer.echo(f"ℹ️  Running: {python_path} manage.py")
 
     try:
         subprocess.run(
-            [python_path, "-m", "django", *cmd_args],
+            [python_path, str(manage_py), *cmd_args],
             cwd=proj.project_path,
             env=env,
             check=True,
