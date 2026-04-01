@@ -618,7 +618,17 @@ def _add_frontend(
             name,
             str(project_path),
         ]
-        subprocess.run(cmd, check=True, cwd=str(project_path))
+        result = subprocess.run(
+            cmd, check=False, capture_output=True, text=True, cwd=str(project_path)
+        )
+        if result.returncode != 0:
+            # Surface just the final error line rather than the full traceback
+            last_line = ""
+            if result.stderr:
+                last_line = result.stderr.strip().splitlines()[-1]
+            raise subprocess.CalledProcessError(
+                result.returncode, cmd, output=result.stdout, stderr=last_line
+            )
 
 
 @app.command("remove")
@@ -741,6 +751,8 @@ def run_project(
     """
     import signal
 
+    verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+
     # Resolve project path and get venv
     proj = resolve_project_path(name, directory)
     python_path, venv_type = get_django_python_path(proj, directory)
@@ -801,17 +813,23 @@ def run_project(
     migrate_env = setup_django_command_env(
         proj, ctx, settings=settings, include_dyld_fallback=False
     )
-    try:
-        subprocess.run(
-            [python_path, "-m", "django", "migrate"],
-            cwd=proj.project_path,
-            env=migrate_env,
-            check=True,
-        )
-        typer.echo("✅ Migrations completed successfully")
-    except subprocess.CalledProcessError as e:
-        typer.echo(f"❌ Migrations failed with exit code {e.returncode}", err=True)
-        raise typer.Exit(code=e.returncode)
+    result = subprocess.run(
+        [python_path, "-m", "django", "migrate"],
+        cwd=proj.project_path,
+        env=migrate_env,
+        check=False,
+        capture_output=not verbose,
+        text=True,
+    )
+    if result.returncode != 0:
+        typer.echo(f"❌ Migrations failed with exit code {result.returncode}", err=True)
+        if verbose and result.stderr:
+            typer.echo(result.stderr, err=True)
+        elif not verbose and result.stderr:
+            last_line = result.stderr.strip().splitlines()[-1]
+            typer.echo(f"   {last_line}", err=True)
+        raise typer.Exit(code=result.returncode)
+    typer.echo("✅ Migrations completed successfully")
 
     # Create superuser (non-fatal if already exists)
     su_email = os.getenv("PROJECT_EMAIL", "admin@example.com")
@@ -832,6 +850,7 @@ def run_project(
         ],
         cwd=proj.project_path,
         env=su_env,
+        capture_output=not verbose,
     )
     if su_result.returncode == 0:
         typer.echo("✅ Superuser 'admin' created successfully")
