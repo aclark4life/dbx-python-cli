@@ -106,18 +106,22 @@ class TestEnsureMongodb:
                 mock_config.return_value = {"project": {"default_env": {}}}
 
                 with patch(
-                    "dbx_python_cli.commands.mongodb.subprocess.run"
-                ) as mock_run:
-                    # mongodb-runner ls (returns existing instance)
-                    mock_run.return_value = MagicMock(
-                        returncode=0,
-                        stdout="abc123: mongodb://127.0.0.1:52065/\n",
-                        stderr="",
-                    )
+                    "dbx_python_cli.commands.mongodb.shutil.which",
+                    return_value="/usr/bin/mongodb-runner",
+                ):
+                    with patch(
+                        "dbx_python_cli.commands.mongodb.subprocess.run"
+                    ) as mock_run:
+                        # mongodb-runner ls (returns existing instance)
+                        mock_run.return_value = MagicMock(
+                            returncode=0,
+                            stdout="abc123: mongodb://127.0.0.1:52065/\n",
+                            stderr="",
+                        )
 
-                    result = ensure_mongodb(env)
-                    assert result["MONGODB_URI"] == "mongodb://127.0.0.1:52065/"
-                    assert mock_run.call_count == 1
+                        result = ensure_mongodb(env)
+                        assert result["MONGODB_URI"] == "mongodb://127.0.0.1:52065/"
+                        assert mock_run.call_count == 1
 
     def test_mongodb_runner_started_on_success(self):
         """Test that mongodb-runner is started when no instance is running."""
@@ -127,28 +131,32 @@ class TestEnsureMongodb:
                 mock_config.return_value = {"project": {"default_env": {}}}
 
                 with patch(
-                    "dbx_python_cli.commands.mongodb.subprocess.run"
-                ) as mock_run:
-                    # First call: mongodb-runner ls (no instances)
-                    # Second call: mongodb-runner start (success)
-                    # Third call: mongodb-runner ls (returns the started instance)
-                    mock_run.side_effect = [
-                        MagicMock(
-                            returncode=0, stdout="", stderr=""
-                        ),  # mongodb-runner ls (empty)
-                        MagicMock(
-                            returncode=0, stdout="Started\n", stderr=""
-                        ),  # mongodb-runner start
-                        MagicMock(
-                            returncode=0,
-                            stdout="abc123: mongodb://127.0.0.1:52065/\n",
-                            stderr="",
-                        ),  # mongodb-runner ls
-                    ]
+                    "dbx_python_cli.commands.mongodb.shutil.which",
+                    return_value="/usr/bin/mongodb-runner",
+                ):
+                    with patch(
+                        "dbx_python_cli.commands.mongodb.subprocess.run"
+                    ) as mock_run:
+                        # First call: mongodb-runner ls (no instances)
+                        # Second call: mongodb-runner start (success)
+                        # Third call: mongodb-runner ls (returns the started instance)
+                        mock_run.side_effect = [
+                            MagicMock(
+                                returncode=0, stdout="", stderr=""
+                            ),  # mongodb-runner ls (empty)
+                            MagicMock(
+                                returncode=0, stdout="Started\n", stderr=""
+                            ),  # mongodb-runner start
+                            MagicMock(
+                                returncode=0,
+                                stdout="abc123: mongodb://127.0.0.1:52065/\n",
+                                stderr="",
+                            ),  # mongodb-runner ls
+                        ]
 
-                    result = ensure_mongodb(env)
-                    assert result["MONGODB_URI"] == "mongodb://127.0.0.1:52065/"
-                    assert mock_run.call_count == 3
+                        result = ensure_mongodb(env)
+                        assert result["MONGODB_URI"] == "mongodb://127.0.0.1:52065/"
+                        assert mock_run.call_count == 3
 
     def test_mongodb_runner_failure_exits(self):
         """Test that mongodb-runner failure exits with 'no db running'."""
