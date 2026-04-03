@@ -5,7 +5,6 @@ import os
 import subprocess
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse
 
 import typer
 
@@ -23,7 +22,7 @@ from dbx_python_cli.utils.repo import (
 )
 from dbx_python_cli.utils.venv import get_venv_info
 from dbx_python_cli.commands.project import add_project
-from dbx_python_cli.commands.mongodb import ensure_mongodb
+from dbx_python_cli.commands.mongodb import ensure_mongodb, parse_mongodb_host_port
 
 app = typer.Typer(
     help="💚 Test commands",
@@ -319,17 +318,13 @@ def test_callback(
         # The pymongo test suite uses DB_IP and DB_PORT instead of MONGODB_URI
         if "MONGODB_URI" in test_env and "DB_IP" not in test_env:
             try:
-                parsed = urlparse(test_env["MONGODB_URI"])
-                if parsed.hostname:
-                    test_env["DB_IP"] = parsed.hostname
-                    if parsed.port:
-                        test_env["DB_PORT"] = str(parsed.port)
-                    else:
-                        test_env["DB_PORT"] = "27017"  # Default MongoDB port
-                    if verbose:
-                        typer.echo(
-                            f"[verbose] Set DB_IP={test_env['DB_IP']} and DB_PORT={test_env['DB_PORT']} from MONGODB_URI"
-                        )
+                host, port = parse_mongodb_host_port(test_env["MONGODB_URI"])
+                test_env["DB_IP"] = host
+                test_env["DB_PORT"] = port
+                if verbose:
+                    typer.echo(
+                        f"[verbose] Set DB_IP={test_env['DB_IP']} and DB_PORT={test_env['DB_PORT']} from MONGODB_URI"
+                    )
             except Exception as e:
                 if verbose:
                     typer.echo(f"[verbose] Could not parse MONGODB_URI: {e}")

@@ -4,11 +4,10 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from urllib.parse import urlparse
 
 import typer
 
-from dbx_python_cli.commands.mongodb import ensure_mongodb
+from dbx_python_cli.commands.mongodb import ensure_mongodb, parse_mongodb_host_port
 from dbx_python_cli.utils.repo import (
     find_all_repos,
     find_all_repos_by_name,
@@ -184,20 +183,34 @@ def _run_just_in_repo(
     # The pymongo test suite uses DB_IP and DB_PORT instead of MONGODB_URI
     if "MONGODB_URI" in just_env and "DB_IP" not in just_env:
         try:
-            parsed = urlparse(just_env["MONGODB_URI"])
-            if parsed.hostname:
-                just_env["DB_IP"] = parsed.hostname
-                if parsed.port:
-                    just_env["DB_PORT"] = str(parsed.port)
-                else:
-                    just_env["DB_PORT"] = "27017"  # Default MongoDB port
-                if verbose:
-                    typer.echo(
-                        f"[verbose] Set DB_IP={just_env['DB_IP']} and DB_PORT={just_env['DB_PORT']} from MONGODB_URI"
-                    )
+            host, port = parse_mongodb_host_port(just_env["MONGODB_URI"])
+            just_env["DB_IP"] = host
+            just_env["DB_PORT"] = port
+            if verbose:
+                typer.echo(
+                    f"[verbose] Set DB_IP={just_env['DB_IP']} and DB_PORT={just_env['DB_PORT']} from MONGODB_URI"
+                )
         except Exception as e:
             if verbose:
                 typer.echo(f"[verbose] Could not parse MONGODB_URI: {e}")
+
+    # Apply libmongocrypt environment variables from project config
+    config = get_config()
+    default_env = config.get("project", {}).get("default_env", {})
+    for var in [
+        "PYMONGOCRYPT_LIB",
+        "DYLD_LIBRARY_PATH",
+        "DYLD_FALLBACK_LIBRARY_PATH",
+        "LD_LIBRARY_PATH",
+        "CRYPT_SHARED_LIB_PATH",
+    ]:
+        if var not in just_env and var in default_env:
+            value = os.path.expanduser(default_env[var])
+            if var in ["PYMONGOCRYPT_LIB", "CRYPT_SHARED_LIB_PATH"]:
+                if Path(value).exists():
+                    just_env[var] = value
+            else:
+                just_env[var] = value
 
     # Set VIRTUAL_ENV to the correct venv path if it exists
     # Check in priority order: repo venv, group venv, base venv

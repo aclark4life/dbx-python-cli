@@ -618,6 +618,26 @@ def ensure_mongodb_runner(env: dict, config: dict) -> dict:
         raise typer.Exit(code=1)
 
 
+def parse_mongodb_host_port(uri: str) -> tuple[str, str]:
+    """Parse the first host and port from a MongoDB URI.
+
+    Handles replica set URIs with multiple comma-separated hosts, e.g.:
+    mongodb://127.0.0.1:51619,127.0.0.1:51621,127.0.0.1:51620/?replicaSet=rs0
+    """
+    from urllib.parse import urlparse
+
+    netloc = urlparse(uri).netloc
+    # Strip userinfo (user:pass@)
+    if "@" in netloc:
+        netloc = netloc.split("@", 1)[1]
+    # Take only the first host from a comma-separated replica set list
+    first_host = netloc.split(",")[0]
+    if ":" in first_host:
+        host, port = first_host.rsplit(":", 1)
+        return host, port
+    return first_host, "27017"
+
+
 def ensure_mongodb(
     env: dict,
     backend_override: str | None = None,
