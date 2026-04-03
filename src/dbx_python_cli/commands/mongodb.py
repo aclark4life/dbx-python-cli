@@ -261,12 +261,14 @@ def ensure_mongodb_atlas_local(env: dict, config: dict) -> dict:
     global _atlas_local_started
 
     # Get Atlas Local configuration
-    atlas_config = config.get("project", {}).get("mongodb", {}).get("atlas_local", {})
+    mongodb_config = config.get("project", {}).get("mongodb", {})
+    atlas_config = mongodb_config.get("atlas_local", {})
     image = atlas_config.get("image", "mongodb/mongodb-atlas-local")
     tag = atlas_config.get("tag", "latest")
     container_name = atlas_config.get("container_name", "dbx-atlas-local")
     port = atlas_config.get("port", 27017)
     docker_options = atlas_config.get("docker_options", [])
+    enable_test_commands = mongodb_config.get("enable_test_commands", False)
 
     full_image = f"{image}:{tag}"
 
@@ -428,6 +430,10 @@ def ensure_mongodb_atlas_local(env: dict, config: dict) -> dict:
             # Add the image
             docker_cmd.append(full_image)
 
+            # Pass extra mongod parameters after the image
+            if enable_test_commands:
+                docker_cmd.extend(["--setParameter", "enableTestCommands=1"])
+
             run_result = subprocess.run(
                 docker_cmd,
                 capture_output=True,
@@ -508,11 +514,13 @@ def ensure_mongodb_runner(env: dict, config: dict) -> dict:
     global _mongodb_runner_started
 
     # Get mongodb-runner configuration
-    runner_config = config.get("project", {}).get("mongodb", {}).get("runner", {})
+    mongodb_config = config.get("project", {}).get("mongodb", {})
+    runner_config = mongodb_config.get("runner", {})
     port = runner_config.get("port")  # Let mongodb-runner choose if not specified
     topology = runner_config.get("topology", "standalone")
     version = runner_config.get("version")  # Use default if not specified
-    edition = config.get("project", {}).get("mongodb", {}).get("edition", "community")
+    edition = mongodb_config.get("edition", "community")
+    enable_test_commands = mongodb_config.get("enable_test_commands", False)
 
     typer.echo(f"⚠️  MONGODB_URI is not set. Checking for mongodb-runner ({edition})...")
 
@@ -557,6 +565,8 @@ def ensure_mongodb_runner(env: dict, config: dict) -> dict:
             start_cmd.extend(["--version", version])
         if edition == "enterprise":
             start_cmd.append("--enterprise")
+        if enable_test_commands:
+            start_cmd.extend(["--setParameter", "enableTestCommands=1"])
 
         result = subprocess.run(
             start_cmd,

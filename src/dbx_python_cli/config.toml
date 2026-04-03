@@ -24,6 +24,9 @@ backend = "runner"
 # - "enterprise": MongoDB Enterprise Server (requires license)
 edition = "community"
 
+# Pass --setParameter enableTestCommands=1 to mongod (applies to runner and atlas-local backends)
+enable_test_commands = true
+
 # runner configuration (only used when backend = "runner")
 [project.mongodb.runner]
 # Topology type: "standalone", "replset", or "sharded"
