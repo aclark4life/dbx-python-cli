@@ -89,13 +89,12 @@ mongodb-runner is the default backend. To explicitly configure it:
 .. code-block:: toml
 
    [project.mongodb]
-   backend = "mongodb-runner"
+   backend = "runner"
    edition = "community"  # or "enterprise"
+   enable_test_commands = true  # passes --setParameter enableTestCommands=1 to mongod
 
-   [project.mongodb.mongodb_runner]
-   topology = "standalone"  # or "replset" or "sharded"
-   # Optional: additional options to pass to mongodb-runner
-   # options = []
+   [project.mongodb.runner]
+   topology = "replset"  # or "standalone" or "sharded"
 
 Usage
 ~~~~~
@@ -145,15 +144,15 @@ Topology Configuration
 
 mongodb-runner supports three topology types:
 
-- **standalone** (default): Single MongoDB instance
-- **replset**: Replica set with configurable number of secondaries and arbiters
+- **replset** (default): Replica set with configurable number of secondaries and arbiters
+- **standalone**: Single MongoDB instance
 - **sharded**: Sharded cluster with configurable number of shards and secondaries
 
 **Replica Set Example:**
 
 .. code-block:: toml
 
-   [project.mongodb.mongodb_runner]
+   [project.mongodb.runner]
    topology = "replset"
    secondaries = 2  # Number of secondary nodes
    arbiters = 0     # Number of arbiter nodes
@@ -162,7 +161,7 @@ mongodb-runner supports three topology types:
 
 .. code-block:: toml
 
-   [project.mongodb.mongodb_runner]
+   [project.mongodb.runner]
    topology = "sharded"
    shards = 2        # Number of shards
    secondaries = 1   # Number of secondaries per replica set
@@ -175,6 +174,18 @@ Example output when starting a replica set:
    🚀 Starting MongoDB Community (Replset) with mongodb-runner...
    ✅ MongoDB started successfully with mongodb-runner
    🔗 Using MongoDB URI: mongodb://127.0.0.1:52065
+
+Test Commands
+~~~~~~~~~~~~~
+
+By default, dbx starts MongoDB with ``--setParameter enableTestCommands=1``, which is required for features like fail points used in driver test suites. To disable this:
+
+.. code-block:: toml
+
+   [project.mongodb]
+   enable_test_commands = false
+
+This setting applies to both the ``runner`` and ``atlas-local`` backends.
 
 Stopping mongodb-runner
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -432,6 +443,9 @@ Advanced Configuration
 You can customize the Docker run options in your config:
 
 .. code-block:: toml
+
+   [project.mongodb]
+   enable_test_commands = true  # passes --setParameter enableTestCommands=1 to mongod (default)
 
    [project.mongodb.atlas_local]
    image = "mongodb/mongodb-atlas-local"
