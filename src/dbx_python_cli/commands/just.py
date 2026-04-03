@@ -212,6 +212,15 @@ def _run_just_in_repo(
             else:
                 just_env[var] = value
 
+    # Set DRIVERS_EVERGREEN_TOOLS path based on layout mode
+    if "DRIVERS_EVERGREEN_TOOLS" not in just_env:
+        det_path = (
+            base_dir / "drivers-evergreen-tools"
+            if flat
+            else base_dir / repo["group"] / "drivers-evergreen-tools"
+        )
+        just_env["DRIVERS_EVERGREEN_TOOLS"] = str(det_path)
+
     # Set VIRTUAL_ENV to the correct venv path if it exists
     # Check in priority order: repo venv, group venv, base venv
     venv_path = None

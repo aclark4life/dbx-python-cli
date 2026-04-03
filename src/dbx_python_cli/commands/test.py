@@ -350,6 +350,15 @@ def test_callback(
                     test_env[var] = value
                     typer.echo(f"🔧 Using {var} from config: {value}")
 
+        # Set DRIVERS_EVERGREEN_TOOLS path based on layout mode
+        if "DRIVERS_EVERGREEN_TOOLS" not in test_env:
+            det_path = (
+                base_dir / "drivers-evergreen-tools"
+                if flat
+                else base_dir / repo["group"] / "drivers-evergreen-tools"
+            )
+            test_env["DRIVERS_EVERGREEN_TOOLS"] = str(det_path)
+
         if verbose:
             typer.echo(f"[verbose] Running command: {' '.join(test_cmd)}")
             typer.echo(f"[verbose] Working directory: {repo['path']}\n")
