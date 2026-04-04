@@ -273,14 +273,22 @@ def _run_just_in_repo(
         typer.echo(f"[verbose] Working directory: {repo_path}\n")
 
     # Run just in the repository
+    # When not verbose, capture stderr to hide noisy tracebacks from sub-scripts.
+    # When verbose, let stderr flow through so the full output is visible.
     result = subprocess.run(
         just_cmd,
         cwd=str(repo_path),
         env=just_env,
         check=False,
+        stderr=None if verbose else subprocess.PIPE,
     )
 
     if result.returncode != 0:
+        if not verbose:
+            typer.echo(
+                "⚠️  Command failed. Run with -v to see full output.",
+                err=True,
+            )
         raise typer.Exit(result.returncode)
 
 
