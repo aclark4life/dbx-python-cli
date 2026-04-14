@@ -11,6 +11,7 @@ import typer
 from dbx_python_cli.utils.repo import (
     find_all_repos,
     find_repo_by_name,
+    find_repo_by_path,
     get_base_dir,
     get_build_commands,
     get_config,
@@ -560,12 +561,31 @@ def install_callback(
 
             selected_group = repo_group
         else:
-            # Find the repository across all groups
-            repo = find_repo_by_name(repo_name, base_dir, config)
-            if not repo:
-                typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
-                typer.echo("\nUse 'dbx install --list' to see available repositories")
-                raise typer.Exit(1)
+            # Detect path-like inputs: ".", "..", absolute paths, relative paths with /
+            _is_path_like = (
+                repo_name in (".", "..")
+                or repo_name.startswith(("./", "../", "/", "~/"))
+                or "/" in repo_name
+                or Path(repo_name).is_dir()
+            )
+
+            if _is_path_like:
+                repo = find_repo_by_path(repo_name, base_dir, config)
+                if not repo:
+                    typer.echo(
+                        f"❌ Error: No managed repository found at '{Path(repo_name).resolve()}'",
+                        err=True,
+                    )
+                    typer.echo("\nUse 'dbx install --list' to see available repositories")
+                    raise typer.Exit(1)
+                repo_name = repo["name"]
+            else:
+                # Find the repository across all groups
+                repo = find_repo_by_name(repo_name, base_dir, config)
+                if not repo:
+                    typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
+                    typer.echo("\nUse 'dbx install --list' to see available repositories")
+                    raise typer.Exit(1)
 
             repo_path = repo["path"]
             selected_group = repo["group"]
@@ -824,29 +844,48 @@ def install_callback(
             "group": venv_group,
         }
     else:
-        # Find the repository (will return highest priority match if multiple exist)
-        repo = find_repo_by_name(repo_name, base_dir, config)
-        if not repo:
-            typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
-            typer.echo("\nRun 'dbx install --list' to see available repositories")
-            raise typer.Exit(1)
+        # Detect path-like inputs: ".", "..", absolute paths, relative paths with /
+        _is_path_like = (
+            repo_name in (".", "..")
+            or repo_name.startswith(("./", "../", "/", "~/"))
+            or "/" in repo_name
+            or Path(repo_name).is_dir()
+        )
 
-        # Check if repo exists in multiple groups (suppress warning if one is a global group)
-        all_repos = find_all_repos(base_dir, config)
-        matching_repos = [r for r in all_repos if r["name"] == repo_name]
-        if len(matching_repos) > 1:
-            groups = [r["group"] for r in matching_repos]
-            global_group_names = set(get_global_groups(config))
-            # Only warn if none of the groups are global groups
-            if not any(g in global_group_names for g in groups):
+        if _is_path_like:
+            repo = find_repo_by_path(repo_name, base_dir, config)
+            if not repo:
                 typer.echo(
-                    f"⚠️  Warning: Repository '{repo_name}' found in multiple groups: {', '.join(groups)}",
+                    f"❌ Error: No managed repository found at '{Path(repo_name).resolve()}'",
                     err=True,
                 )
-                typer.echo(
-                    f"⚠️  Using '{repo['group']}' group. Use -g to specify a different group.\n",
-                    err=True,
-                )
+                typer.echo("\nRun 'dbx install --list' to see available repositories")
+                raise typer.Exit(1)
+            repo_name = repo["name"]
+        else:
+            # Find the repository (will return highest priority match if multiple exist)
+            repo = find_repo_by_name(repo_name, base_dir, config)
+            if not repo:
+                typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
+                typer.echo("\nRun 'dbx install --list' to see available repositories")
+                raise typer.Exit(1)
+
+            # Check if repo exists in multiple groups (suppress warning if one is a global group)
+            all_repos = find_all_repos(base_dir, config)
+            matching_repos = [r for r in all_repos if r["name"] == repo_name]
+            if len(matching_repos) > 1:
+                groups = [r["group"] for r in matching_repos]
+                global_group_names = set(get_global_groups(config))
+                # Only warn if none of the groups are global groups
+                if not any(g in global_group_names for g in groups):
+                    typer.echo(
+                        f"⚠️  Warning: Repository '{repo_name}' found in multiple groups: {', '.join(groups)}",
+                        err=True,
+                    )
+                    typer.echo(
+                        f"⚠️  Using '{repo['group']}' group. Use -g to specify a different group.\n",
+                        err=True,
+                    )
 
         repo_path = Path(repo["path"])
         # Default to repo's own group

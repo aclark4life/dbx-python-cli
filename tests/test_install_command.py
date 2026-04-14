@@ -47,6 +47,55 @@ def test_install_nonexistent_repo(tmp_path):
             assert "not found" in result.stdout or "dbx install --list" in result.stdout
 
 
+def test_install_dot_from_repo_root(tmp_path, monkeypatch):
+    """Test that '.' resolves to the repo at the current directory."""
+    group_dir = tmp_path / "pymongo"
+    repo_dir = group_dir / "mongo-python-driver"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+    (repo_dir / "setup.py").write_text("# setup.py")
+
+    monkeypatch.chdir(repo_dir)
+
+    with patch("dbx_python_cli.utils.repo.get_config_path") as _mock_path:
+        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
+            with patch("dbx_python_cli.commands.install.get_venv_info") as mock_venv:
+                with patch("subprocess.run") as mock_run:
+                    mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+                    mock_venv.return_value = ("python", "venv")
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_run.return_value = mock_result
+
+                    result = runner.invoke(app, ["install", "."])
+                    assert result.exit_code == 0
+                    assert "Installing dependencies" in result.stdout
+                    assert "Package installed successfully" in result.stdout
+                    # Confirm the real repo name appears, not "."
+                    assert "mongo-python-driver" in result.stdout
+
+
+def test_install_dot_not_in_managed_repo(tmp_path, monkeypatch):
+    """Test that '.' in an unmanaged directory gives a clear error."""
+    group_dir = tmp_path / "pymongo"
+    repo_dir = group_dir / "mongo-python-driver"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+
+    unrelated = tmp_path / "unrelated"
+    unrelated.mkdir()
+    monkeypatch.chdir(unrelated)
+
+    with patch("dbx_python_cli.utils.repo.get_config_path") as _mock_path:
+        with patch("dbx_python_cli.commands.install.get_config") as mock_config:
+            mock_config.return_value = {"repo": {"base_dir": str(tmp_path)}}
+
+            result = runner.invoke(app, ["install", "."])
+            assert result.exit_code == 1
+            output = result.stdout + result.stderr
+            assert "No managed repository found" in output
+
+
 def test_install_basic_success(tmp_path):
     """Test basic install without extras or groups."""
     # Create mock repository structure
