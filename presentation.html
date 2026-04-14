@@ -156,20 +156,13 @@
 
     /* Small leaf corner mark (for non-title slides) */
     .leaf-corner {
-      display: none; /* replaced by #leaf-fixed */
-    }
-
-    /* Persistent leaf — absolute inside .reveal (which is always 100vw × 100vh),
-       avoiding position:fixed bugs when Reveal.js sets overflow:hidden on html/body */
-    #leaf-fixed {
       position: absolute;
-      top: 18px;
       right: 28px;
+      bottom: 18px;
       width: 18px;
       height: 30px;
       opacity: 0.30;
       pointer-events: none;
-      z-index: 9999;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 340'%3E%3Cpath d='M100 8 C136 8 165 38 165 78 C165 128 138 172 100 330 C62 172 35 128 35 78 C35 38 64 8 100 8 Z' fill='%2300ED64'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-size: contain;
@@ -711,10 +704,6 @@ dbx --help</code></pre>
   <div class="leaf-corner"></div>
 </section>
 
-<!-- Persistent leaf: last child of .reveal so it paints above slides/backgrounds.
-     position:absolute relative to .reveal (100vw×100vh) avoids position:fixed
-     bugs caused by Reveal.js setting overflow:hidden on html and body. -->
-<div id="leaf-fixed"></div>
 </div>
 </div>
 
