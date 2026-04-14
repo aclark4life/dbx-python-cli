@@ -159,9 +159,10 @@
       display: none; /* replaced by #leaf-fixed */
     }
 
-    /* Persistent leaf — fixed to viewport top-right, unaffected by Reveal.js transforms */
+    /* Persistent leaf — absolute inside .reveal (which is always 100vw × 100vh),
+       avoiding position:fixed bugs when Reveal.js sets overflow:hidden on html/body */
     #leaf-fixed {
-      position: fixed;
+      position: absolute;
       top: 18px;
       right: 28px;
       width: 18px;
@@ -710,6 +711,10 @@ dbx --help</code></pre>
   <div class="leaf-corner"></div>
 </section>
 
+<!-- Persistent leaf: last child of .reveal so it paints above slides/backgrounds.
+     position:absolute relative to .reveal (100vw×100vh) avoids position:fixed
+     bugs caused by Reveal.js setting overflow:hidden on html and body. -->
+<div id="leaf-fixed"></div>
 </div>
 </div>
 
@@ -729,7 +734,5 @@ dbx --help</code></pre>
     plugins: [ RevealHighlight, RevealNotes ],
   });
 </script>
-<!-- Persistent leaf mark: last in DOM so it paints above Reveal.js's stacking context -->
-<div id="leaf-fixed"></div>
 </body>
 </html>
