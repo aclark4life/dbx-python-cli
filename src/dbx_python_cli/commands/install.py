@@ -576,15 +576,21 @@ def install_callback(
                         f"❌ Error: No managed repository found at '{Path(repo_name).resolve()}'",
                         err=True,
                     )
-                    typer.echo("\nUse 'dbx install --list' to see available repositories")
+                    typer.echo(
+                        "\nUse 'dbx install --list' to see available repositories"
+                    )
                     raise typer.Exit(1)
                 repo_name = repo["name"]
             else:
                 # Find the repository across all groups
                 repo = find_repo_by_name(repo_name, base_dir, config)
                 if not repo:
-                    typer.echo(f"❌ Error: Repository '{repo_name}' not found", err=True)
-                    typer.echo("\nUse 'dbx install --list' to see available repositories")
+                    typer.echo(
+                        f"❌ Error: Repository '{repo_name}' not found", err=True
+                    )
+                    typer.echo(
+                        "\nUse 'dbx install --list' to see available repositories"
+                    )
                     raise typer.Exit(1)
 
             repo_path = repo["path"]

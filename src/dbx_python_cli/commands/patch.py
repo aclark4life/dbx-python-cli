@@ -97,7 +97,7 @@ def patch_callback(
                 err=True,
             )
             typer.echo(
-                f"\nAdd to config.toml:\n  [evergreen.{repo_name}]\n  project_name = \"<evg-project>\"",
+                f'\nAdd to config.toml:\n  [evergreen.{repo_name}]\n  project_name = "<evg-project>"',
                 err=True,
             )
             raise typer.Exit(1)
@@ -108,7 +108,9 @@ def patch_callback(
             typer.echo(f"[verbose] Running command: {' '.join(cmd)}")
             typer.echo(f"[verbose] Working directory: {repo['path']}\n")
 
-        typer.echo(f"🌲 Running evergreen patch for {repo_name} (project: {project_name})...")
+        typer.echo(
+            f"🌲 Running evergreen patch for {repo_name} (project: {project_name})..."
+        )
 
         result = subprocess.run(cmd, cwd=str(repo["path"]), check=False)
 

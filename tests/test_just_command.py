@@ -121,7 +121,9 @@ def test_just_dot_from_repo_root(tmp_path, temp_repos_dir, mock_config, monkeypa
                 assert args == ["just", "test"]
 
 
-def test_just_dot_not_in_managed_repo(tmp_path, temp_repos_dir, mock_config, monkeypatch):
+def test_just_dot_not_in_managed_repo(
+    tmp_path, temp_repos_dir, mock_config, monkeypatch
+):
     """Test that '.' in an unmanaged directory gives a clear error."""
     unrelated = tmp_path / "unrelated"
     unrelated.mkdir()

@@ -175,7 +175,9 @@ def test_callback(
                         f"Error: No managed repository found at '{Path(repo_name).resolve()}'.",
                         err=True,
                     )
-                    typer.echo("Run 'dbx list' to see available repositories.", err=True)
+                    typer.echo(
+                        "Run 'dbx list' to see available repositories.", err=True
+                    )
                     raise typer.Exit(1)
                 # Update repo_name so test-runner config lookups and messages use real name
                 repo_name = repo["name"]
@@ -184,7 +186,9 @@ def test_callback(
                 repo = find_repo_by_name(repo_name, base_dir, config)
                 if not repo:
                     typer.echo(f"Error: Repository '{repo_name}' not found.", err=True)
-                    typer.echo("Run 'dbx list' to see available repositories.", err=True)
+                    typer.echo(
+                        "Run 'dbx list' to see available repositories.", err=True
+                    )
                     raise typer.Exit(1)
 
             # Check if repo exists in multiple groups (name-based lookup only)

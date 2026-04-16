@@ -936,7 +936,9 @@ repos = [
                         cmd, 0, stdout="origin\nupstream\n", stderr=""
                     )
                 elif "branch" in cmd and "--show-current" in cmd:
-                    return subprocess.CompletedProcess(cmd, 0, stdout="main\n", stderr="")
+                    return subprocess.CompletedProcess(
+                        cmd, 0, stdout="main\n", stderr=""
+                    )
                 else:
                     return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
@@ -985,7 +987,9 @@ repos = [
                         cmd, 0, stdout="origin\nupstream\n", stderr=""
                     )
                 elif "branch" in cmd and "--show-current" in cmd:
-                    return subprocess.CompletedProcess(cmd, 0, stdout="main\n", stderr="")
+                    return subprocess.CompletedProcess(
+                        cmd, 0, stdout="main\n", stderr=""
+                    )
                 else:
                     return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 

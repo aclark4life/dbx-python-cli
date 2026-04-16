@@ -86,7 +86,11 @@ def sync_callback(
         dbx sync -a --dry-run                           # Preview all groups sync
         dbx sync -g pymongo mongo-python-driver --dry-run  # Preview specific repo
     """
-    from dbx_python_cli.utils.repo import find_all_repos, find_repo_by_name, find_repo_by_path
+    from dbx_python_cli.utils.repo import (
+        find_all_repos,
+        find_repo_by_name,
+        find_repo_by_path,
+    )
 
     # Get verbose flag from parent context
     verbose = ctx.obj.get("verbose", False) if ctx.obj else False

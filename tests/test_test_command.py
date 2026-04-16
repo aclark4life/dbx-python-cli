@@ -105,7 +105,9 @@ def test_test_dot_from_repo_root(mock_config, temp_repos_dir, monkeypatch):
     with patch("dbx_python_cli.utils.repo.get_config_path") as mock_get_path:
         with patch("dbx_python_cli.commands.test.get_venv_info") as mock_venv:
             with patch("subprocess.run") as mock_run:
-                with patch.dict("os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}):
+                with patch.dict(
+                    "os.environ", {"MONGODB_URI": "mongodb://localhost:27017"}
+                ):
                     mock_get_path.return_value = mock_config
                     mock_venv.return_value = ("python", "venv")
 
