@@ -181,6 +181,21 @@ django = "mongodb-6.0.x"
 # Environment variables for test runs
 [repo.groups.django.test_env]
 
+[evergreen.mongo-python-driver]
+project_name = "mongo-python-driver"
+
+[evergreen.django-mongodb-backend]
+project_name = "django-mongodb-backend"
+
+[evergreen.libmongocrypt]
+project_name = "libmongocrypt"
+
+[evergreen.mongo-orchestration]
+project_name = "mongo-orchestration"
+
+[evergreen.ai-ml-pipeline-testing]
+project_name = "ai-ml-pipeline-testing"
+
 [repo.groups.django-3p]
 # Python version for the group's virtual environment
 python_version = "3.13"

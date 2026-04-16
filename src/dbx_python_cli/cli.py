@@ -17,6 +17,7 @@ from dbx_python_cli.commands import (
     list,
     log,
     open,
+    patch,
     project,
     remove,
     status,
@@ -67,6 +68,7 @@ app.add_typer(just.app, name="just")
 app.add_typer(list.app, name="list")
 app.add_typer(log.app, name="log")
 app.add_typer(open.app, name="open")
+app.add_typer(patch.app, name="patch")
 app.add_typer(project.app, name="project")
 app.add_typer(remove.app, name="remove")
 app.add_typer(status.app, name="status")

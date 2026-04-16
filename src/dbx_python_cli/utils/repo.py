@@ -174,6 +174,19 @@ def get_install_extras(config, group_name, repo_name):
     return install_extras_config.get(repo_name, [])
 
 
+def get_evergreen_project_name(config, repo_name):
+    """Get the Evergreen project name for a repository.
+
+    Args:
+        config: Configuration dictionary
+        repo_name: Name of the repository
+
+    Returns:
+        str: Evergreen project name, or None if not configured
+    """
+    return config.get("evergreen", {}).get(repo_name, {}).get("project_name")
+
+
 def get_install_groups(config, group_name, repo_name):
     """
     Get default dependency groups to install for a repository.
